@@ -1,0 +1,11 @@
+[package]
+name = "texel"
+version = "0.1.0"
+authors = ["Ales Katona <almindor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+termion = "1.5.3"
+specs = "0.15.0"
+strum = "0.15.0"
+strum_macros = "0.15.0"

@@ -1,0 +1,27 @@
+mod color;
+mod dimension;
+mod position;
+mod sprite;
+
+pub use color::Color;
+pub use dimension::Dimension;
+pub use position::{Direction, Position, Translation};
+pub use sprite::Sprite;
+
+// flags
+
+use specs::{Component, NullStorage};
+
+#[derive(Default)]
+pub struct Selection;
+
+impl Component for Selection {
+    type Storage = NullStorage<Self>;
+}
+
+#[derive(Default)]
+pub struct Border;
+
+impl Component for Border {
+    type Storage = NullStorage<Self>;
+}
