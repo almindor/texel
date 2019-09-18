@@ -13,13 +13,6 @@ impl Component for Dimension {
 }
 
 impl Dimension {
-    pub fn for_screen(screen_size: &(u16, u16)) -> Self {
-        Dimension {
-            w: screen_size.0,
-            h: screen_size.1,
-        }
-    }
-
     pub fn for_sprite(sprite: &Sprite) -> Result<Self, std::num::TryFromIntError> {
         let mut w = 0i32;
         let mut h = 0i32;

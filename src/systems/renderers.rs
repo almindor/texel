@@ -1,13 +1,11 @@
 use crate::components::{Border, Color, Dimension, Position, Sprite};
 use crate::resources::{CmdLine, Mode, State, SyncTerm};
-use specs::{ReadStorage, System};
+use specs::{Entities, Join, ReadStorage, System};
 use std::io::Write;
 
 pub struct ClearScreen;
 
 pub struct SpriteRenderer;
-
-pub struct BorderRenderer;
 
 pub struct CmdLineRenderer;
 
@@ -19,18 +17,49 @@ impl<'a> System<'a> for ClearScreen {
     }
 }
 
+impl SpriteRenderer {
+    fn render_border(&self, out: &mut SyncTerm, p: &Position, d: &Dimension) {
+        let min_x = p.x - 1;
+        let min_y = p.y - 1;
+        let b_w = i32::from(d.w + 1);
+        let b_h = i32::from(d.h + 1);
+
+        for y in min_y..=min_y + b_h {
+            if y <= 0 {
+                continue;
+            }
+
+            if y == min_y || y == min_y + b_h {
+                let a = if y == min_y { '-' } else { '_' };
+                for x in min_x..=min_x + b_w {
+                    write!(out, "{}{}", crate::common::goto(x, y), a).unwrap();
+                }
+            }
+
+            write!(out, "{}|", crate::common::goto(min_x + b_w, y)).unwrap();
+
+            if min_x <= 0 {
+                continue;
+            }
+
+            write!(out, "{}|", crate::common::goto(min_x, y)).unwrap();
+        }
+    }
+}
+
 impl<'a> System<'a> for SpriteRenderer {
     type SystemData = (
         specs::Write<'a, SyncTerm>,
+        Entities<'a>,
         ReadStorage<'a, Position>,
+        ReadStorage<'a, Dimension>,
         ReadStorage<'a, Sprite>,
         ReadStorage<'a, Color>,
+        ReadStorage<'a, Border>,
     );
 
-    fn run(&mut self, (mut out, p, s, c): Self::SystemData) {
-        use specs::Join;
-
-        for (pos, sprite, color) in (&p, &s, &c).join() {
+    fn run(&mut self, (mut out, e, p, d, s, c, b): Self::SystemData) {
+        for (entity, pos, dim, sprite, color) in (&e, &p, &d, &s, &c).join() {
             write!(out, "{}", color.0).unwrap();
 
             for t in &sprite.texels {
@@ -43,48 +72,9 @@ impl<'a> System<'a> for SpriteRenderer {
                 )
                 .unwrap();
             }
-        }
 
-        write!(out, "{}", Color::default().0).unwrap();
-    }
-}
-
-impl<'a> System<'a> for BorderRenderer {
-    type SystemData = (
-        specs::Write<'a, SyncTerm>,
-        ReadStorage<'a, Position>,
-        ReadStorage<'a, Dimension>,
-        ReadStorage<'a, Border>,
-    );
-
-    fn run(&mut self, (mut out, p, d, b): Self::SystemData) {
-        use specs::Join;
-
-        for (posision, dimension, _border) in (&p, &d, &b).join() {
-            let min_x = posision.x - 1;
-            let min_y = posision.y - 1;
-            let b_w = i32::from(dimension.w + 1);
-            let b_h = i32::from(dimension.h + 1);
-
-            for y in min_y..=min_y + b_h {
-                if y <= 0 {
-                    continue;
-                }
-
-                if y == min_y || y == min_y + b_h {
-                    let a = if y == min_y { '-' } else { '_' };
-                    for x in min_x..=min_x + b_w {
-                        write!(out, "{}{}", crate::common::goto(x, y), a).unwrap();
-                    }
-                }
-
-                write!(out, "{}|", crate::common::goto(min_x + b_w, y)).unwrap();
-
-                if min_x <= 0 {
-                    continue;
-                }
-
-                write!(out, "{}|", crate::common::goto(min_x, y)).unwrap();
+            if b.get(entity).is_some() {
+                self.render_border(&mut out, &pos, &dim);
             }
         }
 
@@ -102,10 +92,10 @@ impl<'a> System<'a> for CmdLineRenderer {
     fn run(&mut self, (mut out, state, cmdline): Self::SystemData) {
         let h = i32::from(out.h);
 
-        if let Some(error) = state.error {
+        if let Some(error) = state.error() {
             write!(
                 out,
-                "{}{}ERR: {}{}",
+                "{}{}{}{}",
                 crate::common::goto(1, h),
                 termion::color::Bg(termion::color::Red),
                 error,

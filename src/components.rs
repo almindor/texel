@@ -25,3 +25,10 @@ pub struct Border;
 impl Component for Border {
     type Storage = NullStorage<Self>;
 }
+
+#[derive(Default)]
+pub struct Selectable;
+
+impl Component for Selectable {
+    type Storage = NullStorage<Self>;
+}

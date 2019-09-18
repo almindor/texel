@@ -24,30 +24,17 @@ fn main() {
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(systems::InputHandler, "input_handler", &[])
-        .with(
-            systems::ActionHandler,
-            "action_handler",
-            &["input_handler"],
-        )
-        .with(
-            systems::ClearScreen,
-            "clear_screen",
-            &["action_handler"],
-        )
+        .with(systems::ActionHandler, "action_handler", &["input_handler"])
+        .with(systems::ClearScreen, "clear_screen", &["action_handler"])
         .with(
             systems::SpriteRenderer,
             "sprite_renderer",
             &["clear_screen"],
         )
         .with(
-            systems::BorderRenderer,
-            "border_renderer",
-            &["clear_screen"],
-        )
-        .with(
             systems::CmdLineRenderer,
             "cmdline_renderer",
-            &["sprite_renderer", "border_renderer"],
+            &["sprite_renderer"],
         )
         .build();
     dispatcher.setup(&mut world);
@@ -64,16 +51,10 @@ fn main() {
                 termion::color::AnsiValue::rgb(0, 5, 0).fg_string(),
             ))
             .with(components::Border)
+            .with(components::Selectable)
             .with(sprite)
             .build();
     }
-
-    world
-        .create_entity()
-        .with(components::Position::from_xy(2, 2))
-        .with(components::Dimension::for_screen(&screen_size))
-        .with(components::Border)
-        .build();
 
     let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
 

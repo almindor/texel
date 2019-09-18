@@ -1,5 +1,6 @@
 use crate::components::Translation;
 use crate::resources::Mode;
+use std::path::PathBuf;
 use strum_macros::{AsRefStr, EnumIter};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -19,8 +20,12 @@ pub struct TexelDiff {
 #[derive(Debug, PartialEq, Eq, EnumIter, AsRefStr)]
 pub enum Action {
     None,
+    ClearError,
     SetMode(Mode),
     ReverseMode,
+    Deselect,
+    SelectNext(bool), // select next keeping old if true
+    Import(PathBuf),
     Translate(Translation),
     Delete,
 }
@@ -31,14 +36,30 @@ impl Default for Action {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, EnumIter, AsRefStr)]
-pub enum Command {
-    None,
-    Engage,
-    Clear,
-    Quit,
-    Cancel,
-    Perform(Action),
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ExecuteError {
+    InvalidCommand,
+    InvalidParam(&'static str),
+    ExecutionError(String),
+}
+
+impl<T> From<T> for ExecuteError
+where
+    T: std::error::Error,
+{
+    fn from(err: T) -> Self {
+        ExecuteError::ExecutionError(err.to_string())
+    }
+}
+
+impl std::fmt::Display for ExecuteError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ExecuteError::InvalidCommand => write!(f, "Error: Invalid command"),
+            ExecuteError::InvalidParam(p) => write!(f, "Error: {}", p),
+            ExecuteError::ExecutionError(e) => write!(f, "Error: {}", e),
+        }
+    }
 }
 
 pub const fn goto(x: i32, y: i32) -> termion::cursor::Goto {
