@@ -2,7 +2,6 @@ extern crate termion;
 
 use std::env;
 use std::io::{stdin, stdout, Write};
-use std::path::Path;
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::IntoRawMode;
 
@@ -22,10 +21,13 @@ fn main() {
     world.insert(resources::SyncTerm::new(screen_size.0, screen_size.1));
     world.insert(resources::State::default());
 
-    let mut dispatcher = DispatcherBuilder::new()
+    let mut updater = DispatcherBuilder::new()
         .with(systems::InputHandler, "input_handler", &[])
         .with(systems::ActionHandler, "action_handler", &["input_handler"])
-        .with(systems::ClearScreen, "clear_screen", &["action_handler"])
+        .build();
+
+    let mut renderer = DispatcherBuilder::new()
+        .with(systems::ClearScreen, "clear_screen", &[])
         .with(
             systems::SpriteRenderer,
             "sprite_renderer",
@@ -37,31 +39,31 @@ fn main() {
             &["sprite_renderer"],
         )
         .build();
-    dispatcher.setup(&mut world);
+
+    updater.setup(&mut world);
+    renderer.setup(&mut world);
 
     if args.len() > 1 {
-        let sprite = components::Sprite::from_file(Path::new(&args[1])).unwrap();
+        match resources::Loader::from_files(&args[1..]) {
+            Ok(sprites) => {
+                let mut state = world.fetch_mut::<resources::State>();
 
-        world
-            .create_entity()
-            .with(components::Dimension::for_sprite(&sprite).unwrap())
-            .with(components::Position::from_xy(10, 10))
-            .with(components::Selection) // pre-selected
-            .with(components::Color(
-                termion::color::AnsiValue::rgb(0, 5, 0).fg_string(),
-            ))
-            .with(components::Border)
-            .with(components::Selectable)
-            .with(sprite)
-            .build();
+                for sprite in sprites {
+                    state.push_action(common::Action::Import(sprite));
+                }
+            }
+            Err(err) => world.fetch_mut::<resources::State>().set_error(Some(err)),
+        }
+
+        updater.dispatch(&world);
+        world.maintain();
     }
 
     let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
 
     write!(stdout, "{}", termion::clear::All,).unwrap();
 
-    dispatcher.dispatch(&world);
-    world.maintain();
+    renderer.dispatch(&world);
 
     world
         .fetch_mut::<resources::SyncTerm>()
@@ -72,16 +74,14 @@ fn main() {
     for c in stdin().events() {
         // handle input
         world.fetch_mut::<resources::State>().push_event(c.unwrap());
-
-        dispatcher.dispatch(&world);
+        updater.dispatch(&world);
 
         if world.fetch_mut::<resources::State>().mode() == resources::Mode::Quitting {
             break;
         }
 
-        // TODO: only if dirty check fails
         world.maintain();
-        dispatcher.dispatch(&world);
+        renderer.dispatch(&world);
 
         world
             .fetch_mut::<resources::SyncTerm>()

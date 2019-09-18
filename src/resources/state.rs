@@ -1,4 +1,4 @@
-use crate::common::{Action, ExecuteError};
+use crate::common::{Action, Error};
 use std::collections::VecDeque;
 use termion::event::Event;
 
@@ -18,7 +18,7 @@ impl Default for Mode {
 
 #[derive(Default, Debug)]
 pub struct State {
-    error: Option<ExecuteError>,
+    error: Option<Error>,
     events: VecDeque<Event>,
     actions: VecDeque<Action>,
     mode: Mode,
@@ -26,11 +26,11 @@ pub struct State {
 }
 
 impl State {
-    pub fn error(&self) -> &Option<ExecuteError> {
+    pub fn error(&self) -> &Option<Error> {
         &self.error
     }
 
-    pub fn set_error(&mut self, error: Option<ExecuteError>) {
+    pub fn set_error(&mut self, error: Option<Error>) {
         self.error = error;
     }
 

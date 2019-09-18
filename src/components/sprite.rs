@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 /// 256 * 256 ascii chars maximum
 pub const SPRITE_MAX_BYTES: usize = u16::max_value() as usize;
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct Sprite {
     pub texels: Vec<Texel>,
 }

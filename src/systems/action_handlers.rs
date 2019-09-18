@@ -1,8 +1,7 @@
-use crate::common::{Action, ExecuteError};
+use crate::common::{Action, Error};
 use crate::components::*;
 use crate::resources::State;
-use specs::{Entities, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
-use std::path::Path;
+use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 
 pub struct ActionHandler;
 
@@ -21,40 +20,49 @@ impl ActionHandler {
         u: &LazyUpdate,
         keep: bool,
     ) {
-        let all: Vec<&Selectable> = sel.join().collect();
+        let mut all: Vec<(Entity, bool)> = Vec::default();
+        let mut start = 0usize;
 
-        for (entity, _) in (e, sel).join() {
-            if s.get(entity).is_some() {
-
+        for (i, (entity, _)) in (e, sel).join().enumerate() {
+            let is_selected = s.get(entity).is_some();
+            all.push((entity, is_selected));
+            if is_selected {
+                start = i
             }
         }
+
+        // go through unselected items only, starting with last selection known
+        let mut unselected_iter = all
+            .iter()
+            .cycle()
+            .skip(start)
+            .take(all.len())
+            .filter(|(_, is_sel)| !is_sel);
 
         if !keep {
             self.deselect(e, s, u);
         }
+
+        if let Some(entity) = unselected_iter.next() {
+            u.insert(entity.0, Selection); // select next if possible
+        } else if let Some(entity) = all.first() {
+            u.insert(entity.0, Selection); // select first if "redeselecting"
+        }
     }
 
-    fn delete_selected(
-        &mut self,
-        e: &Entities,
-        s: &ReadStorage<Selection>,
-    ) -> Option<ExecuteError> {
+    fn delete_selected(&mut self, e: &Entities, s: &ReadStorage<Selection>) -> Option<Error> {
         let mut deleted = 0usize;
 
         for (entity, _) in (e, s).join() {
             if let Err(_) = e.delete(entity) {
-                return Some(ExecuteError::ExecutionError(String::from(
-                    "Error deleting entity",
-                )));
+                return Some(Error::ExecutionError(String::from("Error deleting entity")));
             } else {
                 deleted += 1;
             }
         }
 
         if deleted == 0 {
-            return Some(ExecuteError::ExecutionError(String::from(
-                "No entity to delete",
-            )));
+            return Some(Error::ExecutionError(String::from("No entity to delete")));
         }
 
         None
@@ -75,14 +83,12 @@ impl ActionHandler {
     fn import_sprite(
         &mut self,
         e: &Entities,
-        path: &Path,
+        sprite: Sprite,
         s: &ReadStorage<Selection>,
         u: &LazyUpdate,
-    ) -> Result<(), ExecuteError> {
+    ) -> Result<(), Error> {
         self.deselect(e, s, u);
         let entity = e.create();
-
-        let sprite = Sprite::from_file(path)?;
 
         u.insert(entity, Dimension::for_sprite(&sprite)?);
         u.insert(entity, Position::from_xy(15, 13)); // TODO
@@ -118,8 +124,8 @@ impl<'a> System<'a> for ActionHandler {
                 Action::SelectNext(keep) => self.select_next(&e, &sel, &s, &u, keep),
                 Action::Translate(t) => self.translate_selected(t, &mut p, &s, &d),
                 Action::Delete => state.set_error(self.delete_selected(&e, &s)),
-                Action::Import(path) => {
-                    if let Err(err) = self.import_sprite(&e, &path, &s, &u) {
+                Action::Import(sprite) => {
+                    if let Err(err) = self.import_sprite(&e, sprite, &s, &u) {
                         state.set_error(Some(err));
                     }
                 }

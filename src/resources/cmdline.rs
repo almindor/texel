@@ -1,8 +1,7 @@
-use crate::common::{Action, ExecuteError};
+use crate::common::{Action, Error};
 use crate::components::Translation;
-use crate::resources::Mode;
+use crate::resources::{Loader, Mode};
 use std::iter::Peekable;
-use std::path::PathBuf;
 use std::str::SplitAsciiWhitespace;
 use strum::IntoEnumIterator;
 use termion::event::Key;
@@ -32,7 +31,7 @@ impl CmdLine {
         &self.cmd
     }
 
-    pub fn input(&mut self, k: Key) -> Result<Action, ExecuteError> {
+    pub fn input(&mut self, k: Key) -> Result<Action, Error> {
         let result = match k {
             Key::Esc => Ok(Action::ReverseMode),
             Key::Backspace => self.remove(),
@@ -62,7 +61,7 @@ impl CmdLine {
         self.cmd.clear();
     }
 
-    fn previous(&mut self) -> Result<Action, ExecuteError> {
+    fn previous(&mut self) -> Result<Action, Error> {
         if self.history.len() > 0 {
             if self.history_index.is_none() {
                 self.history_index = Some(self.history.len() - 1);
@@ -79,7 +78,7 @@ impl CmdLine {
         Ok(Action::None)
     }
 
-    fn next(&mut self) -> Result<Action, ExecuteError> {
+    fn next(&mut self) -> Result<Action, Error> {
         if let Some(index) = self.history_index {
             if index < self.history.len() - 1 {
                 self.cmd.clone_from(&self.history[index + 1]);
@@ -93,19 +92,19 @@ impl CmdLine {
         Ok(Action::None)
     }
 
-    fn append(&mut self, c: char) -> Result<Action, ExecuteError> {
+    fn append(&mut self, c: char) -> Result<Action, Error> {
         self.cmd.push(c);
 
         Ok(Action::None)
     }
 
-    fn remove(&mut self) -> Result<Action, ExecuteError> {
+    fn remove(&mut self) -> Result<Action, Error> {
         self.cmd.pop();
 
         Ok(Action::None)
     }
 
-    fn auto_complete(&mut self) -> Result<Action, ExecuteError> {
+    fn auto_complete(&mut self) -> Result<Action, Error> {
         let parts: Vec<&str> = self.cmd.split_ascii_whitespace().collect();
 
         if parts.len() == 1 {
@@ -132,7 +131,7 @@ impl CmdLine {
         None
     }
 
-    fn parse(&mut self) -> Result<Action, ExecuteError> {
+    fn parse(&mut self) -> Result<Action, Error> {
         let mut parts = self.cmd.split_ascii_whitespace().peekable();
 
         // quit
@@ -146,53 +145,44 @@ impl CmdLine {
         self.parse_action(parts)
     }
 
-    fn parse_action(
-        &self,
-        mut parts: Peekable<SplitAsciiWhitespace>,
-    ) -> Result<Action, ExecuteError> {
+    fn parse_action(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
         if let Some(action) = parts.next() {
             let capitalized = crate::common::to_ascii_titlecase(action);
 
             for a in Action::iter() {
                 if a.as_ref() == capitalized {
                     return match a {
-                        Action::Delete => Ok(a),
+                        Action::Delete | Action::Deselect => Ok(a),
                         Action::Translate(_) => self.parse_translate(parts),
                         Action::Import(_) => self.parse_import(parts),
-                        _ => Err(ExecuteError::InvalidCommand),
+                        _ => Err(Error::InvalidCommand),
                     };
                 }
             }
         }
 
-        Err(ExecuteError::InvalidCommand)
+        Err(Error::InvalidCommand)
     }
 
-    fn parse_translate(
-        &self,
-        mut parts: Peekable<SplitAsciiWhitespace>,
-    ) -> Result<Action, ExecuteError> {
+    fn parse_translate(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
         let x = parts
             .next()
-            .ok_or(ExecuteError::InvalidParam("No X specified"))?
+            .ok_or(Error::InvalidParam("No X specified"))?
             .parse::<i32>()
-            .map_err(|_| ExecuteError::InvalidParam("Invalid X value"))?;
+            .map_err(|_| Error::InvalidParam("Invalid X value"))?;
         let y = parts
             .next()
-            .ok_or(ExecuteError::InvalidParam("No Y specified"))?
+            .ok_or(Error::InvalidParam("No Y specified"))?
             .parse::<i32>()
-            .map_err(|_| ExecuteError::InvalidParam("Invalid Y value"))?;
+            .map_err(|_| Error::InvalidParam("Invalid Y value"))?;
         Ok(Action::Translate(Translation::Absolute(x, y)))
     }
 
-    fn parse_import(
-        &self,
-        mut parts: Peekable<SplitAsciiWhitespace>,
-    ) -> Result<Action, ExecuteError> {
+    fn parse_import(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
         if let Some(path) = parts.next() {
-            return Ok(Action::Import(PathBuf::from(path)));
+            return Ok(Action::Import(Loader::from_file(path)?));
         }
 
-        Err(ExecuteError::InvalidParam("No path specified"))
+        Err(Error::InvalidParam("No path specified"))
     }
 }

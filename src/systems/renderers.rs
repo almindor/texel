@@ -1,4 +1,4 @@
-use crate::components::{Border, Color, Dimension, Position, Sprite};
+use crate::components::{Border, Color, Dimension, Position, Selection, Sprite};
 use crate::resources::{CmdLine, Mode, State, SyncTerm};
 use specs::{Entities, Join, ReadStorage, System};
 use std::io::Write;
@@ -56,9 +56,10 @@ impl<'a> System<'a> for SpriteRenderer {
         ReadStorage<'a, Sprite>,
         ReadStorage<'a, Color>,
         ReadStorage<'a, Border>,
+        ReadStorage<'a, Selection>,
     );
 
-    fn run(&mut self, (mut out, e, p, d, s, c, b): Self::SystemData) {
+    fn run(&mut self, (mut out, e, p, d, s, c, b, sel): Self::SystemData) {
         for (entity, pos, dim, sprite, color) in (&e, &p, &d, &s, &c).join() {
             write!(out, "{}", color.0).unwrap();
 
@@ -73,7 +74,7 @@ impl<'a> System<'a> for SpriteRenderer {
                 .unwrap();
             }
 
-            if b.get(entity).is_some() {
+            if b.get(entity).is_some() && sel.get(entity).is_some() {
                 self.render_border(&mut out, &pos, &dim);
             }
         }

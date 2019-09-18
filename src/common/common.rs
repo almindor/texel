@@ -1,6 +1,5 @@
-use crate::components::Translation;
+use crate::components::{Sprite, Translation};
 use crate::resources::Mode;
-use std::path::PathBuf;
 use strum_macros::{AsRefStr, EnumIter};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -25,7 +24,7 @@ pub enum Action {
     ReverseMode,
     Deselect,
     SelectNext(bool), // select next keeping old if true
-    Import(PathBuf),
+    Import(Sprite),
     Translate(Translation),
     Delete,
 }
@@ -37,27 +36,27 @@ impl Default for Action {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ExecuteError {
+pub enum Error {
     InvalidCommand,
     InvalidParam(&'static str),
     ExecutionError(String),
 }
 
-impl<T> From<T> for ExecuteError
+impl<T> From<T> for Error
 where
     T: std::error::Error,
 {
     fn from(err: T) -> Self {
-        ExecuteError::ExecutionError(err.to_string())
+        Error::ExecutionError(err.to_string())
     }
 }
 
-impl std::fmt::Display for ExecuteError {
+impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExecuteError::InvalidCommand => write!(f, "Error: Invalid command"),
-            ExecuteError::InvalidParam(p) => write!(f, "Error: {}", p),
-            ExecuteError::ExecutionError(e) => write!(f, "Error: {}", e),
+            Error::InvalidCommand => write!(f, "Error: Invalid command"),
+            Error::InvalidParam(p) => write!(f, "Error: {}", p),
+            Error::ExecutionError(e) => write!(f, "Error: {}", e),
         }
     }
 }

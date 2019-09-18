@@ -28,6 +28,14 @@ impl InputHandler {
             Event::Key(Key::Char('L')) => {
                 Action::Translate(Translation::ToEdge(Direction::Right(out.w)))
             }
+            Event::Unsupported(raw) => {
+                // shift + tab
+                if raw.len() == 3 && raw[0] == 27 && raw[1] == 91 && raw[2] == 90 {
+                    Action::SelectNext(true)
+                } else {
+                    Action::None
+                }
+            }
             _ => Action::None,
         };
 
