@@ -14,7 +14,6 @@ use specs::prelude::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-
     let screen_size = termion::terminal_size().unwrap();
 
     let mut world = World::new();
@@ -43,6 +42,9 @@ fn main() {
     updater.setup(&mut world);
     renderer.setup(&mut world);
 
+    let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
+    write!(stdout, "{}", termion::clear::All,).unwrap();
+
     if args.len() > 1 {
         match resources::Loader::from_files(&args[1..]) {
             Ok(sprites) => {
@@ -58,10 +60,6 @@ fn main() {
         updater.dispatch(&world);
         world.maintain();
     }
-
-    let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
-
-    write!(stdout, "{}", termion::clear::All,).unwrap();
 
     renderer.dispatch(&world);
 
