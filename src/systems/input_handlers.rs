@@ -46,7 +46,7 @@ impl InputHandler {
         match event {
             Event::Key(k) => match cmdline.input(k) {
                 Ok(action) => {
-                    if action != Action::None {
+                    if action.is_some() {
                         state.push_action(Action::ReverseMode);
                     }
                     state.push_action(action);
@@ -69,8 +69,8 @@ impl<'a> System<'a> for InputHandler {
             match state.mode() {
                 Mode::Command => self.cmdline_event(event, &mut state, &mut cmdline),
                 Mode::Object => self.objmode_event(event, &mut state, &out),
-                Mode::Immediate => {}
-                Mode::Quitting => {}
+                Mode::Immediate => {} // TODO
+                Mode::Quitting(_) => {}
             }
         }
     }

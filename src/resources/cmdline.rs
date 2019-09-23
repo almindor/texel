@@ -1,9 +1,8 @@
-use crate::common::{Action, Error};
+use crate::common::{complete_filename, Action, Error};
 use crate::components::Translation;
-use crate::resources::{Loader, Mode};
+use crate::resources::Loader;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
-use strum::IntoEnumIterator;
 use termion::event::Key;
 
 const DEFAULT_CMD_CAPACITY: usize = 4096; // coz I said so!
@@ -109,59 +108,36 @@ impl CmdLine {
 
         if parts.len() == 1 {
             if let Some(word) = parts.first() {
-                if let Some(cmd) = Self::complete_command(word) {
-                    self.cmd = cmd;
+                if let Some(cmd) = Action::complete_word(word) {
+                    self.cmd = String::from(cmd);
                 }
+            }
+        } else if let Some(cmd) = parts.first() {
+            // if we have something here, and count != 1 it must be >= 1
+            let completed = match *cmd {
+                "import" | "load" | "save" => complete_filename(parts.last().unwrap())?, // parts.last() is safe here
+                _ => None,
+            };
+
+            if let Some(path) = completed {
+                self.cmd = String::from(*cmd) + " " + &path;
             }
         }
 
         Ok(Action::None)
     }
 
-    fn complete_command(partial: &str) -> Option<String> {
-        let word = crate::common::to_ascii_titlecase(partial);
-
-        for c in Action::iter() {
-            let cmd_str = c.as_ref();
-            if cmd_str.starts_with(&word) {
-                return Some(cmd_str.to_ascii_lowercase());
-            }
-        }
-
-        None
-    }
-
     fn parse(&mut self) -> Result<Action, Error> {
         let mut parts = self.cmd.split_ascii_whitespace().peekable();
 
-        // quit
-        if let Some(cmd) = parts.peek() {
-            if *cmd == "quit" {
-                return Ok(Action::SetMode(Mode::Quitting));
-            }
+        let action = Action::from(parts.next());
+        match action {
+            Action::Delete | Action::Deselect | Action::SetMode(_) => Ok(action),
+            Action::Translate(_) => self.parse_translate(parts),
+            Action::Import(_) => self.parse_import(parts),
+            Action::Save(_) => self.parse_save(parts),
+            _ => Err(Error::InvalidCommand),
         }
-
-        // try parsing actions
-        self.parse_action(parts)
-    }
-
-    fn parse_action(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
-        if let Some(action) = parts.next() {
-            let capitalized = crate::common::to_ascii_titlecase(action);
-
-            for a in Action::iter() {
-                if a.as_ref() == capitalized {
-                    return match a {
-                        Action::Delete | Action::Deselect => Ok(a),
-                        Action::Translate(_) => self.parse_translate(parts),
-                        Action::Import(_) => self.parse_import(parts),
-                        _ => Err(Error::InvalidCommand),
-                    };
-                }
-            }
-        }
-
-        Err(Error::InvalidCommand)
     }
 
     fn parse_translate(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
@@ -181,6 +157,14 @@ impl CmdLine {
     fn parse_import(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
         if let Some(path) = parts.next() {
             return Ok(Action::Import(Loader::from_file(path)?));
+        }
+
+        Err(Error::InvalidParam("No path specified"))
+    }
+
+    fn parse_save(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
+        if let Some(path) = parts.next() {
+            return Ok(Action::Save(String::from(path)));
         }
 
         Err(Error::InvalidParam("No path specified"))

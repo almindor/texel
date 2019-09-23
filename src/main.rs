@@ -74,7 +74,7 @@ fn main() {
         world.fetch_mut::<resources::State>().push_event(c.unwrap());
         updater.dispatch(&world);
 
-        if world.fetch_mut::<resources::State>().mode() == resources::Mode::Quitting {
+        if world.fetch_mut::<resources::State>().quitting() {
             break;
         }
 

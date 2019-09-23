@@ -1,7 +1,8 @@
-use crate::common::{Action, Error};
+use crate::common::{cwd_path, Action, Error, Scene};
 use crate::components::*;
 use crate::resources::State;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
+use std::path::Path;
 
 pub struct ActionHandler;
 
@@ -100,6 +101,14 @@ impl ActionHandler {
 
         Ok(())
     }
+
+    fn save_scene(&mut self, s: &ReadStorage<Sprite>, path: &str) -> Result<(), Error> {
+        let ronified = ron::ser::to_string(&Scene::from(s))?;
+        let abs_path = cwd_path(Path::new(path))?;
+
+        std::fs::write(abs_path, ronified)?;
+        Ok(())
+    }
 }
 
 impl<'a> System<'a> for ActionHandler {
@@ -110,10 +119,11 @@ impl<'a> System<'a> for ActionHandler {
         ReadStorage<'a, Selectable>,
         ReadStorage<'a, Selection>,
         ReadStorage<'a, Dimension>,
+        ReadStorage<'a, Sprite>,
         Read<'a, LazyUpdate>,
     );
 
-    fn run(&mut self, (e, mut state, mut p, sel, s, d, u): Self::SystemData) {
+    fn run(&mut self, (e, mut state, mut p, sel, s, d, sp, u): Self::SystemData) {
         while let Some(action) = state.pop_action() {
             match action {
                 Action::None => {}
@@ -129,6 +139,12 @@ impl<'a> System<'a> for ActionHandler {
                         state.set_error(Some(err));
                     }
                 }
+                Action::Save(path) => {
+                    if let Err(err) = self.save_scene(&sp, &path) {
+                        state.set_error(Some(err));
+                    }
+                }
+                Action::Load(_) => {} // TODO
             }
         }
     }

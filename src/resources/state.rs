@@ -7,7 +7,7 @@ pub enum Mode {
     Object,
     Immediate,
     Command,
-    Quitting,
+    Quitting(bool), // true for --force
 }
 
 impl Default for Mode {
@@ -42,6 +42,13 @@ impl State {
         if self.mode != mode {
             self.prev_mode = self.mode;
             self.mode = mode;
+        }
+    }
+
+    pub fn quitting(&self) -> bool {
+        match self.mode {
+            Mode::Quitting(_) => true,
+            _ => false,
         }
     }
 

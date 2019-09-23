@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 termion = "1.5.3"
-specs = "0.15.0"
-strum = "0.15.0"
-strum_macros = "0.15.0"
+ron = "0.5.1"
+serde = "1.0.101"
+serde_derive = "1.0.101"
+specs = "0.15.1"

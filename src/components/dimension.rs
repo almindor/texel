@@ -2,7 +2,7 @@ use crate::components::Sprite;
 use specs::{Component, VecStorage};
 use std::convert::TryInto;
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Dimension {
     pub w: u16,
     pub h: u16,

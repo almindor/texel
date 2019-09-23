@@ -18,6 +18,19 @@ impl<'a> System<'a> for ClearScreen {
 }
 
 impl SpriteRenderer {
+    fn render_sprite(&self, out: &mut SyncTerm, p: &Position, s: &Sprite, c: &Color) {
+        for t in s.texels.iter().filter(|t| p.x + t.x > 0 && p.y + t.y > 0) {
+            write!(
+                out,
+                "{}{}{}",
+                crate::common::goto(p.x + t.x, p.y + t.y),
+                c.0,
+                t.symbol
+            )
+            .unwrap();
+        }
+    }
+
     fn render_border(&self, out: &mut SyncTerm, p: &Position, d: &Dimension) {
         let min_x = p.x - 1;
         let min_y = p.y - 1;
@@ -60,26 +73,25 @@ impl<'a> System<'a> for SpriteRenderer {
     );
 
     fn run(&mut self, (mut out, e, p, d, s, c, b, sel): Self::SystemData) {
+        let mut loc_info: Option<&Position> = None;
+
         for (entity, pos, dim, sprite, color) in (&e, &p, &d, &s, &c).join() {
             write!(out, "{}", color.0).unwrap();
 
-            for t in &sprite.texels {
-                write!(
-                    out,
-                    "{}{}{}",
-                    crate::common::goto(pos.x + t.x, pos.y + t.y),
-                    color.0,
-                    t.symbol
-                )
-                .unwrap();
-            }
+            self.render_sprite(&mut out, &pos, &sprite, &color);
 
             if b.get(entity).is_some() && sel.get(entity).is_some() {
                 self.render_border(&mut out, &pos, &dim);
+                loc_info = Some(pos);
             }
         }
 
         write!(out, "{}", Color::default().0).unwrap();
+        if let Some(loc) = loc_info {
+            let w = i32::from(out.w);
+            let h = i32::from(out.h);
+            write!(out, "{}{}", crate::common::goto(w - 10, h), loc).unwrap();
+        }
     }
 }
 
@@ -107,7 +119,7 @@ impl<'a> System<'a> for CmdLineRenderer {
         }
 
         match state.mode() {
-            Mode::Quitting => return,
+            Mode::Quitting(_) => return,
             Mode::Command => {
                 write!(out, "{}:{}", crate::common::goto(1, h), cmdline.cmd()).unwrap()
             }

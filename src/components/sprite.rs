@@ -1,26 +1,21 @@
-use crate::common::Texel;
+use crate::common::{cwd_path, Texel};
+use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
-use std::env::current_dir;
 use std::fs::File;
 use std::io::Read;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// 256 * 256 ascii chars maximum
 pub const SPRITE_MAX_BYTES: usize = u16::max_value() as usize;
 
-#[derive(Default, Debug, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Sprite {
     pub texels: Vec<Texel>,
 }
 
 impl Sprite {
     pub fn from_file(path: &Path) -> Result<Self, std::io::Error> {
-        let abs_path: PathBuf = if path.is_absolute() {
-            path.to_path_buf()
-        } else {
-            let cwd = current_dir()?;
-            cwd.join(path)
-        };
+        let abs_path = cwd_path(path)?;
 
         let mut f = File::open(abs_path)?;
         let mut buf: String = String::with_capacity(SPRITE_MAX_BYTES);

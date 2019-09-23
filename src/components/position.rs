@@ -1,6 +1,6 @@
 use specs::{Component, VecStorage};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
@@ -9,6 +9,12 @@ pub struct Position {
 impl Default for Position {
     fn default() -> Self {
         Position { x: 1, y: 1 }
+    }
+}
+
+impl std::fmt::Display for Position {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{},{}", self.x, self.y)
     }
 }
 
