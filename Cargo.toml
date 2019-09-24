@@ -5,6 +5,7 @@ authors = ["Ales Katona <almindor@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+libflate = "0.1.27"
 termion = "1.5.3"
 ron = "0.5.1"
 serde = "1.0.101"

@@ -75,7 +75,11 @@ impl<'a> System<'a> for SpriteRenderer {
     fn run(&mut self, (mut out, e, p, d, s, c, b, sel): Self::SystemData) {
         let mut loc_info: Option<&Position> = None;
 
-        for (entity, pos, dim, sprite, color) in (&e, &p, &d, &s, &c).join() {
+        // TODO: optimize using FlaggedStorage
+        let mut sorted = (&e, &p, &d, &s, &c).join().collect::<Vec<_>>();
+        sorted.sort_by(|&a, &b| b.1.z.cmp(&a.1.z));
+
+        for (entity, pos, dim, sprite, color) in sorted {
             write!(out, "{}", color.0).unwrap();
 
             self.render_sprite(&mut out, &pos, &sprite, &color);
@@ -87,6 +91,7 @@ impl<'a> System<'a> for SpriteRenderer {
         }
 
         write!(out, "{}", Color::default().0).unwrap();
+        // location info status line
         if let Some(loc) = loc_info {
             let w = i32::from(out.w);
             let h = i32::from(out.h);

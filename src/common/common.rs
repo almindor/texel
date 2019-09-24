@@ -1,9 +1,8 @@
-use crate::components::{Sprite, Translation};
+use crate::components::{Position, Sprite, Translation};
 use crate::resources::Mode;
 use serde::{Deserialize, Serialize};
-use specs::{Join, ReadStorage};
+use specs::{Join, ReadStorage, WriteStorage};
 use std::env::current_dir;
-use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -125,18 +124,18 @@ impl std::fmt::Display for Error {
 // TODO: figure out a 0-copy way to keep scene serializable/deserializable
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Scene {
-    sprites: Vec<Sprite>,
+    pub objects: Vec<(Sprite, Position)>,
 }
 
-impl<'a> From<&ReadStorage<'a, Sprite>> for Scene {
-    fn from(storage: &ReadStorage<Sprite>) -> Self {
-        let mut sprites = Vec::new();
+impl<'a> From<(&ReadStorage<'a, Sprite>, &WriteStorage<'a, Position>)> for Scene {
+    fn from(storage: (&ReadStorage<'a, Sprite>, &WriteStorage<'a, Position>)) -> Self {
+        let mut objects = Vec::new();
 
-        for sprite in storage.join() {
-            sprites.push(sprite.clone());
+        for (sprite, pos) in storage.join() {
+            objects.push((sprite.clone(), pos.clone()));
         }
 
-        Scene { sprites }
+        Scene { objects }
     }
 }
 
@@ -157,34 +156,10 @@ pub fn cwd_path(path: &Path) -> Result<PathBuf, std::io::Error> {
     }
 }
 
-pub fn complete_filename(raw_path: &str) -> Result<Option<String>, Error> {
-    let loc_path = Path::new(raw_path);
-    let abs_path = cwd_path(loc_path)?;
-    let loc_parent = loc_path.parent().unwrap_or(Path::new(""));
-    let abs_parent = abs_path.parent().unwrap_or(Path::new("/"));
-
-    if let Some(name) = loc_path.file_name() {
-        let str_name = name.to_str().unwrap_or("");
-        for entry in read_dir(abs_parent)? {
-            let full_path = entry?.path();
-            if let Some(os_fn) = full_path.file_name() {
-                let fn_path = os_fn.to_str().ok_or(Error::ExecutionError(String::from(
-                    "Invalid utf-8 path string",
-                )))?;
-                if fn_path.starts_with(str_name) {
-                    let joined = loc_parent.join(os_fn);
-                    let fn_str = joined.to_str().ok_or(Error::ExecutionError(String::from(
-                        "Invalid utf-8 path string",
-                    )))?;
-                    let fn_string = String::from(fn_str);
-                    match full_path.is_dir() {
-                        true => return Ok(Some(fn_string + "/")),
-                        false => return Ok(Some(fn_string)),
-                    }
-                }
-            }
-        }
+pub fn path_base(path: &str) -> String {
+    if let Some(base) = Path::new(path).parent() {
+        return String::from(base.to_str().unwrap_or(""));
     }
 
-    Ok(None)
+    String::default()
 }

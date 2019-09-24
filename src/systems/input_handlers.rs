@@ -14,10 +14,14 @@ impl InputHandler {
                 Action::SetMode(Mode::Command)
             }
             Event::Key(Key::Char('\t')) => Action::SelectNext(false),
-            Event::Key(Key::Char('h')) => Action::Translate(Translation::Relative(-1, 0)),
-            Event::Key(Key::Char('j')) => Action::Translate(Translation::Relative(0, 1)),
-            Event::Key(Key::Char('k')) => Action::Translate(Translation::Relative(0, -1)),
-            Event::Key(Key::Char('l')) => Action::Translate(Translation::Relative(1, 0)),
+
+            Event::Key(Key::Char('f')) => Action::Translate(Translation::Relative(0, 0, -1)),
+            Event::Key(Key::Char('b')) => Action::Translate(Translation::Relative(0, 0, 1)),
+
+            Event::Key(Key::Char('h')) => Action::Translate(Translation::Relative(-1, 0, 0)),
+            Event::Key(Key::Char('j')) => Action::Translate(Translation::Relative(0, 1, 0)),
+            Event::Key(Key::Char('k')) => Action::Translate(Translation::Relative(0, -1, 0)),
+            Event::Key(Key::Char('l')) => Action::Translate(Translation::Relative(1, 0, 0)),
             Event::Key(Key::Char('H')) => {
                 Action::Translate(Translation::ToEdge(Direction::Left(1)))
             }

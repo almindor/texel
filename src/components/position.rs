@@ -1,38 +1,48 @@
+use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
+    pub z: i32,
 }
 
 impl Default for Position {
     fn default() -> Self {
-        Position { x: 1, y: 1 }
+        Position { x: 1, y: 1, z: 0 }
     }
 }
 
 impl std::fmt::Display for Position {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{},{}", self.x, self.y)
+        if self.z != 0 {
+            write!(f, "{},{},{}", self.x, self.y, self.z)
+        } else {
+            write!(f, "{},{}", self.x, self.y)
+        }
     }
 }
 
 impl Position {
-    pub fn from_xy(x: i32, y: i32) -> Self {
-        Position { x, y }
+    pub fn from_xyz(x: i32, y: i32, z: i32) -> Self {
+        Position { x, y, z }
     }
 
     pub fn apply(&mut self, translation: Translation, w: u16, h: u16) -> bool {
         match translation {
             Translation::None => {}
-            Translation::Relative(x, y) => {
+            Translation::Relative(x, y, z) => {
                 self.x += i32::from(x);
                 self.y += i32::from(y);
+                self.z += i32::from(z);
             }
-            Translation::Absolute(x, y) => {
+            Translation::Absolute(x, y, z) => {
                 self.x = x;
                 self.y = y;
+                if let Some(z) = z {
+                    self.z = z;
+                }
             }
             Translation::ToEdge(dir) => match dir {
                 Direction::Left(x) => self.x = i32::from(x),
@@ -61,8 +71,8 @@ pub enum Direction {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Translation {
     None,
-    Relative(i32, i32),
-    Absolute(i32, i32),
+    Relative(i32, i32, i32),
+    Absolute(i32, i32, Option<i32>),
     ToEdge(Direction),
 }
 

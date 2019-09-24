@@ -11,13 +11,13 @@ pub struct SyncTerm {
 impl SyncTerm {
     pub fn new(w: u16, h: u16) -> Self {
         SyncTerm {
-            buf: Vec::new(),
+            buf: Vec::with_capacity(1024usize),
             w,
             h,
         }
     }
 
-    pub fn flush_into(&self, out: &mut Write) -> Result<(), std::io::Error> {
+    pub fn flush_into(&self, out: &mut dyn Write) -> Result<(), std::io::Error> {
         out.write_all(&self.buf)
     }
 }
