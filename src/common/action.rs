@@ -1,6 +1,5 @@
 use crate::components::{Sprite, Translation};
 use crate::resources::Mode;
-use undo::Command;
 
 #[derive(Debug)]
 pub enum Action {
@@ -15,12 +14,8 @@ pub enum Action {
     Save(String),
     Translate(Translation),
     Delete,
-}
-
-// contains only actions that can be undone/redone
-#[derive(Debug)]
-pub enum UndoableAction {
-    Translate(Translation),
+    Undo,
+    Redo,
 }
 
 impl Default for Action {
@@ -62,6 +57,19 @@ impl Action {
         }
     }
 
+    pub fn keeps_history(&self) -> bool {
+        match self {
+            Action::None
+            | Action::Undo
+            | Action::Redo
+            | Action::ClearError
+            | Action::ReverseMode
+            | Action::SetMode(_)
+            | Action::Save(_) => false,
+            _ => true,
+        }
+    }
+
     pub fn complete_word(part: &str) -> Option<&'static str> {
         const ACTION_WORDS: [&'static str; 8] = [
             "import",
@@ -81,29 +89,5 @@ impl Action {
         }
 
         None
-    }
-}
-
-impl Command<String> for UndoableAction {
-    fn apply(&mut self, s: &mut String) -> undo::Result {
-        Ok(())
-    }
-
-    fn undo(&mut self, s: &mut String) -> undo::Result {
-        Ok(())
-    }
-}
-
-impl UndoableAction {
-    pub fn from(action: &Action) -> Option<Self> {
-        match action {
-            Action::Translate(t) => {
-                match t {
-                    Translation::Relative(_, _, _) => Some(UndoableAction::Translate(t.clone())),
-                    _ => None,
-                }
-            },
-            _ => None,
-        }
     }
 }

@@ -8,10 +8,14 @@ use std::path::{Path, PathBuf};
 pub struct ActionHandler;
 
 impl ActionHandler {
-    fn deselect(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) {
+    fn deselect(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) -> bool {
+        let mut changed = false;
         for (entity, _) in (e, s).join() {
             u.remove::<Selection>(entity);
+            changed = true;
         }
+
+        changed
     }
 
     fn select_next(
@@ -20,7 +24,8 @@ impl ActionHandler {
         s: &ReadStorage<Selection>,
         u: &LazyUpdate,
         keep: bool,
-    ) {
+    ) -> bool {
+        let mut changed = false;
         let mut all: Vec<(Entity, bool)> = Vec::default();
         let mut start = 0usize;
 
@@ -45,10 +50,14 @@ impl ActionHandler {
         }
 
         if let Some(entity) = unselected_iter.next() {
+            changed = true;
             u.insert(entity.0, Selection); // select next if possible
         } else if let Some(entity) = all.first() {
+            changed = true;
             u.insert(entity.0, Selection); // select first if "redeselecting"
         }
+
+        changed
     }
 
     fn delete_selected(e: &Entities, s: &ReadStorage<Selection>) -> Option<Error> {
@@ -74,10 +83,15 @@ impl ActionHandler {
         p: &mut WriteStorage<Position>,
         s: &ReadStorage<Selection>,
         d: &ReadStorage<Dimension>,
-    ) {
+    ) -> bool {
+        let mut changed = false;
+
         for (position, _, dimension) in (p, s, d).join() {
             position.apply(t, dimension.w, dimension.h);
+            changed = true;
         }
+
+        changed
     }
 
     fn import_sprite(
@@ -167,6 +181,42 @@ impl ActionHandler {
 
         Ok(())
     }
+
+    fn undo(
+        state: &mut State,
+        e: &Entities,
+        s: &ReadStorage<Selection>,
+        sp: &ReadStorage<Sprite>,
+        u: &LazyUpdate,
+    ) -> bool {
+        if let Some(scene) = state.undo() {
+            return match Self::apply_scene(scene, &e, &s, &sp, &u) {
+                Ok(_) => true,
+                Err(err) => state.set_error(Some(err)),
+            };
+        } else {
+            state.set_error(Some(Error::ExecutionError(String::from("Nothing to undo"))));
+            false
+        }
+    }
+
+    fn redo(
+        state: &mut State,
+        e: &Entities,
+        s: &ReadStorage<Selection>,
+        sp: &ReadStorage<Sprite>,
+        u: &LazyUpdate,
+    ) -> bool {
+        if let Some(scene) = state.redo() {
+            return match Self::apply_scene(scene, &e, &s, &sp, &u) {
+                Ok(_) => true,
+                Err(err) => state.set_error(Some(err)),
+            };
+        } else {
+            state.set_error(Some(Error::ExecutionError(String::from("Nothing to redo"))));
+            false
+        }
+    }
 }
 
 impl<'a> System<'a> for ActionHandler {
@@ -183,8 +233,12 @@ impl<'a> System<'a> for ActionHandler {
 
     fn run(&mut self, (e, mut state, mut p, sel, s, d, sp, u): Self::SystemData) {
         while let Some(action) = state.pop_action() {
-            match action {
-                Action::None => {}
+            let keep_history = action.keeps_history();
+
+            let changed = match action {
+                Action::None => false,
+                Action::Undo => Self::undo(&mut state, &e, &s, &sp, &u),
+                Action::Redo => Self::redo(&mut state, &e, &s, &sp, &u),
                 Action::ClearError => state.set_error(None),
                 Action::SetMode(mode) => state.set_mode(mode),
                 Action::ReverseMode => state.reverse_mode(),
@@ -194,19 +248,29 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Delete => state.set_error(Self::delete_selected(&e, &s)),
                 Action::Import(sprite) => {
                     if let Err(err) = Self::import_sprite(&e, sprite, &s, &u, None, true) {
-                        state.set_error(Some(err));
+                        state.set_error(Some(err))
+                    } else {
+                        true
                     }
                 }
                 Action::Save(path) => {
                     if let Err(err) = Self::save_scene(&e, &sp, &p, &s, &path) {
-                        state.set_error(Some(err));
+                        state.set_error(Some(err))
+                    } else {
+                        true
                     }
                 }
                 Action::Load(path) => {
                     if let Err(err) = Self::load_scene(&e, &s, &sp, &u, &path) {
-                        state.set_error(Some(err));
+                        state.set_error(Some(err))
+                    } else {
+                        true
                     }
                 }
+            };
+
+            if keep_history && changed {
+                state.push_history(Scene::from((&e, &sp, &p, &s)));
             }
         }
     }

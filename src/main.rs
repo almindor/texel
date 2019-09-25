@@ -54,7 +54,9 @@ fn main() {
                     state.push_action(common::Action::Import(sprite));
                 }
             }
-            Err(err) => world.fetch_mut::<resources::State>().set_error(Some(err)),
+            Err(err) => {
+                world.fetch_mut::<resources::State>().set_error(Some(err));
+            },
         }
 
         updater.dispatch(&world);
