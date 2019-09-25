@@ -131,6 +131,7 @@ impl ActionHandler {
         &mut self,
         e: &Entities,
         s: &ReadStorage<Selection>,
+        sp: &ReadStorage<Sprite>,
         u: &LazyUpdate,
         path: &str,
     ) -> Result<(), Error> {
@@ -138,12 +139,34 @@ impl ActionHandler {
         let file = std::fs::File::open(abs_path)?;
 
         let decoder = Decoder::new(file)?;
-
         let scene: Scene = ron::de::from_reader(decoder)?;
+
+        self.apply_scene(scene, e, s, sp, u)
+    }
+
+    fn clear_scene(&mut self, e: &Entities, sp: &ReadStorage<Sprite>) -> Result<(), Error> {
+        for (entity, _) in (e, sp).join() {
+            e.delete(entity)?;
+        }
+
+        Ok(())
+    }
+
+    fn apply_scene(
+        &mut self,
+        scene: Scene,
+        e: &Entities,
+        s: &ReadStorage<Selection>,
+        sp: &ReadStorage<Sprite>,
+        u: &LazyUpdate,
+    ) -> Result<(), Error> {
+        self.clear_scene(e, sp)?;
 
         for obj in scene.objects {
             self.import_sprite(e, obj.0, s, u, Some(obj.1))?;
         }
+
+        self.deselect(e, s, u);
 
         Ok(())
     }
@@ -183,7 +206,7 @@ impl<'a> System<'a> for ActionHandler {
                     }
                 }
                 Action::Load(path) => {
-                    if let Err(err) = self.load_scene(&e, &s, &u, &path) {
+                    if let Err(err) = self.load_scene(&e, &s, &sp, &u, &path) {
                         state.set_error(Some(err));
                     }
                 }
