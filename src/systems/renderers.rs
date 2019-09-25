@@ -84,7 +84,7 @@ impl<'a> System<'a> for SpriteRenderer {
 
             self.render_sprite(&mut out, &pos, &sprite, &color);
 
-            if b.get(entity).is_some() && sel.get(entity).is_some() {
+            if b.contains(entity) && sel.contains(entity) {
                 self.render_border(&mut out, &pos, &dim);
                 loc_info = Some(pos);
             }

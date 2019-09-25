@@ -15,6 +15,10 @@ impl InputHandler {
             }
             Event::Key(Key::Char('\t')) => Action::SelectNext(false),
 
+            Event::Key(Key::Delete) | Event::Key(Key::Backspace) | Event::Key(Key::Char('d')) => {
+                Action::Delete
+            }
+
             Event::Key(Key::Char('f')) => Action::Translate(Translation::Relative(0, 0, -1)),
             Event::Key(Key::Char('b')) => Action::Translate(Translation::Relative(0, 0, 1)),
 

@@ -8,14 +8,13 @@ use std::path::{Path, PathBuf};
 pub struct ActionHandler;
 
 impl ActionHandler {
-    fn deselect(&mut self, e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) {
+    fn deselect(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) {
         for (entity, _) in (e, s).join() {
             u.remove::<Selection>(entity);
         }
     }
 
     fn select_next(
-        &mut self,
         e: &Entities,
         sel: &ReadStorage<Selectable>,
         s: &ReadStorage<Selection>,
@@ -26,7 +25,7 @@ impl ActionHandler {
         let mut start = 0usize;
 
         for (i, (entity, _)) in (e, sel).join().enumerate() {
-            let is_selected = s.get(entity).is_some();
+            let is_selected = s.contains(entity);
             all.push((entity, is_selected));
             if is_selected {
                 start = i
@@ -42,7 +41,7 @@ impl ActionHandler {
             .filter(|(_, is_sel)| !is_sel);
 
         if !keep {
-            self.deselect(e, s, u);
+            Self::deselect(e, s, u);
         }
 
         if let Some(entity) = unselected_iter.next() {
@@ -52,7 +51,7 @@ impl ActionHandler {
         }
     }
 
-    fn delete_selected(&mut self, e: &Entities, s: &ReadStorage<Selection>) -> Option<Error> {
+    fn delete_selected(e: &Entities, s: &ReadStorage<Selection>) -> Option<Error> {
         let mut deleted = 0usize;
 
         for (entity, _) in (e, s).join() {
@@ -71,7 +70,6 @@ impl ActionHandler {
     }
 
     fn translate_selected(
-        &mut self,
         t: Translation,
         p: &mut WriteStorage<Position>,
         s: &ReadStorage<Selection>,
@@ -83,20 +81,22 @@ impl ActionHandler {
     }
 
     fn import_sprite(
-        &mut self,
         e: &Entities,
         sprite: Sprite,
         s: &ReadStorage<Selection>,
         u: &LazyUpdate,
         pos: Option<Position>,
+        pre_select: bool,
     ) -> Result<(), Error> {
-        self.deselect(e, s, u);
+        Self::deselect(e, s, u);
         let entity = e.create();
 
         u.insert(entity, Dimension::for_sprite(&sprite)?);
         u.insert(entity, pos.unwrap_or(Position::from_xyz(10, 10, 0)));
         u.insert(entity, Color::default());
-        u.insert(entity, Selection);
+        if pre_select {
+            u.insert(entity, Selection);
+        }
         u.insert(entity, Selectable);
         u.insert(entity, Border);
         u.insert(entity, sprite);
@@ -105,12 +105,13 @@ impl ActionHandler {
     }
 
     fn save_scene(
-        &mut self,
-        s: &ReadStorage<Sprite>,
+        e: &Entities,
+        sp: &ReadStorage<Sprite>,
         p: &WriteStorage<Position>,
+        s: &ReadStorage<Selection>,
         path: &str,
     ) -> Result<(), Error> {
-        let ronified = ron::ser::to_string(&Scene::from((s, p)))?;
+        let ronified = ron::ser::to_string(&Scene::from((e, sp, p, s)))?;
         let raw_path = if Path::new(path).extension() != Some(std::ffi::OsStr::new("rgz")) {
             Path::new(path).with_extension("rgz")
         } else {
@@ -128,7 +129,6 @@ impl ActionHandler {
     }
 
     fn load_scene(
-        &mut self,
         e: &Entities,
         s: &ReadStorage<Selection>,
         sp: &ReadStorage<Sprite>,
@@ -141,10 +141,10 @@ impl ActionHandler {
         let decoder = Decoder::new(file)?;
         let scene: Scene = ron::de::from_reader(decoder)?;
 
-        self.apply_scene(scene, e, s, sp, u)
+        Self::apply_scene(scene, e, s, sp, u)
     }
 
-    fn clear_scene(&mut self, e: &Entities, sp: &ReadStorage<Sprite>) -> Result<(), Error> {
+    fn clear_scene(e: &Entities, sp: &ReadStorage<Sprite>) -> Result<(), Error> {
         for (entity, _) in (e, sp).join() {
             e.delete(entity)?;
         }
@@ -153,20 +153,17 @@ impl ActionHandler {
     }
 
     fn apply_scene(
-        &mut self,
         scene: Scene,
         e: &Entities,
         s: &ReadStorage<Selection>,
         sp: &ReadStorage<Sprite>,
         u: &LazyUpdate,
     ) -> Result<(), Error> {
-        self.clear_scene(e, sp)?;
+        Self::clear_scene(e, sp)?;
 
         for obj in scene.objects {
-            self.import_sprite(e, obj.0, s, u, Some(obj.1))?;
+            Self::import_sprite(e, obj.0, s, u, Some(obj.1), obj.2)?;
         }
-
-        self.deselect(e, s, u);
 
         Ok(())
     }
@@ -191,22 +188,22 @@ impl<'a> System<'a> for ActionHandler {
                 Action::ClearError => state.set_error(None),
                 Action::SetMode(mode) => state.set_mode(mode),
                 Action::ReverseMode => state.reverse_mode(),
-                Action::Deselect => self.deselect(&e, &s, &u),
-                Action::SelectNext(keep) => self.select_next(&e, &sel, &s, &u, keep),
-                Action::Translate(t) => self.translate_selected(t, &mut p, &s, &d),
-                Action::Delete => state.set_error(self.delete_selected(&e, &s)),
+                Action::Deselect => Self::deselect(&e, &s, &u),
+                Action::SelectNext(keep) => Self::select_next(&e, &sel, &s, &u, keep),
+                Action::Translate(t) => Self::translate_selected(t, &mut p, &s, &d),
+                Action::Delete => state.set_error(Self::delete_selected(&e, &s)),
                 Action::Import(sprite) => {
-                    if let Err(err) = self.import_sprite(&e, sprite, &s, &u, None) {
+                    if let Err(err) = Self::import_sprite(&e, sprite, &s, &u, None, true) {
                         state.set_error(Some(err));
                     }
                 }
                 Action::Save(path) => {
-                    if let Err(err) = self.save_scene(&sp, &p, &path) {
+                    if let Err(err) = Self::save_scene(&e, &sp, &p, &s, &path) {
                         state.set_error(Some(err));
                     }
                 }
                 Action::Load(path) => {
-                    if let Err(err) = self.load_scene(&e, &s, &sp, &u, &path) {
+                    if let Err(err) = Self::load_scene(&e, &s, &sp, &u, &path) {
                         state.set_error(Some(err));
                     }
                 }
