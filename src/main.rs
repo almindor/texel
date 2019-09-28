@@ -26,6 +26,7 @@ fn main() {
         .build();
 
     let mut renderer = DispatcherBuilder::new()
+        .with(systems::HistoryHandler, "history_handler", &[]) // a bit wonky but works fine
         .with(systems::ClearScreen, "clear_screen", &[])
         .with(
             systems::SpriteRenderer,

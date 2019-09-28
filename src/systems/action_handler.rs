@@ -270,7 +270,7 @@ impl<'a> System<'a> for ActionHandler {
             };
 
             if keep_history && changed {
-                state.push_history(Scene::from((&e, &sp, &p, &s)));
+                state.dirty();
             }
         }
     }

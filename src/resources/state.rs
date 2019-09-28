@@ -7,7 +7,7 @@ pub enum Mode {
     Object,
     Immediate,
     Command,
-    Quitting(bool), // true for --force
+    Quitting(bool), // true for force quit
 }
 
 impl Default for Mode {
@@ -27,11 +27,12 @@ pub struct State {
     prev_mode: Mode,
     history: VecDeque<Scene>,
     history_index: usize,
+    dirty: bool,
 }
 
 impl Default for State {
     fn default() -> Self {
-        State {
+        let mut result = State {
             error: None,
             events: VecDeque::with_capacity(10usize),
             actions: VecDeque::with_capacity(10usize),
@@ -39,7 +40,12 @@ impl Default for State {
             prev_mode: Mode::default(),
             history: VecDeque::with_capacity(HISTORY_CAPACITY),
             history_index: 0usize,
-        }
+            dirty: true,
+        };
+
+        result.push_history(Scene::default());
+
+        result
     }
 }
 
@@ -101,18 +107,35 @@ impl State {
         self.actions.pop_front()
     }
 
+    pub fn dirty(&mut self) {
+        self.dirty = true;
+    }
+
     // the minimalist in me screams at this, but doing a delta with
     // multi-selections and absolute location selections (mouse) is a
     // major PITA with ECS context, saving the whole thing for undo/redo is
     // just so much easier to do. Given it's ascii we're only taking kilobytes of
     // space under typical usage
     pub fn push_history(&mut self, scene: Scene) {
+        if !self.dirty {
+            return;
+        }
+
+        let objects = scene.objects.len();
+
         if self.history.len() >= HISTORY_CAPACITY {
             self.history.pop_front();
         }
 
+        if self.history.len() > 0 && self.history_index != self.history.len() - 1 {
+            self.history.truncate(self.history_index + 1);
+        }
+
         self.history.push_back(scene);
-        self.history_index = self.history.len() - 1;
+        let next_index = self.history.len() - 1;
+
+        self.history_index = next_index;
+        self.dirty = false;
     }
 
     pub fn undo(&mut self) -> Option<Scene> {
@@ -129,7 +152,7 @@ impl State {
     }
 
     pub fn redo(&mut self) -> Option<Scene> {
-        if self.history_index >= self.history.len() - 1 {
+        if self.history.len() == 0 || self.history_index >= self.history.len() - 1 {
             return None;
         }
 
