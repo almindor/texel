@@ -121,8 +121,6 @@ impl State {
             return;
         }
 
-        let objects = scene.objects.len();
-
         if self.history.len() >= HISTORY_CAPACITY {
             self.history.pop_front();
         }
