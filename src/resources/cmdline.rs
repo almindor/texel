@@ -1,6 +1,6 @@
 use crate::common::{path_base, Action, Error};
 use crate::components::Translation;
-use crate::resources::{Loader};
+use crate::resources::Loader;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
 use termion::event::Key;

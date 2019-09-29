@@ -5,6 +5,7 @@ use termion::event::Event;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     Object,
+    Color,
     Immediate,
     Command,
     Quitting(bool), // true for force quit

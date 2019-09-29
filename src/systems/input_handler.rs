@@ -1,13 +1,15 @@
 use crate::common::Action;
 use crate::components::{Direction, Translation};
-use crate::resources::{CmdLine, Mode, State, SyncTerm};
+use crate::resources::{CmdLine, Mode, State};
 use specs::{System, Write};
 use termion::event::{Event, Key};
 
 pub struct InputHandler;
 
 impl InputHandler {
-    fn objmode_event(&mut self, event: Event, state: &mut State, out: &SyncTerm) {
+    fn objmode_event(&mut self, event: Event, state: &mut State) {
+        let ts = termion::terminal_size().unwrap();
+
         let action = match event {
             Event::Key(Key::Char(':')) => {
                 state.push_action(Action::ClearError); // clean errors when going back to cmdline
@@ -25,7 +27,7 @@ impl InputHandler {
             Event::Key(Key::Char('f')) => Action::Translate(Translation::Relative(0, 0, -1)),
             Event::Key(Key::Char('b')) => Action::Translate(Translation::Relative(0, 0, 1)),
 
-            Event::Key(Key::Char('c')) => Action::PickColor,
+            Event::Key(Key::Char('c')) => Action::SetMode(Mode::Color),
 
             Event::Key(Key::Char('h')) => Action::Translate(Translation::Relative(-1, 0, 0)),
             Event::Key(Key::Char('j')) => Action::Translate(Translation::Relative(0, 1, 0)),
@@ -36,10 +38,10 @@ impl InputHandler {
             }
             Event::Key(Key::Char('J')) => Action::Translate(Translation::ToEdge(Direction::Top(1))),
             Event::Key(Key::Char('K')) => {
-                Action::Translate(Translation::ToEdge(Direction::Bottom(out.h)))
+                Action::Translate(Translation::ToEdge(Direction::Bottom(ts.1)))
             }
             Event::Key(Key::Char('L')) => {
-                Action::Translate(Translation::ToEdge(Direction::Right(out.w)))
+                Action::Translate(Translation::ToEdge(Direction::Right(ts.0)))
             }
             Event::Unsupported(raw) => {
                 // shift + tab
@@ -72,16 +74,29 @@ impl InputHandler {
             _ => {}
         };
     }
+
+    fn palette_event(&mut self, event: Event, state: &mut State) {
+        match event {
+            Event::Key(Key::Char(':')) => {
+                state.push_action(Action::ReverseMode);
+                state.push_action(Action::ClearError); // clean errors when going back to cmdline
+                state.push_action(Action::SetMode(Mode::Command));
+            },
+            Event::Key(Key::Esc) => state.push_action(Action::ReverseMode),
+            _ => {}
+        };
+    }
 }
 
 impl<'a> System<'a> for InputHandler {
-    type SystemData = (Write<'a, SyncTerm>, Write<'a, State>, Write<'a, CmdLine>);
+    type SystemData = (Write<'a, State>, Write<'a, CmdLine>);
 
-    fn run(&mut self, (out, mut state, mut cmdline): Self::SystemData) {
+    fn run(&mut self, (mut state, mut cmdline): Self::SystemData) {
         while let Some(event) = state.pop_event() {
             match state.mode() {
                 Mode::Command => self.cmdline_event(event, &mut state, &mut cmdline),
-                Mode::Object => self.objmode_event(event, &mut state, &out),
+                Mode::Object => self.objmode_event(event, &mut state),
+                Mode::Color => self.palette_event(event, &mut state),
                 Mode::Immediate => {} // TODO
                 Mode::Quitting(_) => {}
             }

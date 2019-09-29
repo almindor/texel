@@ -1,6 +1,6 @@
-use crate::common::{Error, Scene, cwd_path};
-use crate::components::{Sprite};
-use libflate::gzip::{Decoder};
+use crate::common::{cwd_path, Error, Scene};
+use crate::components::Sprite;
+use libflate::gzip::Decoder;
 use std::path::Path;
 
 pub struct Loader;
@@ -14,12 +14,14 @@ pub enum Loaded {
 impl Loader {
     pub fn from_file(path: &str) -> Result<Loaded, Error> {
         match Path::new(path).extension() {
-            Some(ext) => if ext == "rgz" {
-                Self::from_rgz_file(path)
-            } else {
-                Ok(Loaded::Sprite(Self::from_txt_file(path)?))
+            Some(ext) => {
+                if ext == "rgz" {
+                    Self::from_rgz_file(path)
+                } else {
+                    Ok(Loaded::Sprite(Self::from_txt_file(path)?))
+                }
             }
-            None => Ok(Loaded::Sprite(Self::from_txt_file(path)?))
+            None => Ok(Loaded::Sprite(Self::from_txt_file(path)?)),
         }
     }
 

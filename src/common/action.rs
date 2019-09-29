@@ -1,5 +1,5 @@
 use crate::components::{Sprite, Translation};
-use crate::resources::{Mode};
+use crate::resources::Mode;
 
 #[derive(Debug)]
 pub enum Action {
@@ -16,7 +16,6 @@ pub enum Action {
     Delete,
     Undo,
     Redo,
-    PickColor,
 }
 
 impl Default for Action {

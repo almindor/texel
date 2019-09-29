@@ -1,6 +1,6 @@
 use crate::common::Texel;
-use crate::components::{Border, ColorPalette, Dimension, Position, Selection, Sprite};
-use crate::resources::{SyncTerm};
+use crate::components::{Border, Dimension, Position, Selection, Sprite};
+use crate::resources::{SyncTerm, ColorPalette};
 use specs::{Entities, Join, ReadStorage, System};
 use std::io::Write;
 
@@ -32,7 +32,8 @@ impl SpriteRenderer {
         let mut prev_color: Option<&str> = None;
         for t in s.texels.iter().filter(|t| p.x + t.x > 0 && p.y + t.y > 0) {
             if let Some(color) = prev_color {
-                if color == t.color { // don't print same color needlessly
+                if color == t.color {
+                    // don't print same color needlessly
                     Self::print_texel_symbol(out, p, t);
                     continue;
                 }
@@ -104,8 +105,9 @@ impl<'a> System<'a> for SpriteRenderer {
         write!(out, "{}", ColorPalette::default_fg()).unwrap();
         // location info status line
         if let Some(loc) = loc_info {
-            let w = i32::from(out.w);
-            let h = i32::from(out.h);
+            let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+            let w = i32::from(ts.0);
+            let h = i32::from(ts.1);
             write!(out, "{}{}", crate::common::goto(w - 10, h), loc).unwrap();
         }
     }

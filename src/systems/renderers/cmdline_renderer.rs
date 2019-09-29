@@ -1,5 +1,5 @@
-use crate::resources::{CmdLine, Mode, State, SyncTerm};
-use specs::{System};
+use crate::resources::{CmdLine, Mode, State, SyncTerm, ColorPalette};
+use specs::System;
 use std::io::Write;
 
 pub struct CmdLineRenderer;
@@ -9,10 +9,12 @@ impl<'a> System<'a> for CmdLineRenderer {
         specs::Write<'a, SyncTerm>,
         specs::Read<'a, State>,
         specs::Read<'a, CmdLine>,
+        specs::Read<'a, ColorPalette>,
     );
 
-    fn run(&mut self, (mut out, state, cmdline): Self::SystemData) {
-        let h = i32::from(out.h);
+    fn run(&mut self, (mut out, state, cmdline, palette): Self::SystemData) {
+        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+        let h = i32::from(ts.1);
 
         if let Some(error) = state.error() {
             write!(
@@ -47,6 +49,16 @@ impl<'a> System<'a> for CmdLineRenderer {
                 crate::common::goto(1, h),
                 termion::style::Bold,
                 termion::color::Fg(termion::color::White),
+                termion::style::Reset,
+            )
+            .unwrap(),
+            Mode::Color => write!(
+                out,
+                "{}{}{}--COLOR--\t{}{}",
+                crate::common::goto(1, h),
+                termion::style::Bold,
+                termion::color::Fg(termion::color::White),
+                palette.line_str(),
                 termion::style::Reset,
             )
             .unwrap(),

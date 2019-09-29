@@ -4,16 +4,12 @@ use std::vec::Vec;
 #[derive(Default)]
 pub struct SyncTerm {
     buf: Vec<u8>,
-    pub w: u16,
-    pub h: u16,
 }
 
 impl SyncTerm {
-    pub fn new(w: u16, h: u16) -> Self {
+    pub fn new() -> Self {
         SyncTerm {
-            buf: Vec::with_capacity(1024usize),
-            w,
-            h,
+            buf: Vec::with_capacity(32768),
         }
     }
 

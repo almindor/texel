@@ -14,10 +14,9 @@ use specs::prelude::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let screen_size = termion::terminal_size().unwrap();
 
     let mut world = World::new();
-    world.insert(resources::SyncTerm::new(screen_size.0, screen_size.1));
+    world.insert(resources::SyncTerm::new());
     world.insert(resources::State::default());
 
     let mut updater = DispatcherBuilder::new()

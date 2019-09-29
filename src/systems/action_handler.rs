@@ -1,7 +1,7 @@
 use crate::common::{cwd_path, Action, Error, Scene};
 use crate::components::*;
-use crate::resources::{State, Loader, Loaded};
-use libflate::gzip::{Encoder};
+use crate::resources::{Loaded, Loader, State};
+use libflate::gzip::Encoder;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use std::path::{Path, PathBuf};
 
@@ -213,10 +213,6 @@ impl ActionHandler {
             false
         }
     }
-
-    fn pick_color() -> bool {
-        false
-    }
 }
 
 impl<'a> System<'a> for ActionHandler {
@@ -239,7 +235,6 @@ impl<'a> System<'a> for ActionHandler {
                 Action::None => false,
                 Action::Undo => Self::undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => Self::redo(&mut state, &e, &s, &sp, &u),
-                Action::PickColor => Self::pick_color(),
                 Action::ClearError => state.set_error(None),
                 Action::SetMode(mode) => state.set_mode(mode),
                 Action::ReverseMode => state.reverse_mode(),

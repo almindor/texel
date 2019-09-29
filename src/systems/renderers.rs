@@ -1,5 +1,5 @@
-use crate::resources::{SyncTerm};
-use specs::{System};
+use crate::resources::SyncTerm;
+use specs::System;
 use std::io::Write;
 
 mod cmdline_renderer;

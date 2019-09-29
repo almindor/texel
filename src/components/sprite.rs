@@ -1,5 +1,5 @@
 use crate::common::{cwd_path, Texel};
-use crate::components::ColorPalette;
+use crate::resources::ColorPalette;
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 use std::fs::File;
