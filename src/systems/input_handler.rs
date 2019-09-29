@@ -82,6 +82,7 @@ impl InputHandler {
                 state.push_action(Action::ClearError); // clean errors when going back to cmdline
                 state.push_action(Action::SetMode(Mode::Command));
             },
+            Event::Key(Key::Char('q')) |
             Event::Key(Key::Esc) => state.push_action(Action::ReverseMode),
             _ => {}
         };
