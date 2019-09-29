@@ -1,4 +1,5 @@
 use crate::common::{cwd_path, Texel};
+use crate::components::ColorPalette;
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 use std::fs::File;
@@ -41,7 +42,7 @@ impl Sprite {
                         x,
                         y,
                         symbol: c,
-                        color: 0, // TODO
+                        color: String::from(ColorPalette::default_fg()),
                     });
                     x += 1;
                 }

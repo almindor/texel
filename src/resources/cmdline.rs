@@ -1,6 +1,6 @@
 use crate::common::{path_base, Action, Error};
 use crate::components::Translation;
-use crate::resources::Loader;
+use crate::resources::{Loader};
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
 use termion::event::Key;
@@ -173,7 +173,7 @@ impl CmdLine {
 
     fn parse_import(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
         if let Some(path) = parts.next() {
-            return Ok(Action::Import(Loader::from_file(path)?));
+            return Ok(Action::Import(Loader::from_txt_file(path)?));
         }
 
         Err(Error::InvalidParam("No path specified"))

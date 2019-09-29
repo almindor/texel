@@ -47,17 +47,12 @@ fn main() {
     write!(stdout, "{}", termion::clear::All,).unwrap();
 
     if args.len() > 1 {
-        match resources::Loader::from_files(&args[1..]) {
-            Ok(sprites) => {
-                let mut state = world.fetch_mut::<resources::State>();
+        {
+            let mut state = world.fetch_mut::<resources::State>();
 
-                for sprite in sprites {
-                    state.push_action(common::Action::Import(sprite));
-                }
+            for path in &args[1..] {
+                state.push_action(common::Action::Load(String::from(path)));
             }
-            Err(err) => {
-                world.fetch_mut::<resources::State>().set_error(Some(err));
-            },
         }
 
         updater.dispatch(&world);

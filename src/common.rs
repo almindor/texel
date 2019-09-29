@@ -8,15 +8,15 @@ mod action;
 
 pub use action::Action;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Texel {
     pub x: i32,
     pub y: i32,
     pub symbol: char,
-    pub color: u8,
+    pub color: String,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct TexelDiff {
     pub index: usize,
     pub texel: Texel,

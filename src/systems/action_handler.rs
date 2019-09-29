@@ -1,7 +1,7 @@
 use crate::common::{cwd_path, Action, Error, Scene};
 use crate::components::*;
-use crate::resources::State;
-use libflate::gzip::{Decoder, Encoder};
+use crate::resources::{State, Loader, Loaded};
+use libflate::gzip::{Encoder};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use std::path::{Path, PathBuf};
 
@@ -95,8 +95,8 @@ impl ActionHandler {
     }
 
     fn import_sprite(
-        e: &Entities,
         sprite: Sprite,
+        e: &Entities,
         s: &ReadStorage<Selection>,
         u: &LazyUpdate,
         pos: Option<Position>,
@@ -107,7 +107,6 @@ impl ActionHandler {
 
         u.insert(entity, Dimension::for_sprite(&sprite)?);
         u.insert(entity, pos.unwrap_or(Position::from_xyz(10, 10, 0)));
-        u.insert(entity, Color::default());
         if pre_select {
             u.insert(entity, Selection);
         }
@@ -142,20 +141,17 @@ impl ActionHandler {
         Ok(())
     }
 
-    fn load_scene(
+    fn load_from_file(
         e: &Entities,
         s: &ReadStorage<Selection>,
         sp: &ReadStorage<Sprite>,
         u: &LazyUpdate,
         path: &str,
     ) -> Result<(), Error> {
-        let abs_path = cwd_path(Path::new(path))?;
-        let file = std::fs::File::open(abs_path)?;
-
-        let decoder = Decoder::new(file)?;
-        let scene: Scene = ron::de::from_reader(decoder)?;
-
-        Self::apply_scene(scene, e, s, sp, u)
+        match Loader::from_file(path)? {
+            Loaded::Scene(scene) => Self::apply_scene(scene, e, s, sp, u),
+            Loaded::Sprite(sprite) => Self::import_sprite(sprite, e, s, u, None, true),
+        }
     }
 
     fn clear_scene(e: &Entities, sp: &ReadStorage<Sprite>) -> Result<(), Error> {
@@ -176,7 +172,7 @@ impl ActionHandler {
         Self::clear_scene(e, sp)?;
 
         for obj in scene.objects {
-            Self::import_sprite(e, obj.0, s, u, Some(obj.1), obj.2)?;
+            Self::import_sprite(obj.0, e, s, u, Some(obj.1), obj.2)?;
         }
 
         Ok(())
@@ -217,6 +213,10 @@ impl ActionHandler {
             false
         }
     }
+
+    fn pick_color() -> bool {
+        false
+    }
 }
 
 impl<'a> System<'a> for ActionHandler {
@@ -239,6 +239,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::None => false,
                 Action::Undo => Self::undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => Self::redo(&mut state, &e, &s, &sp, &u),
+                Action::PickColor => Self::pick_color(),
                 Action::ClearError => state.set_error(None),
                 Action::SetMode(mode) => state.set_mode(mode),
                 Action::ReverseMode => state.reverse_mode(),
@@ -247,7 +248,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Translate(t) => Self::translate_selected(t, &mut p, &s, &d),
                 Action::Delete => state.set_error(Self::delete_selected(&e, &s)),
                 Action::Import(sprite) => {
-                    if let Err(err) = Self::import_sprite(&e, sprite, &s, &u, None, true) {
+                    if let Err(err) = Self::import_sprite(sprite, &e, &s, &u, None, true) {
                         state.set_error(Some(err))
                     } else {
                         true
@@ -261,7 +262,7 @@ impl<'a> System<'a> for ActionHandler {
                     }
                 }
                 Action::Load(path) => {
-                    if let Err(err) = Self::load_scene(&e, &s, &sp, &u, &path) {
+                    if let Err(err) = Self::load_from_file(&e, &s, &sp, &u, &path) {
                         state.set_error(Some(err))
                     } else {
                         true

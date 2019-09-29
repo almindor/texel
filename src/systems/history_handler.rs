@@ -1,7 +1,7 @@
-use crate::resources::State;
 use crate::common::Scene;
 use crate::components::{Position, Selection, Sprite};
-use specs::{System, Write, Entities, ReadStorage, WriteStorage};
+use crate::resources::State;
+use specs::{Entities, ReadStorage, System, Write, WriteStorage};
 
 pub struct HistoryHandler;
 

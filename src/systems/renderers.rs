@@ -1,4 +1,5 @@
-use crate::components::{Border, Color, Dimension, Position, Selection, Sprite};
+use crate::common::Texel;
+use crate::components::{Border, ColorPalette, Dimension, Position, Selection, Sprite};
 use crate::resources::{CmdLine, Mode, State, SyncTerm};
 use specs::{Entities, Join, ReadStorage, System};
 use std::io::Write;
@@ -18,20 +19,43 @@ impl<'a> System<'a> for ClearScreen {
 }
 
 impl SpriteRenderer {
-    fn render_sprite(&self, out: &mut SyncTerm, p: &Position, s: &Sprite, c: &Color) {
+    fn print_texel(out: &mut SyncTerm, p: &Position, t: &Texel) {
+        write!(
+            out,
+            "{}{}",
+            crate::common::goto(p.x + t.x, p.y + t.y),
+            t.symbol
+        )
+        .unwrap();
+    }
+
+    fn print_texel_symbol(out: &mut SyncTerm, p: &Position, t: &Texel) {
+        write!(
+            out,
+            "{}{}{}",
+            crate::common::goto(p.x + t.x, p.y + t.y),
+            t.color,
+            t.symbol,
+        )
+        .unwrap();
+    }
+
+    fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
+        let mut prev_color: Option<&str> = None;
         for t in s.texels.iter().filter(|t| p.x + t.x > 0 && p.y + t.y > 0) {
-            write!(
-                out,
-                "{}{}{}",
-                crate::common::goto(p.x + t.x, p.y + t.y),
-                c.0,
-                t.symbol
-            )
-            .unwrap();
+            if let Some(color) = prev_color {
+                if color == t.color { // don't print same color needlessly
+                    Self::print_texel_symbol(out, p, t);
+                    continue;
+                }
+            }
+
+            Self::print_texel(out, p, t);
+            prev_color = Some(&t.color);
         }
     }
 
-    fn render_border(&self, out: &mut SyncTerm, p: &Position, d: &Dimension) {
+    fn render_border(out: &mut SyncTerm, p: &Position, d: &Dimension) {
         let min_x = p.x - 1;
         let min_y = p.y - 1;
         let b_w = i32::from(d.w + 1);
@@ -67,30 +91,29 @@ impl<'a> System<'a> for SpriteRenderer {
         ReadStorage<'a, Position>,
         ReadStorage<'a, Dimension>,
         ReadStorage<'a, Sprite>,
-        ReadStorage<'a, Color>,
         ReadStorage<'a, Border>,
         ReadStorage<'a, Selection>,
     );
 
-    fn run(&mut self, (mut out, e, p, d, s, c, b, sel): Self::SystemData) {
+    fn run(&mut self, (mut out, e, p, d, s, b, sel): Self::SystemData) {
         let mut loc_info: Option<&Position> = None;
 
         // TODO: optimize using FlaggedStorage
-        let mut sorted = (&e, &p, &d, &s, &c).join().collect::<Vec<_>>();
+        let mut sorted = (&e, &p, &d, &s).join().collect::<Vec<_>>();
         sorted.sort_by(|&a, &b| b.1.z.cmp(&a.1.z));
 
-        for (entity, pos, dim, sprite, color) in sorted {
-            write!(out, "{}", color.0).unwrap();
+        for (entity, pos, dim, sprite) in sorted {
+            write!(out, "{}", ColorPalette::default_fg()).unwrap();
 
-            self.render_sprite(&mut out, &pos, &sprite, &color);
+            Self::render_sprite(&mut out, &pos, &sprite);
 
             if b.contains(entity) && sel.contains(entity) {
-                self.render_border(&mut out, &pos, &dim);
+                Self::render_border(&mut out, &pos, &dim);
                 loc_info = Some(pos);
             }
         }
 
-        write!(out, "{}", Color::default().0).unwrap();
+        write!(out, "{}", ColorPalette::default_fg()).unwrap();
         // location info status line
         if let Some(loc) = loc_info {
             let w = i32::from(out.w);

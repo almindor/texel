@@ -3,7 +3,7 @@ mod dimension;
 mod position;
 mod sprite;
 
-pub use color::Color;
+pub use color::ColorPalette;
 pub use dimension::Dimension;
 pub use position::{Direction, Position, Translation};
 pub use sprite::Sprite;

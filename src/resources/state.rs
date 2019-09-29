@@ -69,7 +69,7 @@ impl State {
         if self.mode != mode {
             self.prev_mode = self.mode;
             self.mode = mode;
-            return true
+            return true;
         }
 
         false
@@ -85,7 +85,7 @@ impl State {
     pub fn reverse_mode(&mut self) -> bool {
         if self.mode != self.prev_mode {
             self.mode = self.prev_mode;
-            return true
+            return true;
         }
 
         false
