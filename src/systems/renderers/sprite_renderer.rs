@@ -1,6 +1,6 @@
 use crate::common::Texel;
 use crate::components::{Border, Dimension, Position, Selection, Sprite};
-use crate::resources::{SyncTerm, ColorPalette};
+use crate::resources::{ColorPalette, SyncTerm};
 use specs::{Entities, Join, ReadStorage, System};
 use std::io::Write;
 
@@ -20,19 +20,20 @@ impl SpriteRenderer {
     fn print_texel_symbol(out: &mut SyncTerm, p: &Position, t: &Texel) {
         write!(
             out,
-            "{}{}{}",
+            "{}{}{}{}",
             crate::common::goto(p.x + t.x, p.y + t.y),
-            t.color,
+            ColorPalette::u8_to_bg(t.bg),
+            ColorPalette::u8_to_fg(t.fg),
             t.symbol,
         )
         .unwrap();
     }
 
     fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
-        let mut prev_color: Option<&str> = None;
+        let mut prev_color: Option<(u8, u8)> = None;
         for t in s.texels.iter().filter(|t| p.x + t.x > 0 && p.y + t.y > 0) {
             if let Some(color) = prev_color {
-                if color == t.color {
+                if color == (t.bg, t.fg) {
                     // don't print same color needlessly
                     Self::print_texel_symbol(out, p, t);
                     continue;
@@ -40,7 +41,7 @@ impl SpriteRenderer {
             }
 
             Self::print_texel(out, p, t);
-            prev_color = Some(&t.color);
+            prev_color = Some((t.bg, t.fg));
         }
     }
 

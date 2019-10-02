@@ -1,7 +1,7 @@
 use crate::common::Action;
 use crate::components::{Direction, Translation};
-use crate::resources::{CmdLine, Mode, State};
-use specs::{System, Write};
+use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State};
+use specs::{Read, System, Write};
 use termion::event::{Event, Key};
 
 pub struct InputHandler;
@@ -24,10 +24,13 @@ impl InputHandler {
             Event::Key(Key::Char('u')) => Action::Undo,
             Event::Key(Key::Char('U')) => Action::Redo,
 
-            Event::Key(Key::Char('f')) => Action::Translate(Translation::Relative(0, 0, -1)),
-            Event::Key(Key::Char('b')) => Action::Translate(Translation::Relative(0, 0, 1)),
+            Event::Key(Key::Char('i')) => Action::Translate(Translation::Relative(0, 0, -1)),
+            Event::Key(Key::Char('m')) => Action::Translate(Translation::Relative(0, 0, 1)),
 
-            Event::Key(Key::Char('c')) => Action::SetMode(Mode::Color),
+            Event::Key(Key::Char('F')) => Action::SetMode(Mode::Color(ColorMode::Fg)),
+            Event::Key(Key::Char('B')) => Action::SetMode(Mode::Color(ColorMode::Bg)),
+            Event::Key(Key::Char('f')) => Action::ApplyColor(ColorMode::Fg),
+            Event::Key(Key::Char('b')) => Action::ApplyColor(ColorMode::Bg),
 
             Event::Key(Key::Char('h')) => Action::Translate(Translation::Relative(-1, 0, 0)),
             Event::Key(Key::Char('j')) => Action::Translate(Translation::Relative(0, 1, 0)),
@@ -75,29 +78,42 @@ impl InputHandler {
         };
     }
 
-    fn palette_event(&mut self, event: Event, state: &mut State) {
+    fn palette_event(
+        &mut self,
+        event: Event,
+        state: &mut State,
+        cm: ColorMode,
+        palette: &ColorPalette,
+    ) {
         match event {
             Event::Key(Key::Char(':')) => {
                 state.push_action(Action::ReverseMode);
                 state.push_action(Action::ClearError); // clean errors when going back to cmdline
                 state.push_action(Action::SetMode(Mode::Command));
-            },
-            Event::Key(Key::Char('q')) |
-            Event::Key(Key::Esc) => state.push_action(Action::ReverseMode),
+            }
+            Event::Key(Key::Char('q')) | Event::Key(Key::Esc) => {
+                state.push_action(Action::ReverseMode)
+            }
+            Event::Key(Key::Char(c)) => {
+                if let Some(index) = c.to_digit(16) {
+                    state.set_color(palette.color(index as usize), cm);
+                    state.push_action(Action::ReverseMode);
+                }
+            }
             _ => {}
         };
     }
 }
 
 impl<'a> System<'a> for InputHandler {
-    type SystemData = (Write<'a, State>, Write<'a, CmdLine>);
+    type SystemData = (Write<'a, State>, Write<'a, CmdLine>, Read<'a, ColorPalette>);
 
-    fn run(&mut self, (mut state, mut cmdline): Self::SystemData) {
+    fn run(&mut self, (mut state, mut cmdline, palette): Self::SystemData) {
         while let Some(event) = state.pop_event() {
             match state.mode() {
                 Mode::Command => self.cmdline_event(event, &mut state, &mut cmdline),
                 Mode::Object => self.objmode_event(event, &mut state),
-                Mode::Color => self.palette_event(event, &mut state),
+                Mode::Color(cm) => self.palette_event(event, &mut state, cm, &palette),
                 Mode::Immediate => {} // TODO
                 Mode::Quitting(_) => {}
             }

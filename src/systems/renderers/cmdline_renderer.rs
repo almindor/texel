@@ -1,4 +1,4 @@
-use crate::resources::{CmdLine, Mode, State, SyncTerm, ColorPalette};
+use crate::resources::{CmdLine, ColorPalette, ColorMode, Mode, State, SyncTerm};
 use specs::System;
 use std::io::Write;
 
@@ -52,16 +52,34 @@ impl<'a> System<'a> for CmdLineRenderer {
                 termion::style::Reset,
             )
             .unwrap(),
-            Mode::Color => write!(
+            Mode::Color(cm) => write!(
                 out,
                 "{}{}{}--COLOR--\t{}{}",
                 crate::common::goto(1, h),
                 termion::style::Bold,
                 termion::color::Fg(termion::color::White),
-                palette.line_str(),
+                palette.line_str(cm),
                 termion::style::Reset,
             )
             .unwrap(),
         }
+
+        // color selection
+        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+        let w = i32::from(ts.0);
+        let h = i32::from(ts.1);
+        let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
+        write!(
+            out,
+            "{}{}{}{}{}{}{}",
+            crate::common::goto(w - 12, h),
+            ColorPalette::u8_to_bg(sc.0),
+            ColorPalette::u8_to_fg(sc.1),
+            "▞",
+            ColorPalette::default_fg(),
+            ColorPalette::default_bg(),
+            crate::common::goto(w, h),
+        )
+        .unwrap();
     }
 }

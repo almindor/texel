@@ -1,5 +1,5 @@
 use crate::components::{Sprite, Translation};
-use crate::resources::Mode;
+use crate::resources::{ColorMode, Mode};
 
 #[derive(Debug)]
 pub enum Action {
@@ -8,6 +8,7 @@ pub enum Action {
     SetMode(Mode),
     ReverseMode,
     Deselect,
+    ApplyColor(ColorMode),
     SelectNext(bool), // select next keeping old if true
     Import(Sprite),
     Load(String),

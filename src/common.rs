@@ -13,7 +13,8 @@ pub struct Texel {
     pub x: i32,
     pub y: i32,
     pub symbol: char,
-    pub color: String,
+    pub fg: u8,
+    pub bg: u8,
 }
 
 #[derive(Debug, Clone)]
@@ -57,7 +58,7 @@ pub struct Scene {
 impl<'a>
     From<(
         &Entities<'a>,
-        &ReadStorage<'a, Sprite>,
+        &WriteStorage<'a, Sprite>,
         &WriteStorage<'a, Position>,
         &ReadStorage<'a, Selection>,
     )> for Scene
@@ -65,7 +66,7 @@ impl<'a>
     fn from(
         storage: (
             &Entities,
-            &ReadStorage<'a, Sprite>,
+            &WriteStorage<'a, Sprite>,
             &WriteStorage<'a, Position>,
             &ReadStorage<'a, Selection>,
         ),

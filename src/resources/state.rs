@@ -1,11 +1,12 @@
 use crate::common::{Action, Error, Scene};
+use crate::resources::{ColorMode, ColorPalette};
 use std::collections::VecDeque;
 use termion::event::Event;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     Object,
-    Color,
+    Color(ColorMode),
     Immediate,
     Command,
     Quitting(bool), // true for force quit
@@ -28,6 +29,7 @@ pub struct State {
     prev_mode: Mode,
     history: VecDeque<Scene>,
     history_index: usize,
+    selected_color: (u8, u8),
     dirty: bool,
 }
 
@@ -35,12 +37,13 @@ impl Default for State {
     fn default() -> Self {
         let mut result = State {
             error: None,
-            events: VecDeque::with_capacity(10usize),
-            actions: VecDeque::with_capacity(10usize),
+            events: VecDeque::with_capacity(10),
+            actions: VecDeque::with_capacity(10),
             mode: Mode::default(),
             prev_mode: Mode::default(),
             history: VecDeque::with_capacity(HISTORY_CAPACITY),
             history_index: 0usize,
+            selected_color: (ColorPalette::default_bg_u8(), ColorPalette::default_fg_u8()),
             dirty: true,
         };
 
@@ -53,6 +56,20 @@ impl Default for State {
 impl State {
     pub fn error(&self) -> &Option<Error> {
         &self.error
+    }
+
+    pub fn color(&self, cm: ColorMode) -> u8 {
+        match cm {
+            ColorMode::Bg => self.selected_color.0,
+            ColorMode::Fg => self.selected_color.1,
+        }
+    }
+
+    pub fn set_color(&mut self, color: u8, cm: ColorMode) {
+        match cm {
+            ColorMode::Bg => self.selected_color.0 = color,
+            ColorMode::Fg => self.selected_color.1 = color,
+        }
     }
 
     // returns bool so we can easily chain to "changed"

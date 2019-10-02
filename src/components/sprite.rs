@@ -1,5 +1,5 @@
 use crate::common::{cwd_path, Texel};
-use crate::resources::ColorPalette;
+use crate::resources::{ColorPalette, ColorMode};
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 use std::fs::File;
@@ -42,7 +42,8 @@ impl Sprite {
                         x,
                         y,
                         symbol: c,
-                        color: String::from(ColorPalette::default_fg()),
+                        fg: ColorPalette::default_fg_u8(),
+                        bg: ColorPalette::default_bg_u8(),
                     });
                     x += 1;
                 }
@@ -54,6 +55,15 @@ impl Sprite {
 
     pub fn from_texels(texels: Vec<Texel>) -> Sprite {
         Sprite { texels }
+    }
+
+    pub fn fill(&mut self, cm: ColorMode, color: u8) {
+        for texel in self.texels.iter_mut() {
+            match cm {
+                ColorMode::Fg => texel.fg = color,
+                ColorMode::Bg => texel.bg = color,
+            }
+        }
     }
 }
 

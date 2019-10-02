@@ -1,6 +1,6 @@
 use crate::common::{cwd_path, Action, Error, Scene};
 use crate::components::*;
-use crate::resources::{Loaded, Loader, State};
+use crate::resources::{Loaded, Loader, State, ColorMode};
 use libflate::gzip::Encoder;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use std::path::{Path, PathBuf};
@@ -94,6 +94,23 @@ impl ActionHandler {
         changed
     }
 
+    fn apply_color_to_selected(
+        cm: ColorMode,
+        state: &State,
+        sp: &mut WriteStorage<Sprite>,
+        s: &ReadStorage<Selection>,
+    ) -> bool {
+        let mut changed = false;
+        let color = state.color(cm);
+
+        for (sprite, _) in (sp, s).join() {
+            sprite.fill(cm, color);
+            changed = true;
+        }
+
+        changed
+    }
+
     fn import_sprite(
         sprite: Sprite,
         e: &Entities,
@@ -119,7 +136,7 @@ impl ActionHandler {
 
     fn save_scene(
         e: &Entities,
-        sp: &ReadStorage<Sprite>,
+        sp: &WriteStorage<Sprite>,
         p: &WriteStorage<Position>,
         s: &ReadStorage<Selection>,
         path: &str,
@@ -144,7 +161,7 @@ impl ActionHandler {
     fn load_from_file(
         e: &Entities,
         s: &ReadStorage<Selection>,
-        sp: &ReadStorage<Sprite>,
+        sp: &WriteStorage<Sprite>,
         u: &LazyUpdate,
         path: &str,
     ) -> Result<(), Error> {
@@ -154,7 +171,7 @@ impl ActionHandler {
         }
     }
 
-    fn clear_scene(e: &Entities, sp: &ReadStorage<Sprite>) -> Result<(), Error> {
+    fn clear_scene(e: &Entities, sp: &WriteStorage<Sprite>) -> Result<(), Error> {
         for (entity, _) in (e, sp).join() {
             e.delete(entity)?;
         }
@@ -166,7 +183,7 @@ impl ActionHandler {
         scene: Scene,
         e: &Entities,
         s: &ReadStorage<Selection>,
-        sp: &ReadStorage<Sprite>,
+        sp: &WriteStorage<Sprite>,
         u: &LazyUpdate,
     ) -> Result<(), Error> {
         Self::clear_scene(e, sp)?;
@@ -182,7 +199,7 @@ impl ActionHandler {
         state: &mut State,
         e: &Entities,
         s: &ReadStorage<Selection>,
-        sp: &ReadStorage<Sprite>,
+        sp: &WriteStorage<Sprite>,
         u: &LazyUpdate,
     ) -> bool {
         if let Some(scene) = state.undo() {
@@ -200,7 +217,7 @@ impl ActionHandler {
         state: &mut State,
         e: &Entities,
         s: &ReadStorage<Selection>,
-        sp: &ReadStorage<Sprite>,
+        sp: &WriteStorage<Sprite>,
         u: &LazyUpdate,
     ) -> bool {
         if let Some(scene) = state.redo() {
@@ -223,11 +240,11 @@ impl<'a> System<'a> for ActionHandler {
         ReadStorage<'a, Selectable>,
         ReadStorage<'a, Selection>,
         ReadStorage<'a, Dimension>,
-        ReadStorage<'a, Sprite>,
+        WriteStorage<'a, Sprite>,
         Read<'a, LazyUpdate>,
     );
 
-    fn run(&mut self, (e, mut state, mut p, sel, s, d, sp, u): Self::SystemData) {
+    fn run(&mut self, (e, mut state, mut p, sel, s, d, mut sp, u): Self::SystemData) {
         while let Some(action) = state.pop_action() {
             let keep_history = action.keeps_history();
 
@@ -237,6 +254,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Redo => Self::redo(&mut state, &e, &s, &sp, &u),
                 Action::ClearError => state.set_error(None),
                 Action::SetMode(mode) => state.set_mode(mode),
+                Action::ApplyColor(cm) => Self::apply_color_to_selected(cm, &state, &mut sp, &s),
                 Action::ReverseMode => state.reverse_mode(),
                 Action::Deselect => Self::deselect(&e, &s, &u),
                 Action::SelectNext(keep) => Self::select_next(&e, &sel, &s, &u, keep),

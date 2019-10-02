@@ -11,7 +11,7 @@ impl<'a> System<'a> for HistoryHandler {
         Write<'a, State>,
         WriteStorage<'a, Position>,
         ReadStorage<'a, Selection>,
-        ReadStorage<'a, Sprite>,
+        WriteStorage<'a, Sprite>,
     );
 
     fn run(&mut self, (e, mut state, p, s, sp): Self::SystemData) {
