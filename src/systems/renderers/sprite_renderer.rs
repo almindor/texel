@@ -10,16 +10,6 @@ impl SpriteRenderer {
     fn print_texel(out: &mut SyncTerm, p: &Position, t: &Texel) {
         write!(
             out,
-            "{}{}",
-            crate::common::goto(p.x + t.x, p.y + t.y),
-            t.symbol
-        )
-        .unwrap();
-    }
-
-    fn print_texel_symbol(out: &mut SyncTerm, p: &Position, t: &Texel) {
-        write!(
-            out,
             "{}{}{}{}",
             crate::common::goto(p.x + t.x, p.y + t.y),
             ColorPalette::u8_to_bg(t.bg),
@@ -30,18 +20,8 @@ impl SpriteRenderer {
     }
 
     fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
-        let mut prev_color: Option<(u8, u8)> = None;
         for t in s.texels.iter().filter(|t| p.x + t.x > 0 && p.y + t.y > 0) {
-            if let Some(color) = prev_color {
-                if color == (t.bg, t.fg) {
-                    // don't print same color needlessly
-                    Self::print_texel_symbol(out, p, t);
-                    continue;
-                }
-            }
-
             Self::print_texel(out, p, t);
-            prev_color = Some((t.bg, t.fg));
         }
     }
 
@@ -103,7 +83,14 @@ impl<'a> System<'a> for SpriteRenderer {
             }
         }
 
-        write!(out, "{}", ColorPalette::default_fg()).unwrap();
+        write!(
+            out,
+            "{}{}",
+            ColorPalette::default_bg(),
+            ColorPalette::default_fg()
+        )
+        .unwrap();
+        
         // location info status line
         if let Some(loc) = loc_info {
             let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise

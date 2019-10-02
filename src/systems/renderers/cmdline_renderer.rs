@@ -1,4 +1,4 @@
-use crate::resources::{CmdLine, ColorPalette, ColorMode, Mode, State, SyncTerm};
+use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SyncTerm};
 use specs::System;
 use std::io::Write;
 

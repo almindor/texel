@@ -1,6 +1,6 @@
 use crate::common::{cwd_path, Action, Error, Scene};
 use crate::components::*;
-use crate::resources::{Loaded, Loader, State, ColorMode};
+use crate::resources::{ColorMode, Loaded, Loader, State};
 use libflate::gzip::Encoder;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use std::path::{Path, PathBuf};
