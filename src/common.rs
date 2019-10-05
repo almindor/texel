@@ -88,6 +88,22 @@ impl<'a>
     }
 }
 
+pub fn add_max(u: usize, i: i32, m: usize) -> Option<usize> {
+    let result = if i.is_negative() {
+        u.checked_sub(i.wrapping_abs() as u32 as usize)
+    } else {
+        u.checked_add(i as usize)
+    };
+
+    if let Some(val) = result {
+        if val > m {
+            return None
+        }
+    }
+
+    result
+}
+
 pub const fn goto(x: i32, y: i32) -> termion::cursor::Goto {
     // TODO: figure out best way to handle this
     let u_x = x as u16;

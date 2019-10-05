@@ -1,8 +1,27 @@
 use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SyncTerm};
+use crate::common::Error;
 use specs::System;
 use std::io::Write;
 
 pub struct CmdLineRenderer;
+
+impl CmdLineRenderer {
+    fn print_error(out: &mut SyncTerm, error: &Error, h: i32) {
+        write!(
+            out,
+            "{}{}{}{}",
+            crate::common::goto(1, h),
+            termion::color::Bg(termion::color::Red),
+            error,
+            termion::color::Bg(termion::color::Reset),
+        )
+        .unwrap();
+    }
+    
+    fn print_cmd(out: &mut SyncTerm, cmd: &str, h: i32) {
+        write!(out, "{}:{}", crate::common::goto(1, h), cmd).unwrap();
+    }
+}
 
 impl<'a> System<'a> for CmdLineRenderer {
     type SystemData = (
@@ -17,23 +36,13 @@ impl<'a> System<'a> for CmdLineRenderer {
         let h = i32::from(ts.1);
 
         if let Some(error) = state.error() {
-            write!(
-                out,
-                "{}{}{}{}",
-                crate::common::goto(1, h),
-                termion::color::Bg(termion::color::Red),
-                error,
-                termion::color::Bg(termion::color::Reset),
-            )
-            .unwrap();
+            Self::print_error(&mut out, error, h);
             return;
         }
 
         match state.mode() {
             Mode::Quitting(_) => return,
-            Mode::Command => {
-                write!(out, "{}:{}", crate::common::goto(1, h), cmdline.cmd()).unwrap()
-            }
+            Mode::Command => Self::print_cmd(&mut out, cmdline.cmd(), h),
             Mode::Edit => write!(
                 out,
                 "{}{}{}--EDIT--{}",
@@ -78,7 +87,7 @@ impl<'a> System<'a> for CmdLineRenderer {
             "▞",
             ColorPalette::default_fg(),
             ColorPalette::default_bg(),
-            crate::common::goto(w, h),
+            crate::common::goto(cmdline.cursor_pos(), h),
         )
         .unwrap();
     }

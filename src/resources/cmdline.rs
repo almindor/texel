@@ -14,6 +14,7 @@ const MAX_HISTORY_ENTRIES: usize = 255; // coz I said so too!
 #[derive(Debug)]
 pub struct CmdLine {
     cmd: String,
+    cursor_pos: usize,
     history: Vec<String>,
     history_index: Option<usize>,
     file_complete: FileComplete,
@@ -23,6 +24,7 @@ impl Default for CmdLine {
     fn default() -> Self {
         CmdLine {
             cmd: String::with_capacity(DEFAULT_CMD_CAPACITY),
+            cursor_pos: 0,
             history: Vec::with_capacity(MAX_HISTORY_ENTRIES),
             history_index: None,
             file_complete: FileComplete::new(),
@@ -33,6 +35,10 @@ impl Default for CmdLine {
 impl CmdLine {
     pub fn cmd(&self) -> &str {
         &self.cmd
+    }
+
+    pub fn cursor_pos(&self) -> i32 {
+        (self.cursor_pos + 2) as i32 // add for ':'
     }
 
     pub fn input(&mut self, k: Key) -> Result<Action, Error> {
@@ -50,8 +56,8 @@ impl CmdLine {
             },
             Key::Up => self.previous(),
             Key::Down => self.next(),
-            // TODO: handle somehow
-            Key::Left | Key::Right => Ok(Action::None),
+            Key::Left => self.move_cursor(-1),
+            Key::Right => self.move_cursor(1),
             _ => Ok(Action::None),
         };
 
@@ -71,6 +77,15 @@ impl CmdLine {
     fn flush(&mut self) {
         self.history.push(self.cmd.clone());
         self.cmd.clear();
+        self.cursor_pos = 0;
+    }
+
+    fn move_cursor(&mut self, diff: i32) -> Result<Action, Error> {
+        if let Some(new_pos) = crate::common::add_max(self.cursor_pos, diff, self.cmd.len()) {
+            self.cursor_pos = new_pos;
+        } // otherwise ignore
+
+        Ok(Action::None)
     }
 
     fn previous(&mut self) -> Result<Action, Error> {
@@ -105,13 +120,26 @@ impl CmdLine {
     }
 
     fn append(&mut self, c: char) -> Result<Action, Error> {
-        self.cmd.push(c);
+        if self.cursor_pos != self.cmd.len() {
+            self.cmd.insert(self.cursor_pos, c);
+        } else {
+            self.cmd.push(c);
+        }
+        self.cursor_pos += 1;
 
         Ok(Action::None)
     }
 
     fn remove(&mut self) -> Result<Action, Error> {
-        self.cmd.pop();
+        if self.cursor_pos == self.cmd.len() {
+            self.cmd.pop();
+        } else {
+            self.cmd.remove(self.cursor_pos - 1);
+        }
+
+        if self.cursor_pos > 0 {
+           self.cursor_pos -= 1;
+        }
 
         Ok(Action::None)
     }
@@ -123,6 +151,7 @@ impl CmdLine {
             if let Some(word) = parts.first() {
                 if let Some(cmd) = Action::complete_word(word) {
                     self.cmd = path_base(&self.cmd) + cmd;
+                    self.cursor_pos = self.cmd.len();
                 }
             }
         } else if let Some(cmd) = parts.first() {
@@ -136,6 +165,7 @@ impl CmdLine {
 
             if let Some(path) = completed {
                 self.cmd = String::from(*cmd) + " " + &path;
+                self.cursor_pos = self.cmd.len();
             }
         }
 
@@ -143,6 +173,7 @@ impl CmdLine {
     }
 
     fn parse(&mut self) -> Result<Action, Error> {
+        self.cursor_pos = 0; // reset even in case of errors
         let mut parts = self.cmd.split_ascii_whitespace().peekable();
 
         let action = Action::from(parts.next());
