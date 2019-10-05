@@ -172,12 +172,8 @@ impl State {
             self.history.pop_front();
         }
 
-        use std::io::Write;
-
         if self.history.len() > 0 && self.history_index != self.history.len() - 1 {
             self.history.truncate(self.history_index + 1);
-
-            writeln!(std::io::stderr(), "H- {}/{}", self.history_index, self.history.len()).unwrap();
         }
 
         self.history.push_back(scene);
@@ -185,8 +181,6 @@ impl State {
 
         self.history_index = next_index;
         self.dirty = false;
-
-        writeln!(std::io::stderr(), "H+ {}/{}", self.history_index,  self.history.len()).unwrap();
         
         self.save_state.1 += 1;
     }
@@ -198,9 +192,6 @@ impl State {
 
         self.history_index -= 1;
         if let Some(scene) = self.history.get(self.history_index) {
-            use std::io::Write;
-            writeln!(std::io::stderr(), "Hu {}/{}", self.history_index,  self.history.len()).unwrap();
-
             return Some(scene.clone());
         }
 
@@ -214,9 +205,6 @@ impl State {
 
         self.history_index += 1;
         if let Some(scene) = self.history.get(self.history_index) {
-            use std::io::Write;
-            writeln!(std::io::stderr(), "Hr {}/{}", self.history_index,  self.history.len()).unwrap();
-
             return Some(scene.clone());
         }
 
