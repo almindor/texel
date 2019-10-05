@@ -23,10 +23,10 @@ fn main() {
     let mut updater = DispatcherBuilder::new()
         .with(systems::InputHandler, "input_handler", &[])
         .with(systems::ActionHandler, "action_handler", &["input_handler"])
-        .with(systems::HistoryHandler, "history_handler", &["action_handler"])
         .build();
 
     let mut renderer = DispatcherBuilder::new()
+        .with(systems::HistoryHandler, "history_handler", &[]) // needs to run after world.update
         .with(systems::ClearScreen, "clear_screen", &[])
         .with(
             systems::SpriteRenderer,
@@ -57,6 +57,7 @@ fn main() {
 
         updater.dispatch(&world);
         world.maintain();
+        renderer.dispatch(&world); // due to history handler
 
         // must set saved state after history handler is done
         let mut state = world.fetch_mut::<resources::State>();
