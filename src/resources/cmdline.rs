@@ -1,6 +1,5 @@
 use crate::common::{path_base, Action, Error};
 use crate::components::Translation;
-use crate::resources::Loader;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
 use termion::event::Key;
@@ -150,7 +149,6 @@ impl CmdLine {
         match action {
             Action::Delete | Action::Deselect | Action::SetMode(_) => Ok(action),
             Action::Translate(_) => self.parse_translate(parts),
-            Action::Import(_) => self.parse_import(parts),
             Action::Write(_) => self.parse_save(parts),
             Action::Read(_) => self.parse_load(parts),
             _ => Err(Error::InvalidCommand),
@@ -169,14 +167,6 @@ impl CmdLine {
             .parse::<i32>()
             .map_err(|_| Error::InvalidParam("Invalid Y value"))?;
         Ok(Action::Translate(Translation::Absolute(x, y, None)))
-    }
-
-    fn parse_import(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
-        if let Some(path) = parts.next() {
-            return Ok(Action::Import(Loader::from_txt_file(path)?));
-        }
-
-        Err(Error::InvalidParam("No path specified"))
     }
 
     fn parse_save(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {

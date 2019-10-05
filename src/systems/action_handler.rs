@@ -268,13 +268,6 @@ impl<'a> System<'a> for ActionHandler {
                         true
                     }
                 }
-                Action::Import(sprite) => {
-                    if let Err(err) = Self::import_sprite(sprite, &e, &s, &u, None, true) {
-                        state.set_error(err)
-                    } else {
-                        true
-                    }
-                }
                 Action::Write(path) => {
                     if let Err(err) = Self::save_scene(&e, &mut state, &sp, &p, &s, &path) {
                         state.set_error(err)

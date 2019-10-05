@@ -1,4 +1,4 @@
-use crate::components::{Sprite, Translation};
+use crate::components::{Translation};
 use crate::resources::{ColorMode, Mode};
 
 #[derive(Debug)]
@@ -10,7 +10,6 @@ pub enum Action {
     Deselect,
     ApplyColor(ColorMode),
     SelectNext(bool), // select next keeping old if true
-    Import(Sprite),
     Read(String),
     Write(Option<String>),
     Translate(Translation),
@@ -28,7 +27,6 @@ impl Default for Action {
 impl From<&str> for Action {
     fn from(source: &str) -> Self {
         match source {
-            "import" => Action::Import(Sprite::default()),
             "read" | "r" => Action::Read(String::default()),
             "write" | "w" => Action::Write(None),
             "translate" => Action::Translate(Translation::default()),
