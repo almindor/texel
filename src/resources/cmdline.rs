@@ -37,10 +37,6 @@ impl CmdLine {
         &self.cmd
     }
 
-    pub fn cursor_pos(&self) -> i32 {
-        self.cursor_pos as i32
-    }
-
     pub fn input(&mut self, k: Key) -> Result<Action, Error> {
         let mut clear_ac = true;
         let result = match k {
