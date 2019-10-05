@@ -129,7 +129,7 @@ impl CmdLine {
         } else if let Some(cmd) = parts.first() {
             // if we have something here, and count != 1 parts.count() must be >= 1
             let completed = match *cmd {
-                "import" | "load" | "save" => {
+                "import" | "read" | "write" => {
                     self.file_complete.with_path(parts.last().unwrap_or(&"."))?
                 } // parts.last() is safe here
                 _ => None,
@@ -151,8 +151,8 @@ impl CmdLine {
             Action::Delete | Action::Deselect | Action::SetMode(_) => Ok(action),
             Action::Translate(_) => self.parse_translate(parts),
             Action::Import(_) => self.parse_import(parts),
-            Action::Save(_) => self.parse_save(parts),
-            Action::Load(_) => self.parse_load(parts),
+            Action::Write(_) => self.parse_save(parts),
+            Action::Read(_) => self.parse_load(parts),
             _ => Err(Error::InvalidCommand),
         }
     }
@@ -181,7 +181,7 @@ impl CmdLine {
 
     fn parse_save(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
         if let Some(path) = parts.next() {
-            return Ok(Action::Save(String::from(path)));
+            return Ok(Action::Write(String::from(path)));
         }
 
         Err(Error::InvalidParam("No path specified"))
@@ -189,7 +189,7 @@ impl CmdLine {
 
     fn parse_load(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
         if let Some(path) = parts.next() {
-            return Ok(Action::Load(String::from(path)));
+            return Ok(Action::Read(String::from(path)));
         }
 
         Err(Error::InvalidParam("No path specified"))

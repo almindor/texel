@@ -49,6 +49,12 @@ impl std::fmt::Display for Error {
     }
 }
 
+impl Error {
+    pub fn execution(src: &'static str) -> Self {
+        Error::ExecutionError(String::from(src))
+    }
+}
+
 // TODO: figure out a 0-copy way to keep scene serializable/deserializable
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct Scene {

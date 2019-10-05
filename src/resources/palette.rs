@@ -13,15 +13,15 @@ const DEFAULT_PALETTE_COLORS: [u8; COLORS_IN_PALETTE] = [
     cc(5, 0, 0),
     cc(0, 5, 0),
     cc(0, 0, 5), // r, g, b
-    18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    24,
-    25,
-    26,
+    cc(5, 5, 0),
+    cc(0, 5, 5),
+    cc(5, 0, 5),
+    cc(2, 5, 2),
+    cc(5, 2, 2),
+    cc(2, 2, 5),
+    cc(2, 5, 5),
+    cc(5, 5, 2),
+    cc(5, 2, 5),
     27,
     28, // ??
 ];
@@ -134,17 +134,17 @@ impl ColorPalette {
 
     fn invert_fg(color: u8) -> String {
         if Self::luminance(color) > 2 {
-            termion::color::AnsiValue::grayscale(3).fg_string()
+            termion::color::AnsiValue::grayscale(5).fg_string()
         } else {
-            termion::color::AnsiValue::grayscale(19).fg_string()
+            termion::color::AnsiValue::grayscale(17).fg_string()
         }
     }
 
     fn invert_bg(color: u8) -> String {
         if Self::luminance(color) > 2 {
-            termion::color::AnsiValue::grayscale(3).bg_string()
+            termion::color::AnsiValue::grayscale(5).bg_string()
         } else {
-            termion::color::AnsiValue::grayscale(19).bg_string()
+            termion::color::AnsiValue::grayscale(17).bg_string()
         }
     }
 

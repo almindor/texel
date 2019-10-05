@@ -34,9 +34,9 @@ impl<'a> System<'a> for CmdLineRenderer {
             Mode::Command => {
                 write!(out, "{}:{}", crate::common::goto(1, h), cmdline.cmd()).unwrap()
             }
-            Mode::Immediate => write!(
+            Mode::Edit => write!(
                 out,
-                "{}{}{}--INSERT--{}",
+                "{}{}{}--EDIT--{}",
                 crate::common::goto(1, h),
                 termion::style::Bold,
                 termion::color::Fg(termion::color::White),

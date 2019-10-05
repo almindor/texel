@@ -7,7 +7,7 @@ use termion::event::Event;
 pub enum Mode {
     Object,
     Color(ColorMode),
-    Immediate,
+    Edit,
     Command,
     Quitting(bool), // true for force quit
 }
@@ -25,11 +25,11 @@ pub struct State {
     error: Option<Error>,
     events: VecDeque<Event>,
     actions: VecDeque<Action>,
-    mode: Mode,
-    prev_mode: Mode,
+    modes: VecDeque<Mode>,
     history: VecDeque<Scene>,
     history_index: usize,
     selected_color: (u8, u8),
+    unsaved_changes: usize,
     dirty: bool,
 }
 
@@ -39,14 +39,15 @@ impl Default for State {
             error: None,
             events: VecDeque::with_capacity(10),
             actions: VecDeque::with_capacity(10),
-            mode: Mode::default(),
-            prev_mode: Mode::default(),
+            modes: VecDeque::with_capacity(5),
             history: VecDeque::with_capacity(HISTORY_CAPACITY),
             history_index: 0usize,
             selected_color: (ColorPalette::default_bg_u8(), ColorPalette::default_fg_u8()),
-            dirty: true,
+            unsaved_changes: 0,
+            dirty: false,
         };
 
+        result.modes.push_back(Mode::default()); // there is always a mode!
         result.push_history(Scene::default());
 
         result
@@ -74,35 +75,48 @@ impl State {
 
     // returns bool so we can easily chain to "changed"
     // in action handler, bit of a hack
-    pub fn set_error(&mut self, error: Option<Error>) -> bool {
-        self.error = error;
+    pub fn set_error(&mut self, error: Error) -> bool {
+        self.error = Some(error);
+        false
+    }
+
+    pub fn clear_error(&mut self) -> bool {
+        self.error = None;
         false
     }
 
     pub fn mode(&self) -> Mode {
-        self.mode
+        *self.modes.back().unwrap()
     }
 
     pub fn set_mode(&mut self, mode: Mode) -> bool {
-        if self.mode != mode {
-            self.prev_mode = self.mode;
-            self.mode = mode;
+        if self.mode() != mode {
+            self.modes.push_back(mode);
             return true;
         }
 
         false
     }
 
+    pub fn unsaved_changes(&self) -> usize {
+        self.unsaved_changes
+    }
+
+    pub fn saved(&mut self) -> bool {
+        self.unsaved_changes = 0;
+        true
+    }
+
     pub fn quitting(&self) -> bool {
-        match self.mode {
+        match self.mode() {
             Mode::Quitting(_) => true,
             _ => false,
         }
     }
 
     pub fn reverse_mode(&mut self) -> bool {
-        if self.mode != self.prev_mode {
-            self.mode = self.prev_mode;
+        if self.modes.len() > 1 {
+            self.modes.pop_back();
             return true;
         }
 
@@ -152,6 +166,7 @@ impl State {
 
         self.history_index = next_index;
         self.dirty = false;
+        self.unsaved_changes += 1;
     }
 
     pub fn undo(&mut self) -> Option<Scene> {

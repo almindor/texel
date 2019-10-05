@@ -60,22 +60,22 @@ impl ActionHandler {
         changed
     }
 
-    fn delete_selected(e: &Entities, s: &ReadStorage<Selection>) -> Option<Error> {
+    fn delete_selected(e: &Entities, s: &ReadStorage<Selection>) -> Result<(), Error> {
         let mut deleted = 0usize;
 
         for (entity, _) in (e, s).join() {
             if let Err(_) = e.delete(entity) {
-                return Some(Error::ExecutionError(String::from("Error deleting entity")));
+                return Err(Error::execution("Error deleting entity"));
             } else {
                 deleted += 1;
             }
         }
 
         if deleted == 0 {
-            return Some(Error::ExecutionError(String::from("No entity to delete")));
+            return Err(Error::execution("No entity to delete"));
         }
 
-        None
+        Ok(())
     }
 
     fn translate_selected(
@@ -205,10 +205,10 @@ impl ActionHandler {
         if let Some(scene) = state.undo() {
             return match Self::apply_scene(scene, &e, &s, &sp, &u) {
                 Ok(_) => true,
-                Err(err) => state.set_error(Some(err)),
+                Err(err) => state.set_error(err),
             };
         } else {
-            state.set_error(Some(Error::ExecutionError(String::from("Nothing to undo"))));
+            state.set_error(Error::execution("Nothing to undo"));
             false
         }
     }
@@ -223,10 +223,10 @@ impl ActionHandler {
         if let Some(scene) = state.redo() {
             return match Self::apply_scene(scene, &e, &s, &sp, &u) {
                 Ok(_) => true,
-                Err(err) => state.set_error(Some(err)),
+                Err(err) => state.set_error(err),
             };
         } else {
-            state.set_error(Some(Error::ExecutionError(String::from("Nothing to redo"))));
+            state.set_error(Error::execution("Nothing to redo"));
             false
         }
     }
@@ -252,31 +252,37 @@ impl<'a> System<'a> for ActionHandler {
                 Action::None => false,
                 Action::Undo => Self::undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => Self::redo(&mut state, &e, &s, &sp, &u),
-                Action::ClearError => state.set_error(None),
+                Action::ClearError => state.clear_error(),
                 Action::SetMode(mode) => state.set_mode(mode),
                 Action::ApplyColor(cm) => Self::apply_color_to_selected(cm, &state, &mut sp, &s),
                 Action::ReverseMode => state.reverse_mode(),
                 Action::Deselect => Self::deselect(&e, &s, &u),
                 Action::SelectNext(keep) => Self::select_next(&e, &sel, &s, &u, keep),
                 Action::Translate(t) => Self::translate_selected(t, &mut p, &s, &d),
-                Action::Delete => state.set_error(Self::delete_selected(&e, &s)),
+                Action::Delete => {
+                    if let Err(err) = Self::delete_selected(&e, &s) {
+                        state.set_error(err)
+                    } else {
+                        true
+                    }
+                }
                 Action::Import(sprite) => {
                     if let Err(err) = Self::import_sprite(sprite, &e, &s, &u, None, true) {
-                        state.set_error(Some(err))
+                        state.set_error(err)
                     } else {
                         true
                     }
                 }
-                Action::Save(path) => {
+                Action::Write(path) => {
                     if let Err(err) = Self::save_scene(&e, &sp, &p, &s, &path) {
-                        state.set_error(Some(err))
+                        state.set_error(err)
                     } else {
-                        true
+                        state.saved()
                     }
                 }
-                Action::Load(path) => {
+                Action::Read(path) => {
                     if let Err(err) = Self::load_from_file(&e, &s, &sp, &u, &path) {
-                        state.set_error(Some(err))
+                        state.set_error(err)
                     } else {
                         true
                     }

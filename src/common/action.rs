@@ -11,8 +11,8 @@ pub enum Action {
     ApplyColor(ColorMode),
     SelectNext(bool), // select next keeping old if true
     Import(Sprite),
-    Load(String),
-    Save(String),
+    Read(String),
+    Write(String),
     Translate(Translation),
     Delete,
     Undo,
@@ -29,8 +29,8 @@ impl From<&str> for Action {
     fn from(source: &str) -> Self {
         match source {
             "import" => Action::Import(Sprite::default()),
-            "load" => Action::Load(String::default()),
-            "save" => Action::Save(String::default()),
+            "read" | "r" => Action::Read(String::default()),
+            "write" | "w" => Action::Write(String::default()),
             "translate" => Action::Translate(Translation::default()),
             "delete" => Action::Delete,
             "deselect" => Action::Deselect,
@@ -58,6 +58,13 @@ impl Action {
         }
     }
 
+    pub fn is_reverse_mode(&self) -> bool {
+        match self {
+            Action::ReverseMode => true,
+            _ => false,
+        }
+    }
+
     pub fn keeps_history(&self) -> bool {
         match self {
             Action::None
@@ -66,7 +73,7 @@ impl Action {
             | Action::ClearError
             | Action::ReverseMode
             | Action::SetMode(_)
-            | Action::Save(_) => false,
+            | Action::Write(_) => false,
             _ => true,
         }
     }
@@ -74,8 +81,8 @@ impl Action {
     pub fn complete_word(part: &str) -> Option<&'static str> {
         const ACTION_WORDS: [&'static str; 8] = [
             "import",
-            "load",
-            "save",
+            "read",
+            "write",
             "translate",
             "delete",
             "deselect",

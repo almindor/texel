@@ -1,19 +1,29 @@
-use crate::common::Action;
-use crate::components::{Direction, Translation};
+use crate::common::{Action, Error};
+use crate::components::{Direction, Selection, Translation};
 use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State};
-use specs::{Read, System, Write};
+use specs::{Read, ReadStorage, System, Write};
 use termion::event::{Event, Key};
 
 pub struct InputHandler;
 
 impl InputHandler {
-    fn objmode_event(&mut self, event: Event, state: &mut State) {
+    fn objmode_event(event: Event, state: &mut State, selection: &ReadStorage<Selection>) {
         let ts = termion::terminal_size().unwrap();
 
         let action = match event {
+            Event::Key(Key::Esc) => Action::ReverseMode,
             Event::Key(Key::Char(':')) => {
                 state.push_action(Action::ClearError); // clean errors when going back to cmdline
                 Action::SetMode(Mode::Command)
+            }
+            Event::Key(Key::Char('e')) => {
+                if selection.count() == 1 {
+                    state.push_action(Action::ClearError); // clean errors when to edit mode
+                    Action::SetMode(Mode::Edit)
+                } else {
+                    state.set_error(Error::execution("One object must be selected"));
+                    Action::None
+                }
             }
             Event::Key(Key::Char('\t')) => Action::SelectNext(false),
 
@@ -60,17 +70,17 @@ impl InputHandler {
         state.push_action(action);
     }
 
-    fn cmdline_event(&mut self, event: Event, state: &mut State, cmdline: &mut CmdLine) {
+    fn cmdline_event(event: Event, state: &mut State, cmdline: &mut CmdLine) {
         match event {
             Event::Key(k) => match cmdline.input(k) {
                 Ok(action) => {
-                    if action.is_some() {
+                    if action.is_some() && !action.is_reverse_mode() {
                         state.push_action(Action::ReverseMode);
                     }
                     state.push_action(action);
                 }
-                Err(error) => {
-                    state.set_error(Some(error));
+                Err(err) => {
+                    state.set_error(err);
                     state.push_action(Action::ReverseMode);
                 }
             },
@@ -78,13 +88,7 @@ impl InputHandler {
         };
     }
 
-    fn palette_event(
-        &mut self,
-        event: Event,
-        state: &mut State,
-        cm: ColorMode,
-        palette: &ColorPalette,
-    ) {
+    fn palette_event(event: Event, state: &mut State, cm: ColorMode, palette: &ColorPalette) {
         match event {
             Event::Key(Key::Char(':')) => {
                 state.push_action(Action::ReverseMode);
@@ -103,18 +107,39 @@ impl InputHandler {
             _ => {}
         };
     }
+
+    fn edit_event(event: Event, state: &mut State) {
+        match event {
+            Event::Key(Key::Char(':')) => {
+                state.push_action(Action::ClearError); // clean errors when going back to cmdline
+                state.push_action(Action::SetMode(Mode::Command));
+            },
+            Event::Key(Key::Esc) => {
+                use std::io::Write;
+                writeln!(std::io::stderr(), "Esc pressed in: {:?}", state.mode()).unwrap();
+
+                state.push_action(Action::ReverseMode)
+            },
+            _ => {}
+        };
+    }
 }
 
 impl<'a> System<'a> for InputHandler {
-    type SystemData = (Write<'a, State>, Write<'a, CmdLine>, Read<'a, ColorPalette>);
+    type SystemData = (
+        Write<'a, State>,
+        Write<'a, CmdLine>,
+        Read<'a, ColorPalette>,
+        ReadStorage<'a, Selection>,
+    );
 
-    fn run(&mut self, (mut state, mut cmdline, palette): Self::SystemData) {
+    fn run(&mut self, (mut state, mut cmdline, palette, selection): Self::SystemData) {
         while let Some(event) = state.pop_event() {
             match state.mode() {
-                Mode::Command => self.cmdline_event(event, &mut state, &mut cmdline),
-                Mode::Object => self.objmode_event(event, &mut state),
-                Mode::Color(cm) => self.palette_event(event, &mut state, cm, &palette),
-                Mode::Immediate => {} // TODO
+                Mode::Command => Self::cmdline_event(event, &mut state, &mut cmdline),
+                Mode::Object => Self::objmode_event(event, &mut state, &selection),
+                Mode::Color(cm) => Self::palette_event(event, &mut state, cm, &palette),
+                Mode::Edit => Self::edit_event(event, &mut state),
                 Mode::Quitting(_) => {}
             }
         }

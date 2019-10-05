@@ -51,7 +51,7 @@ fn main() {
             let mut state = world.fetch_mut::<resources::State>();
 
             for path in &args[1..] {
-                state.push_action(common::Action::Load(String::from(path)));
+                state.push_action(common::Action::Read(String::from(path)));
             }
         }
 

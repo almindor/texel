@@ -39,7 +39,7 @@ impl Loader {
         if path.ends_with("txt") {
             Ok(Sprite::from_file(Path::new(path))?)
         } else {
-            Err(Error::ExecutionError(String::from("Unknown file type")))
+            Err(Error::execution("Unknown file type"))
         }
     }
 }
