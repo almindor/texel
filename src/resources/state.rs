@@ -29,7 +29,7 @@ pub struct State {
     history: VecDeque<Scene>,
     history_index: usize,
     selected_color: (u8, u8),
-    unsaved_changes: usize,
+    save_state: (Option<String>, usize),
     dirty: bool,
 }
 
@@ -43,12 +43,13 @@ impl Default for State {
             history: VecDeque::with_capacity(HISTORY_CAPACITY),
             history_index: 0usize,
             selected_color: (ColorPalette::default_bg_u8(), ColorPalette::default_fg_u8()),
-            unsaved_changes: 0,
+            save_state: (None, 0),
             dirty: false,
         };
 
         result.modes.push_back(Mode::default()); // there is always a mode!
-        result.push_history(Scene::default());
+        result.push_history(Scene::default()); // there is always a default scene
+        result.save_state.1 = 0; // push_history will bump this but it doesn't count
 
         result
     }
@@ -91,19 +92,33 @@ impl State {
 
     pub fn set_mode(&mut self, mode: Mode) -> bool {
         if self.mode() != mode {
+            if mode == Mode::Quitting(false) && self.save_state.1 > 0 {
+                self.set_error(Error::execution("Unsaved changes, use q! to quit without saving"));
+                return false
+            }
+
             self.modes.push_back(mode);
-            return true;
+            return true
         }
 
         false
     }
 
-    pub fn unsaved_changes(&self) -> usize {
-        self.unsaved_changes
+    // needs to clone because we need to keep the option for saved() if
+    // everything went fine and scene was saved, also the temporary new_path
+    // cannot be referenced out because it has no place to live in
+    pub fn save_file(&self, new_path: &Option<String>) -> Result<String, Error> {
+        if let Some(path) = new_path {
+            Ok(path.clone())
+        } else if let Some(path) = &self.save_state.0 {
+            Ok(path.clone())
+        } else {
+            Err(Error::execution("No file path specified"))
+        }
     }
 
-    pub fn saved(&mut self) -> bool {
-        self.unsaved_changes = 0;
+    pub fn saved(&mut self, path: Option<String>) -> bool {
+        self.save_state = (path, 0);
         true
     }
 
@@ -166,7 +181,8 @@ impl State {
 
         self.history_index = next_index;
         self.dirty = false;
-        self.unsaved_changes += 1;
+
+        self.save_state.1 += 1;
     }
 
     pub fn undo(&mut self) -> Option<Scene> {

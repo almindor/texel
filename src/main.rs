@@ -23,10 +23,10 @@ fn main() {
     let mut updater = DispatcherBuilder::new()
         .with(systems::InputHandler, "input_handler", &[])
         .with(systems::ActionHandler, "action_handler", &["input_handler"])
+        .with(systems::HistoryHandler, "history_handler", &["action_handler"])
         .build();
 
     let mut renderer = DispatcherBuilder::new()
-        .with(systems::HistoryHandler, "history_handler", &[]) // a bit wonky but works fine
         .with(systems::ClearScreen, "clear_screen", &[])
         .with(
             systems::SpriteRenderer,
@@ -57,6 +57,18 @@ fn main() {
 
         updater.dispatch(&world);
         world.maintain();
+
+        // must set saved state after history handler is done
+        let mut state = world.fetch_mut::<resources::State>();
+        if args.len() == 2 {
+            if let Some(path) = args.get(1) {
+                state.saved(Some(String::from(path))); // store saved state with filename
+            } else {
+                state.set_error(common::Error::execution("Unable to determine source file"));
+            }
+        } else { // loaded multiple, store save state but with no file
+            state.saved(None);
+        }
     }
 
     renderer.dispatch(&world);

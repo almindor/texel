@@ -136,14 +136,16 @@ impl ActionHandler {
 
     fn save_scene(
         e: &Entities,
+        state: &mut State,
         sp: &WriteStorage<Sprite>,
         p: &WriteStorage<Position>,
         s: &ReadStorage<Selection>,
-        path: &str,
+        new_path: &Option<String>,
     ) -> Result<(), Error> {
+        let path = state.save_file(new_path)?;
         let ronified = ron::ser::to_string(&Scene::from((e, sp, p, s)))?;
-        let raw_path = if Path::new(path).extension() != Some(std::ffi::OsStr::new("rgz")) {
-            Path::new(path).with_extension("rgz")
+        let raw_path = if Path::new(&path).extension() != Some(std::ffi::OsStr::new("rgz")) {
+            Path::new(&path).with_extension("rgz")
         } else {
             PathBuf::from(path)
         };
@@ -274,10 +276,10 @@ impl<'a> System<'a> for ActionHandler {
                     }
                 }
                 Action::Write(path) => {
-                    if let Err(err) = Self::save_scene(&e, &sp, &p, &s, &path) {
+                    if let Err(err) = Self::save_scene(&e, &mut state, &sp, &p, &s, &path) {
                         state.set_error(err)
                     } else {
-                        state.saved()
+                        state.saved(path)
                     }
                 }
                 Action::Read(path) => {

@@ -12,7 +12,7 @@ pub enum Action {
     SelectNext(bool), // select next keeping old if true
     Import(Sprite),
     Read(String),
-    Write(String),
+    Write(Option<String>),
     Translate(Translation),
     Delete,
     Undo,
@@ -30,7 +30,7 @@ impl From<&str> for Action {
         match source {
             "import" => Action::Import(Sprite::default()),
             "read" | "r" => Action::Read(String::default()),
-            "write" | "w" => Action::Write(String::default()),
+            "write" | "w" => Action::Write(None),
             "translate" => Action::Translate(Translation::default()),
             "delete" => Action::Delete,
             "deselect" => Action::Deselect,

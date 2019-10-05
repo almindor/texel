@@ -129,7 +129,7 @@ impl CmdLine {
         } else if let Some(cmd) = parts.first() {
             // if we have something here, and count != 1 parts.count() must be >= 1
             let completed = match *cmd {
-                "import" | "read" | "write" => {
+                "import" | "read" | "write" | "w" | "r" => {
                     self.file_complete.with_path(parts.last().unwrap_or(&"."))?
                 } // parts.last() is safe here
                 _ => None,
@@ -181,10 +181,10 @@ impl CmdLine {
 
     fn parse_save(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
         if let Some(path) = parts.next() {
-            return Ok(Action::Write(String::from(path)));
+            return Ok(Action::Write(Some(String::from(path))));
         }
 
-        Err(Error::InvalidParam("No path specified"))
+        Ok(Action::Write(None))
     }
 
     fn parse_load(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
