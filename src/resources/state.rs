@@ -18,6 +18,19 @@ impl Default for Mode {
     }
 }
 
+impl Mode {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            Mode::Object => "OBJECT",
+            Mode::Color(ColorMode::Fg) => "COLOR[FG]",
+            Mode::Color(ColorMode::Bg) => "COLOR[BG]",
+            Mode::Edit => "EDIT",
+            Mode::Command => "COMMAND",
+            Mode::Quitting(_) => "QUITTING",
+        }
+    }
+}
+
 const HISTORY_CAPACITY: usize = 20usize;
 
 #[derive(Debug)]
@@ -93,12 +106,14 @@ impl State {
     pub fn set_mode(&mut self, mode: Mode) -> bool {
         if self.mode() != mode {
             if mode == Mode::Quitting(false) && self.save_state.1 > 0 {
-                self.set_error(Error::execution("Unsaved changes, use q! to quit without saving"));
-                return false
+                self.set_error(Error::execution(
+                    "Unsaved changes, use q! to quit without saving",
+                ));
+                return false;
             }
 
             self.modes.push_back(mode);
-            return true
+            return true;
         }
 
         false
@@ -181,7 +196,7 @@ impl State {
 
         self.history_index = next_index;
         self.dirty = false;
-        
+
         self.save_state.1 += 1;
     }
 

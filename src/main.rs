@@ -67,7 +67,8 @@ fn main() {
             } else {
                 state.set_error(common::Error::execution("Unable to determine source file"));
             }
-        } else { // loaded multiple, store save state but with no file
+        } else {
+            // loaded multiple, store save state but with no file
             state.saved(None);
         }
     }

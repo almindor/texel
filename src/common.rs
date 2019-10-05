@@ -97,7 +97,7 @@ pub fn add_max(u: usize, i: i32, m: usize) -> Option<usize> {
 
     if let Some(val) = result {
         if val > m {
-            return None
+            return None;
         }
     }
 

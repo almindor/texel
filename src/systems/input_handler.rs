@@ -113,13 +113,13 @@ impl InputHandler {
             Event::Key(Key::Char(':')) => {
                 state.push_action(Action::ClearError); // clean errors when going back to cmdline
                 state.push_action(Action::SetMode(Mode::Command));
-            },
+            }
             Event::Key(Key::Esc) => {
                 use std::io::Write;
                 writeln!(std::io::stderr(), "Esc pressed in: {:?}", state.mode()).unwrap();
 
                 state.push_action(Action::ReverseMode)
-            },
+            }
             _ => {}
         };
     }

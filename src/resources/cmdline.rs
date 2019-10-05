@@ -141,7 +141,7 @@ impl CmdLine {
         }
 
         if self.cursor_pos > 0 {
-           self.cursor_pos -= 1;
+            self.cursor_pos -= 1;
         }
 
         Ok(Action::None)

@@ -1,4 +1,4 @@
-use crate::components::{Translation};
+use crate::components::Translation;
 use crate::resources::{ColorMode, Mode};
 
 #[derive(Debug)]
