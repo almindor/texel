@@ -87,7 +87,7 @@ impl<'a> System<'a> for CmdLineRenderer {
             "▞",
             ColorPalette::default_fg(),
             ColorPalette::default_bg(),
-            crate::common::goto(cmdline.cursor_pos(), h),
+            crate::common::goto(cmdline.cursor_pos() + 2, h), // : + one after
         )
         .unwrap();
     }

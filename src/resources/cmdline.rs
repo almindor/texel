@@ -38,7 +38,7 @@ impl CmdLine {
     }
 
     pub fn cursor_pos(&self) -> i32 {
-        (self.cursor_pos + 2) as i32 // add for ':'
+        self.cursor_pos as i32
     }
 
     pub fn input(&mut self, k: Key) -> Result<Action, Error> {
@@ -99,6 +99,7 @@ impl CmdLine {
                 if index > 0 {
                     self.history_index = Some(index - 1);
                 }
+                self.cursor_pos = self.cmd.len();
             }
         }
 
@@ -114,6 +115,8 @@ impl CmdLine {
                 self.cmd.clear();
                 self.history_index = None;
             }
+
+            self.cursor_pos = self.cmd.len();
         }
 
         Ok(Action::None)
