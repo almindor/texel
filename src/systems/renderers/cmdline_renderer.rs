@@ -1,5 +1,5 @@
 use crate::common::Error;
-use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SyncTerm};
+use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette, SyncTerm};
 use specs::System;
 use std::io::Write;
 
@@ -22,11 +22,8 @@ impl CmdLineRenderer {
         write!(out, "{}:{}", crate::common::goto(1, h), cmd).unwrap();
     }
 
-    fn print_status_line(out: &mut SyncTerm, state: &State) {
+    fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
         // color selection
-        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
-        let w = i32::from(ts.0);
-        let h = i32::from(ts.1);
         let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
 
         write!(
@@ -56,7 +53,21 @@ impl CmdLineRenderer {
         .unwrap();
     }
 
-    fn print_palette(out: &mut SyncTerm, palette: &ColorPalette, cm: ColorMode, w: i32, h: i32) {
+    fn print_edit(out: &mut SyncTerm, state: &State, palette: &SymbolPalette, h: i32) {
+        write!(
+            out,
+            "{}{}{}--EDIT--\t{}{}{}",
+            crate::common::goto(1, h),
+            termion::style::Bold,
+            termion::color::Fg(termion::color::White),
+            palette.line_str(),
+            termion::style::Reset,
+            crate::common::goto(state.cursor.x, state.cursor.y),
+        )
+        .unwrap();
+    }
+
+    fn print_color(out: &mut SyncTerm, palette: &ColorPalette, cm: ColorMode, w: i32, h: i32) {
         write!(
             out,
             "{}{}{}--COLOR--\t{}{}{}",
@@ -77,14 +88,15 @@ impl<'a> System<'a> for CmdLineRenderer {
         specs::Read<'a, State>,
         specs::Read<'a, CmdLine>,
         specs::Read<'a, ColorPalette>,
+        specs::Read<'a, SymbolPalette>,
     );
 
-    fn run(&mut self, (mut out, state, cmdline, palette): Self::SystemData) {
+    fn run(&mut self, (mut out, state, cmdline, color_palette, symbol_palette): Self::SystemData) {
         let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
         let w = i32::from(ts.0);
         let h = i32::from(ts.1);
 
-        Self::print_status_line(&mut out, &state);
+        Self::print_status_line(&mut out, &state, w, h);
 
         if let Some(error) = state.error() {
             Self::print_error(&mut out, error, h);
@@ -95,8 +107,9 @@ impl<'a> System<'a> for CmdLineRenderer {
         match mode {
             Mode::Quitting(_) => return,
             Mode::Command => Self::print_cmd(&mut out, cmdline.cmd(), h),
-            Mode::Edit | Mode::Object => Self::print_mode(&mut out, mode, w, h),
-            Mode::Color(cm) => Self::print_palette(&mut out, &palette, cm, w, h),
+            Mode::Object => Self::print_mode(&mut out, mode, w, h),
+            Mode::Edit => Self::print_edit(&mut out, &state, &symbol_palette, h),
+            Mode::Color(cm) => Self::print_color(&mut out, &color_palette, cm, w, h),
         }
     }
 }

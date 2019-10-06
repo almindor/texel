@@ -1,6 +1,6 @@
 use crate::common::{cwd_path, Action, Error, Scene};
 use crate::components::*;
-use crate::resources::{ColorMode, Loaded, Loader, State};
+use crate::resources::{ColorMode, Loaded, Loader, Mode, State};
 use libflate::gzip::Encoder;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use std::path::{Path, PathBuf};
@@ -16,6 +16,26 @@ impl ActionHandler {
         }
 
         changed
+    }
+
+    fn set_mode(
+        mode: Mode,
+        state: &mut State,
+        s: &ReadStorage<Selection>,
+        p: &WriteStorage<Position>,
+    ) -> bool {
+        if mode == Mode::Edit {
+            if s.count() == 1 {
+                for (pos, _) in (p, s).join() {
+                    state.clear_error();
+                    state.cursor = *pos;
+                }
+            } else {
+                return state.set_error(Error::execution("One object must be selected"));
+            }
+        }
+
+        state.set_mode(mode)
     }
 
     fn select_next(
@@ -80,15 +100,24 @@ impl ActionHandler {
 
     fn translate_selected(
         t: Translation,
+        state: &mut State,
         p: &mut WriteStorage<Position>,
         s: &ReadStorage<Selection>,
-        d: &ReadStorage<Dimension>,
+        d: &WriteStorage<Dimension>,
     ) -> bool {
         let mut changed = false;
+        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+        let screen_dim = Dimension::from_wh(ts.0, ts.1 - 1);
+        let screen_bounds = (Position::default(), screen_dim);
 
-        for (position, _, dimension) in (p, s, d).join() {
-            position.apply(t, dimension.w, dimension.h);
-            changed = true;
+        for (position, _, dim) in (p, s, d).join() {
+            if state.mode() == Mode::Edit {
+                // moving around in edit mode amounts to no changes
+                state.cursor.apply(t, dim, Some(screen_bounds));
+            } else {
+                position.apply(t, dim, None);
+                changed = true;
+            }
         }
 
         changed
@@ -106,6 +135,45 @@ impl ActionHandler {
         for (sprite, _) in (sp, s).join() {
             sprite.fill(cm, color);
             changed = true;
+        }
+
+        changed
+    }
+
+    fn apply_symbol_to_selected(
+        symbol: char,
+        state: &mut State,
+        sp: &mut WriteStorage<Sprite>,
+        s: &ReadStorage<Selection>,
+        p: &mut WriteStorage<Position>,
+        d: &mut WriteStorage<Dimension>,
+    ) -> bool {
+        let mut changed = false;
+        let bg = state.color(ColorMode::Bg);
+        let fg = state.color(ColorMode::Fg);
+
+        for (sprite, mut pos, mut dim, _) in (sp, p, d, s).join() {
+            let rel_pos = state.cursor - *pos;
+            changed = sprite.apply_symbol(symbol, bg, fg, rel_pos); // TODO: fg/bg
+
+            if changed {
+                if rel_pos.x < 0 {
+                    pos.x += rel_pos.x;
+                }
+                if rel_pos.y < 0 {
+                    pos.y += rel_pos.y;
+                }
+
+                match Dimension::for_sprite(sprite) {
+                    Ok(new_dim) => {
+                        dim.w = new_dim.w;
+                        dim.h = new_dim.h;
+                    },
+                    Err(err) => {
+                        state.set_error(err.into());
+                    },
+                }
+            }
         }
 
         changed
@@ -241,12 +309,12 @@ impl<'a> System<'a> for ActionHandler {
         WriteStorage<'a, Position>,
         ReadStorage<'a, Selectable>,
         ReadStorage<'a, Selection>,
-        ReadStorage<'a, Dimension>,
+        WriteStorage<'a, Dimension>,
         WriteStorage<'a, Sprite>,
         Read<'a, LazyUpdate>,
     );
 
-    fn run(&mut self, (e, mut state, mut p, sel, s, d, mut sp, u): Self::SystemData) {
+    fn run(&mut self, (e, mut state, mut p, sel, s, mut d, mut sp, u): Self::SystemData) {
         while let Some(action) = state.pop_action() {
             let keep_history = action.keeps_history();
 
@@ -255,12 +323,13 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Undo => Self::undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => Self::redo(&mut state, &e, &s, &sp, &u),
                 Action::ClearError => state.clear_error(),
-                Action::SetMode(mode) => state.set_mode(mode),
+                Action::SetMode(mode) => Self::set_mode(mode, &mut state, &s, &p),
                 Action::ApplyColor(cm) => Self::apply_color_to_selected(cm, &state, &mut sp, &s),
+                Action::ApplySymbol(sym) => Self::apply_symbol_to_selected(sym, &mut state, &mut sp, &s, &mut p, &mut d),
                 Action::ReverseMode => state.reverse_mode(),
                 Action::Deselect => Self::deselect(&e, &s, &u),
                 Action::SelectNext(keep) => Self::select_next(&e, &sel, &s, &u, keep),
-                Action::Translate(t) => Self::translate_selected(t, &mut p, &s, &d),
+                Action::Translate(t) => Self::translate_selected(t, &mut state, &mut p, &s, &d),
                 Action::Delete => {
                     if let Err(err) = Self::delete_selected(&e, &s) {
                         state.set_error(err)

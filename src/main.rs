@@ -13,6 +13,16 @@ mod systems;
 use specs::prelude::*;
 
 fn main() {
+    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+    if ts.0 < 80 || ts.1 < 15 {
+        writeln!(
+            std::io::stderr(),
+            "Terminal size too small, minimum 80x15 is required"
+        )
+        .unwrap();
+        std::process::exit(1);
+    }
+
     let args: Vec<String> = env::args().collect();
 
     let mut world = World::new();

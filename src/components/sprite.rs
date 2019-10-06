@@ -1,5 +1,6 @@
 use crate::common::{cwd_path, Texel};
 use crate::resources::{ColorMode, ColorPalette};
+use crate::components::Position;
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 use std::fs::File;
@@ -62,6 +63,48 @@ impl Sprite {
             match cm {
                 ColorMode::Fg => texel.fg = color,
                 ColorMode::Bg => texel.bg = color,
+            }
+        }
+    }
+
+    pub fn apply_symbol(&mut self, symbol: char, bg: u8, fg: u8, pos: Position) -> bool {
+        for t in self.texels.iter_mut().filter(|t| {
+            t.x == pos.x && t.y == pos.y
+        }) {
+            if t.symbol == symbol && t.bg == bg && t.fg == fg {
+                return false
+            }
+
+            t.symbol = symbol;
+            t.bg = bg;
+            t.fg = fg;
+
+            return true
+        }
+
+        self.texels.push(Texel {
+            symbol,
+            bg,
+            fg,
+            x: pos.x,
+            y: pos.y
+        });
+
+        self.recalculate_xy(pos);
+
+        true
+    }
+
+    fn recalculate_xy(&mut self, pos: Position) {
+        if pos.x < 0 {
+            for t in self.texels.iter_mut() {
+                t.x -= pos.x
+            }
+        }
+
+        if pos.y < 0 {
+            for t in self.texels.iter_mut() {
+                t.y -= pos.y
             }
         }
     }

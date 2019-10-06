@@ -1,3 +1,4 @@
+use crate::components::Dimension;
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 
@@ -24,12 +25,28 @@ impl std::fmt::Display for Position {
     }
 }
 
+impl std::ops::Sub for Position {
+    type Output = Position;
+
+    fn sub(self, other: Self) -> Self {
+        Position {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
+    }}
+
 impl Position {
     pub fn from_xyz(x: i32, y: i32, z: i32) -> Self {
         Position { x, y, z }
     }
 
-    pub fn apply(&mut self, translation: Translation, w: u16, h: u16) -> bool {
+    pub fn apply(
+        &mut self,
+        translation: Translation,
+        dim: &Dimension,
+        bounds: Option<(Position, Dimension)>,
+    ) -> bool {
         match translation {
             Translation::None => {}
             Translation::Relative(x, y, z) => {
@@ -47,9 +64,28 @@ impl Position {
             Translation::ToEdge(dir) => match dir {
                 Direction::Left(x) => self.x = i32::from(x),
                 Direction::Top(y) => self.y = i32::from(y),
-                Direction::Bottom(y) => self.y = i32::from(y - h),
-                Direction::Right(x) => self.x = i32::from(x - w),
+                Direction::Bottom(y) => self.y = i32::from(y - dim.h),
+                Direction::Right(x) => self.x = i32::from(x - dim.w),
             },
+        }
+
+        if let Some(bounds) = bounds {
+            if self.x < bounds.0.x {
+                self.x = bounds.0.x;
+                return false;
+            }
+            if self.y < bounds.0.y {
+                self.y = bounds.0.y;
+                return false;
+            }
+            if self.x > i32::from(bounds.1.w) {
+                self.x = i32::from(bounds.1.w);
+                return false;
+            }
+            if self.y > i32::from(bounds.1.h) {
+                self.y = i32::from(bounds.1.h);
+                return false;
+            }
         }
 
         true

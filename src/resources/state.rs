@@ -1,4 +1,5 @@
 use crate::common::{Action, Error, Scene};
+use crate::components::Position;
 use crate::resources::{ColorMode, ColorPalette};
 use std::collections::VecDeque;
 use termion::event::Event;
@@ -44,6 +45,7 @@ pub struct State {
     selected_color: (u8, u8),
     save_state: (Option<String>, usize),
     dirty: bool,
+    pub cursor: Position,
 }
 
 impl Default for State {
@@ -58,6 +60,7 @@ impl Default for State {
             selected_color: (ColorPalette::default_bg_u8(), ColorPalette::default_fg_u8()),
             save_state: (None, 0),
             dirty: false,
+            cursor: Position::default(),
         };
 
         result.modes.push_back(Mode::default()); // there is always a mode!

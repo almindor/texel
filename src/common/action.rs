@@ -9,6 +9,7 @@ pub enum Action {
     ReverseMode,
     Deselect,
     ApplyColor(ColorMode),
+    ApplySymbol(char),
     SelectNext(bool), // select next keeping old if true
     Read(String),
     Write(Option<String>),
