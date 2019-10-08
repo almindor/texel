@@ -140,6 +140,41 @@ impl ActionHandler {
         changed
     }
 
+    fn clear_symbol_on_selected(
+        state: &mut State,
+        sp: &mut WriteStorage<Sprite>,
+        s: &ReadStorage<Selection>,
+        p: &mut WriteStorage<Position>,
+        d: &mut WriteStorage<Dimension>,
+    ) -> bool {
+        let mut changed = false;
+        for (sprite, mut pos, mut dim, _) in (sp, p, d, s).join() {
+            let rel_pos = state.cursor - *pos;
+            let changes = sprite.clear_symbol(rel_pos);
+
+            match changes {
+                Ok(None) => {} // no change, symbol was applied in bounds
+                Ok(Some(bounds)) => { // changed pos or dim => apply new bounds
+                    if rel_pos.x < 0 {
+                        pos.x += bounds.0.x;
+                    }
+                    if rel_pos.y < 0 {
+                        pos.y += bounds.0.y;
+                    }
+
+                    dim.w = bounds.1.w;
+                    dim.h = bounds.1.h;
+                    changed = true;
+                }
+                Err(err) => { // if dim is funky?
+                    return state.set_error(err)
+                }
+            }
+        }
+
+        changed
+    }
+
     fn apply_symbol_to_selected(
         symbol: char,
         state: &mut State,
@@ -154,24 +189,24 @@ impl ActionHandler {
 
         for (sprite, mut pos, mut dim, _) in (sp, p, d, s).join() {
             let rel_pos = state.cursor - *pos;
-            changed = sprite.apply_symbol(symbol, bg, fg, rel_pos); // TODO: fg/bg
+            let changes = sprite.apply_symbol(symbol, bg, fg, rel_pos);
 
-            if changed {
-                if rel_pos.x < 0 {
-                    pos.x += rel_pos.x;
-                }
-                if rel_pos.y < 0 {
-                    pos.y += rel_pos.y;
-                }
+            match changes {
+                Ok(None) => {} // no change, symbol was applied in bounds
+                Ok(Some(bounds)) => { // changed pos or dim => apply new bounds
+                    if rel_pos.x < 0 {
+                        pos.x += bounds.0.x;
+                    }
+                    if rel_pos.y < 0 {
+                        pos.y += bounds.0.y;
+                    }
 
-                match Dimension::for_sprite(sprite) {
-                    Ok(new_dim) => {
-                        dim.w = new_dim.w;
-                        dim.h = new_dim.h;
-                    },
-                    Err(err) => {
-                        state.set_error(err.into());
-                    },
+                    dim.w = bounds.1.w;
+                    dim.h = bounds.1.h;
+                    changed = true;
+                }
+                Err(err) => { // if dim is funky?
+                    return state.set_error(err)
                 }
             }
         }
@@ -331,7 +366,9 @@ impl<'a> System<'a> for ActionHandler {
                 Action::SelectNext(keep) => Self::select_next(&e, &sel, &s, &u, keep),
                 Action::Translate(t) => Self::translate_selected(t, &mut state, &mut p, &s, &d),
                 Action::Delete => {
-                    if let Err(err) = Self::delete_selected(&e, &s) {
+                    if state.mode() == Mode::Edit {
+                        Self::clear_symbol_on_selected(&mut state, &mut sp, &s, &mut p, &mut d)
+                    } else if let Err(err) = Self::delete_selected(&e, &s) {
                         state.set_error(err)
                     } else {
                         true

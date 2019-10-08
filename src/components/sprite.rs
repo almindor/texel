@@ -1,6 +1,6 @@
-use crate::common::{cwd_path, Texel};
+use crate::common::{cwd_path, Texel, Error};
 use crate::resources::{ColorMode, ColorPalette};
-use crate::components::Position;
+use crate::components::{Position, Dimension};
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 use std::fs::File;
@@ -67,19 +67,19 @@ impl Sprite {
         }
     }
 
-    pub fn apply_symbol(&mut self, symbol: char, bg: u8, fg: u8, pos: Position) -> bool {
+    pub fn apply_symbol(&mut self, symbol: char, bg: u8, fg: u8, pos: Position) -> Result<Option<(Position, Dimension)>, Error> {
         for t in self.texels.iter_mut().filter(|t| {
             t.x == pos.x && t.y == pos.y
         }) {
             if t.symbol == symbol && t.bg == bg && t.fg == fg {
-                return false
+                return Ok(None)
             }
 
             t.symbol = symbol;
             t.bg = bg;
             t.fg = fg;
 
-            return true
+            return Ok(Some(self.calculate_bounds()?)); // TODO: not needed, just need to know we did something
         }
 
         self.texels.push(Texel {
@@ -90,23 +90,49 @@ impl Sprite {
             y: pos.y
         });
 
-        self.recalculate_xy(pos);
-
-        true
+        Ok(Some(self.calculate_bounds()?))
     }
 
-    fn recalculate_xy(&mut self, pos: Position) {
-        if pos.x < 0 {
-            for t in self.texels.iter_mut() {
-                t.x -= pos.x
+    pub fn clear_symbol(&mut self, pos: Position) -> Result<Option<(Position, Dimension)>, Error> {
+        let count = self.texels.len();
+        self.texels.retain(|t| t.x != pos.x || t.y != pos.y);
+
+        if count != self.texels.len() {
+            return Ok(Some(self.calculate_bounds()?))
+        }
+
+        Ok(None)
+    }
+
+    // goes through texels so we can calculate dimension and move position if
+    // needed. TODO: optimize, we're doing 3 loops here for no good reason
+    fn calculate_bounds(&mut self) -> Result<(Position, Dimension), Error> {
+        let mut min_x = i32::max_value();
+        let mut min_y = i32::max_value();
+
+        // get new symbol at negative position if any
+        for t in &self.texels {
+            if t.x < min_x {
+                min_x = t.x;
+            }
+            if t.y < min_y {
+                min_y = t.y;
             }
         }
 
-        if pos.y < 0 {
+        // shift to the right/bottom as needed
+        if min_x < 0 || min_y < 0 {
             for t in self.texels.iter_mut() {
-                t.y -= pos.y
+                if min_x < 0 {
+                    t.x -= min_x;
+                }
+                if min_y < 0 {
+                    t.y -= min_y;
+                }
             }
         }
+
+        Ok((Position::from_xyz(min_x, min_y, 0), Dimension::for_sprite(self)?))
     }
 }
 
