@@ -1,4 +1,4 @@
-use crate::common::{cwd_path, Action, Error, Scene};
+use crate::common::{cwd_path, Action, Error, Scene, SceneV1};
 use crate::components::*;
 use crate::resources::{ColorMode, Loaded, Loader, Mode, State};
 use libflate::gzip::Encoder;
@@ -250,7 +250,8 @@ impl ActionHandler {
         new_path: &Option<String>,
     ) -> Result<(), Error> {
         let path = state.save_file(new_path)?;
-        let ronified = ron::ser::to_string(&Scene::from((e, sp, p, s)))?;
+        let scene = Scene::V1(SceneV1::from((e, sp, p, s)));
+        let ronified = ron::ser::to_string(&scene)?;
         let raw_path = if Path::new(&path).extension() != Some(std::ffi::OsStr::new("rgz")) {
             Path::new(&path).with_extension("rgz")
         } else {
@@ -297,8 +298,10 @@ impl ActionHandler {
     ) -> Result<(), Error> {
         Self::clear_scene(e, sp)?;
 
-        for obj in scene.objects {
-            Self::import_sprite(obj.0, e, s, u, Some(obj.1), obj.2)?;
+        match scene {
+            Scene::V1(v1) => for obj in v1.objects {
+                Self::import_sprite(obj.0, e, s, u, Some(obj.1), obj.2)?;
+            }
         }
 
         Ok(())

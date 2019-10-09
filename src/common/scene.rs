@@ -2,9 +2,20 @@ use crate::components::{Position, Selection, Sprite};
 use serde::{Deserialize, Serialize};
 use specs::{Entities, Join, ReadStorage, WriteStorage};
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum Scene {
+    V1(SceneV1),
+}
+
+impl Default for Scene {
+    fn default() -> Self {
+        Scene::V1(SceneV1::default())
+    }
+}
+
 // TODO: figure out a 0-copy way to keep scene serializable/deserializable
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
-pub struct Scene {
+pub struct SceneV1 {
     pub objects: Vec<(Sprite, Position, bool)>,
 }
 
@@ -14,7 +25,7 @@ impl<'a>
         &WriteStorage<'a, Sprite>,
         &WriteStorage<'a, Position>,
         &ReadStorage<'a, Selection>,
-    )> for Scene
+    )> for SceneV1
 {
     fn from(
         storage: (
@@ -31,6 +42,6 @@ impl<'a>
             objects.push((sprite.clone(), pos.clone(), s.contains(entity)));
         }
 
-        Scene { objects }
+        SceneV1 { objects }
     }
 }

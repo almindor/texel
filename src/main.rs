@@ -29,6 +29,7 @@ fn main() {
     world.insert(resources::SyncTerm::new());
     world.insert(resources::State::default());
     world.insert(resources::ColorPalette::default());
+    world.insert(resources::SymbolPalette::default());
 
     let mut updater = DispatcherBuilder::new()
         .with(systems::InputHandler, "input_handler", &[])

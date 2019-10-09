@@ -4,9 +4,11 @@ use std::path::{Path, PathBuf};
 
 mod action;
 mod scene;
+mod config;
 
 pub use action::Action;
-pub use scene::Scene;
+pub use scene::{Scene, SceneV1};
+pub use config::{Config, ConfigV1};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Texel {
