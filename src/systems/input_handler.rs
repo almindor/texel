@@ -1,6 +1,6 @@
 use crate::common::Action;
 use crate::components::{Direction, Translation};
-use crate::resources::{CmdLine, ColorMode, ColorPalette, SymbolPalette, Mode, State};
+use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette};
 use specs::{Read, System, Write};
 use termion::event::{Event, Key};
 
@@ -153,9 +153,12 @@ impl InputHandler {
 }
 
 impl<'a> System<'a> for InputHandler {
-    type SystemData = (Write<'a, State>, Write<'a, CmdLine>,
+    type SystemData = (
+        Write<'a, State>,
+        Write<'a, CmdLine>,
         Read<'a, ColorPalette>,
-        Read<'a, SymbolPalette>);
+        Read<'a, SymbolPalette>,
+    );
 
     fn run(&mut self, (mut state, mut cmdline, color_palette, symbol_palette): Self::SystemData) {
         while let Some(event) = state.pop_event() {

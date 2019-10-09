@@ -154,7 +154,8 @@ impl ActionHandler {
 
             match changes {
                 Ok(None) => {} // no change, symbol was applied in bounds
-                Ok(Some(bounds)) => { // changed pos or dim => apply new bounds
+                Ok(Some(bounds)) => {
+                    // changed pos or dim => apply new bounds
                     if rel_pos.x < 0 {
                         pos.x += bounds.0.x;
                     }
@@ -166,8 +167,9 @@ impl ActionHandler {
                     dim.h = bounds.1.h;
                     changed = true;
                 }
-                Err(err) => { // if dim is funky?
-                    return state.set_error(err)
+                Err(err) => {
+                    // if dim is funky?
+                    return state.set_error(err);
                 }
             }
         }
@@ -193,7 +195,8 @@ impl ActionHandler {
 
             match changes {
                 Ok(None) => {} // no change, symbol was applied in bounds
-                Ok(Some(bounds)) => { // changed pos or dim => apply new bounds
+                Ok(Some(bounds)) => {
+                    // changed pos or dim => apply new bounds
                     if rel_pos.x < 0 {
                         pos.x += bounds.0.x;
                     }
@@ -205,8 +208,9 @@ impl ActionHandler {
                     dim.h = bounds.1.h;
                     changed = true;
                 }
-                Err(err) => { // if dim is funky?
-                    return state.set_error(err)
+                Err(err) => {
+                    // if dim is funky?
+                    return state.set_error(err);
                 }
             }
         }
@@ -360,7 +364,9 @@ impl<'a> System<'a> for ActionHandler {
                 Action::ClearError => state.clear_error(),
                 Action::SetMode(mode) => Self::set_mode(mode, &mut state, &s, &p),
                 Action::ApplyColor(cm) => Self::apply_color_to_selected(cm, &state, &mut sp, &s),
-                Action::ApplySymbol(sym) => Self::apply_symbol_to_selected(sym, &mut state, &mut sp, &s, &mut p, &mut d),
+                Action::ApplySymbol(sym) => {
+                    Self::apply_symbol_to_selected(sym, &mut state, &mut sp, &s, &mut p, &mut d)
+                }
                 Action::ReverseMode => state.reverse_mode(),
                 Action::Deselect => Self::deselect(&e, &s, &u),
                 Action::SelectNext(keep) => Self::select_next(&e, &sel, &s, &u, keep),

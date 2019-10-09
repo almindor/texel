@@ -1,6 +1,6 @@
-use crate::common::{cwd_path, Texel, Error};
+use crate::common::{cwd_path, Error, Texel};
+use crate::components::{Dimension, Position};
 use crate::resources::{ColorMode, ColorPalette};
-use crate::components::{Position, Dimension};
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 use std::fs::File;
@@ -67,12 +67,20 @@ impl Sprite {
         }
     }
 
-    pub fn apply_symbol(&mut self, symbol: char, bg: u8, fg: u8, pos: Position) -> Result<Option<(Position, Dimension)>, Error> {
-        for t in self.texels.iter_mut().filter(|t| {
-            t.x == pos.x && t.y == pos.y
-        }) {
+    pub fn apply_symbol(
+        &mut self,
+        symbol: char,
+        bg: u8,
+        fg: u8,
+        pos: Position,
+    ) -> Result<Option<(Position, Dimension)>, Error> {
+        for t in self
+            .texels
+            .iter_mut()
+            .filter(|t| t.x == pos.x && t.y == pos.y)
+        {
             if t.symbol == symbol && t.bg == bg && t.fg == fg {
-                return Ok(None)
+                return Ok(None);
             }
 
             t.symbol = symbol;
@@ -87,7 +95,7 @@ impl Sprite {
             bg,
             fg,
             x: pos.x,
-            y: pos.y
+            y: pos.y,
         });
 
         Ok(Some(self.calculate_bounds()?))
@@ -98,7 +106,7 @@ impl Sprite {
         self.texels.retain(|t| t.x != pos.x || t.y != pos.y);
 
         if count != self.texels.len() {
-            return Ok(Some(self.calculate_bounds()?))
+            return Ok(Some(self.calculate_bounds()?));
         }
 
         Ok(None)
@@ -132,7 +140,10 @@ impl Sprite {
             }
         }
 
-        Ok((Position::from_xyz(min_x, min_y, 0), Dimension::for_sprite(self)?))
+        Ok((
+            Position::from_xyz(min_x, min_y, 0),
+            Dimension::for_sprite(self)?,
+        ))
     }
 }
 

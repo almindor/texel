@@ -1,6 +1,6 @@
-use serde::{Serialize, Deserialize};
-use specs::{Entities, Join, ReadStorage, WriteStorage};
 use crate::components::{Position, Selection, Sprite};
+use serde::{Deserialize, Serialize};
+use specs::{Entities, Join, ReadStorage, WriteStorage};
 
 // TODO: figure out a 0-copy way to keep scene serializable/deserializable
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]

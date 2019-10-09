@@ -34,7 +34,8 @@ impl std::ops::Sub for Position {
             y: self.y - other.y,
             z: self.z - other.z,
         }
-    }}
+    }
+}
 
 impl Position {
     pub fn from_xyz(x: i32, y: i32, z: i32) -> Self {
