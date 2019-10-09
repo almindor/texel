@@ -13,6 +13,15 @@ impl Default for Scene {
     }
 }
 
+impl Scene {
+    pub fn current(self) -> SceneV1 {
+        match self {
+            Self::V1(scene) => scene,
+            // TODO: once we have V2+ we'll need to return that and convert previous
+        }
+    }
+}
+
 // TODO: figure out a 0-copy way to keep scene serializable/deserializable
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct SceneV1 {

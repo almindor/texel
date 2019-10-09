@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::common::LazyLoaded;
 
 const fn cc(r: u8, g: u8, b: u8) -> u8 {
     16 + 36 * r + 6 * g + b
@@ -38,7 +39,11 @@ pub enum ColorMode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColorPalette {
     colors: [u8; COLORS_IN_PALETTE],
+    #[serde(skip_serializing)]
+    #[serde(default)]
     fg_string: String,
+    #[serde(skip_serializing)]
+    #[serde(default)]
     bg_string: String,
 }
 
@@ -74,6 +79,18 @@ impl From<&[u8]> for ColorPalette {
             colors: palette_colors,
             fg_string: Self::to_line_string(&palette_colors, ColorMode::Fg),
             bg_string: Self::to_line_string(&palette_colors, ColorMode::Bg),
+        }
+    }
+}
+
+impl LazyLoaded for ColorPalette {
+    fn refresh(&mut self) {
+        if self.fg_string.is_empty() {
+            self.fg_string = Self::to_line_string(&self.colors, ColorMode::Fg);
+        }
+
+        if self.bg_string.is_empty() {
+            self.bg_string = Self::to_line_string(&self.colors, ColorMode::Bg);
         }
     }
 }
@@ -167,6 +184,7 @@ impl ColorPalette {
         result
     }
 
+    // lazy load so we can skip serializing but don't need to do custom serde crap
     pub fn line_str(&self, cm: ColorMode) -> &str {
         match cm {
             ColorMode::Fg => &self.fg_string,

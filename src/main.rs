@@ -10,6 +10,7 @@ mod components;
 mod resources;
 mod systems;
 
+use common::{Config, ConfigV1, Loader};
 use specs::prelude::*;
 
 fn main() {
@@ -24,13 +25,25 @@ fn main() {
     }
 
     let args: Vec<String> = env::args().collect();
-
     let mut world = World::new();
-    world.insert(resources::SyncTerm::new());
-    world.insert(resources::State::default());
-    world.insert(resources::ColorPalette::default());
-    world.insert(resources::SymbolPalette::default());
 
+    let config_dir = dirs::config_dir().unwrap();
+    let config_file = config_dir.join("texel/texel.ron");
+    writeln!(std::io::stderr(), "Config file: {:?}", &config_file).unwrap();
+
+    {
+        let config = match Loader::from_config_file(&config_file) {
+            Ok(val) => val.current(), // ensures we upgrade if there's a version change
+            Err(_) => Config::default().current(),
+        };
+
+        // prep resources
+        world.insert(resources::SyncTerm::new());
+        world.insert(resources::State::default());
+        world.insert(config.color_palette);
+        world.insert(config.symbol_palette);
+    }
+    // create dispatchers
     let mut updater = DispatcherBuilder::new()
         .with(systems::InputHandler, "input_handler", &[])
         .with(systems::ActionHandler, "action_handler", &["input_handler"])
@@ -50,13 +63,13 @@ fn main() {
             &["sprite_renderer"],
         )
         .build();
-
+    // setup dispatchers with world
     updater.setup(&mut world);
     renderer.setup(&mut world);
-
+    // initial clear screen
     let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
     write!(stdout, "{}", termion::clear::All,).unwrap();
-
+    // load files as needed
     if args.len() > 1 {
         {
             let mut state = world.fetch_mut::<resources::State>();
@@ -83,9 +96,9 @@ fn main() {
             state.saved(None);
         }
     }
-
+    // render first time
     renderer.dispatch(&world);
-
+    // flush buffers to terminal
     world
         .fetch_mut::<resources::SyncTerm>()
         .flush_into(&mut stdout)
@@ -96,21 +109,22 @@ fn main() {
         // handle input
         world.fetch_mut::<resources::State>().push_event(c.unwrap());
         updater.dispatch(&world);
-
+        // quit if needed
         if world.fetch_mut::<resources::State>().quitting() {
             break;
         }
-
+        // ensure we lazy update
         world.maintain();
+        // render only after world is up to date
         renderer.dispatch(&world);
-
+        // flush buffers to terminal
         world
             .fetch_mut::<resources::SyncTerm>()
             .flush_into(&mut stdout)
             .unwrap();
         stdout.flush().unwrap();
     }
-
+    // reset tty back with clear screen
     let color_reset = termion::color::Reset;
     write!(
         stdout,
@@ -122,4 +136,10 @@ fn main() {
     )
     .unwrap();
     stdout.flush().unwrap();
+
+    // save config
+    let cp = world.fetch::<resources::ColorPalette>();
+    let sp = world.fetch::<resources::SymbolPalette>();
+    let config = Config::V1(ConfigV1::from((&*cp, &*sp)));
+    Loader::to_config_file(config, &config_file).unwrap();
 }

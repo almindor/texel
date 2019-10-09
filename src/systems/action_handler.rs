@@ -1,6 +1,6 @@
-use crate::common::{cwd_path, Action, Error, Scene, SceneV1};
+use crate::common::{cwd_path, Action, Error, Scene, SceneV1, Loaded, Loader};
 use crate::components::*;
-use crate::resources::{ColorMode, Loaded, Loader, Mode, State};
+use crate::resources::{ColorMode, Mode, State};
 use libflate::gzip::Encoder;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use std::path::{Path, PathBuf};
@@ -298,10 +298,9 @@ impl ActionHandler {
     ) -> Result<(), Error> {
         Self::clear_scene(e, sp)?;
 
-        match scene {
-            Scene::V1(v1) => for obj in v1.objects {
-                Self::import_sprite(obj.0, e, s, u, Some(obj.1), obj.2)?;
-            }
+        let current = scene.current();
+        for obj in current.objects {
+            Self::import_sprite(obj.0, e, s, u, Some(obj.1), obj.2)?;
         }
 
         Ok(())

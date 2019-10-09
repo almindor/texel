@@ -5,10 +5,17 @@ use std::path::{Path, PathBuf};
 mod action;
 mod scene;
 mod config;
+mod loader;
 
 pub use action::Action;
 pub use scene::{Scene, SceneV1};
 pub use config::{Config, ConfigV1};
+pub use loader::{Loader, Loaded};
+
+// described deserializables that need "after load" refresh
+pub trait LazyLoaded {
+    fn refresh(&mut self);
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Texel {

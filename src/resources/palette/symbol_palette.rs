@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::common::LazyLoaded;
 
 const SYMBOLS_IN_PALETTE: usize = 16;
 const DEFAULT_SYMBOLS: [char; SYMBOLS_IN_PALETTE] = [
@@ -11,6 +12,8 @@ const SYMBOL_SELECTOR: [char; SYMBOLS_IN_PALETTE] = [
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolPalette {
     symbols: [char; SYMBOLS_IN_PALETTE],
+    #[serde(skip_serializing)]
+    #[serde(default)]
     line_str: String,
 }
 
@@ -44,6 +47,12 @@ impl From<&[char]> for SymbolPalette {
             symbols: symbol_chars,
             line_str: Self::to_line_string(&symbol_chars),
         }
+    }
+}
+
+impl LazyLoaded for SymbolPalette {
+    fn refresh(&mut self) {
+        self.line_str = Self::to_line_string(&self.symbols);
     }
 }
 
