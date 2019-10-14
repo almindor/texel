@@ -1,8 +1,7 @@
-use crate::common::{path_base, Action, Error};
+use crate::common::{path_base, Action, Error, InputEvent, Event};
 use crate::components::Translation;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
-use termion::event::Key;
 
 mod auto_complete;
 
@@ -37,24 +36,29 @@ impl CmdLine {
         &self.cmd
     }
 
-    pub fn input(&mut self, k: Key) -> Result<Action, Error> {
+    pub fn input(&mut self, event: InputEvent) -> Result<Action, Error> {
         let mut clear_ac = true;
-        let result = match k {
-            Key::Esc => Ok(Action::ReverseMode),
-            Key::Backspace => self.remove(),
-            Key::Char(c) => match c {
-                '\n' => self.parse(),
-                '\t' => {
-                    clear_ac = false;
-                    self.auto_complete()
-                }
-                _ => self.append(c),
-            },
-            Key::Up => self.previous(),
-            Key::Down => self.next(),
-            Key::Left => self.move_cursor(-1),
-            Key::Right => self.move_cursor(1),
-            _ => Ok(Action::None),
+        let result = match event.0 {
+            Event::Cancel => Ok(Action::ReverseMode),
+            Event::Backspace => self.remove(),
+
+            Event::ArrowUp => self.previous(),
+            Event::ArrowDown => self.next(),
+            Event::ArrowLeft => self.move_cursor(-1),
+            Event::ArrowRight => self.move_cursor(1),
+
+            Event::Confirm => self.parse(),
+            Event::Next => {
+                clear_ac = false;
+                self.auto_complete()
+            }
+
+            // otherwise get char and handle
+            _ => if let Some(c) = event.1 {
+                self.append(c)
+            } else {
+                Ok(Action::None)
+            }
         };
 
         if clear_ac {
@@ -132,7 +136,7 @@ impl CmdLine {
     fn remove(&mut self) -> Result<Action, Error> {
         if self.cursor_pos == self.cmd.len() {
             self.cmd.pop();
-        } else {
+        } else if self.cursor_pos > 0 {
             self.cmd.remove(self.cursor_pos - 1);
         }
 

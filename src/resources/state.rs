@@ -1,8 +1,7 @@
-use crate::common::{Action, Error, Scene};
+use crate::common::{Action, Error, Scene, InputEvent};
 use crate::components::Position;
 use crate::resources::{ColorMode, ColorPalette};
 use std::collections::VecDeque;
-use termion::event::Event;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -37,7 +36,7 @@ const HISTORY_CAPACITY: usize = 20usize;
 #[derive(Debug)]
 pub struct State {
     error: Option<Error>,
-    events: VecDeque<Event>,
+    events: VecDeque<InputEvent>, // (raw, Option<mapping>)
     actions: VecDeque<Action>,
     modes: VecDeque<Mode>,
     history: VecDeque<Scene>,
@@ -156,11 +155,14 @@ impl State {
         false
     }
 
-    pub fn push_event(&mut self, event: Event) {
+    pub fn push_event(&mut self, event: InputEvent) {
+        use std::io::Write;
+        writeln!(std::io::stderr(), "I: {:?}", event).unwrap();
+
         self.events.push_back(event)
     }
 
-    pub fn pop_event(&mut self) -> Option<Event> {
+    pub fn pop_event(&mut self) -> Option<InputEvent> {
         self.events.pop_front()
     }
 

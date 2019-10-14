@@ -10,7 +10,7 @@ mod components;
 mod resources;
 mod systems;
 
-use common::{Config, ConfigV1, Loader};
+use common::{Config, ConfigV1, Loader, InputMap};
 use specs::prelude::*;
 
 fn main() {
@@ -31,18 +31,26 @@ fn main() {
     let config_file = config_dir.join("texel/texel.ron");
     writeln!(std::io::stderr(), "Config file: {:?}", &config_file).unwrap();
 
-    {
+    let input_map = {
         let config = match Loader::from_config_file(&config_file) {
             Ok(val) => val.current(), // ensures we upgrade if there's a version change
             Err(_) => Config::default().current(),
         };
+
+        writeln!(std::io::stderr(), "CM: {:?}", config.char_map).unwrap();
 
         // prep resources
         world.insert(resources::SyncTerm::new());
         world.insert(resources::State::default());
         world.insert(config.color_palette);
         world.insert(config.symbol_palette);
-    }
+
+        InputMap::from(config.char_map)
+    };
+
+    writeln!(std::io::stderr(), "EM: {:?}", input_map).unwrap();
+
+
     // create dispatchers
     let mut updater = DispatcherBuilder::new()
         .with(systems::InputHandler, "input_handler", &[])
@@ -107,7 +115,8 @@ fn main() {
 
     for c in stdin().events() {
         // handle input
-        world.fetch_mut::<resources::State>().push_event(c.unwrap());
+        let mapped = input_map.map_input(c.unwrap());
+        world.fetch_mut::<resources::State>().push_event(mapped);
         updater.dispatch(&world);
         // quit if needed
         if world.fetch_mut::<resources::State>().quitting() {

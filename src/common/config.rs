@@ -1,5 +1,5 @@
 use crate::resources::{ColorPalette, SymbolPalette};
-use crate::common::LazyLoaded;
+use crate::common::{LazyLoaded, CharMap};
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -29,6 +29,7 @@ impl Config {
 pub struct ConfigV1 {
     pub color_palette: ColorPalette,
     pub symbol_palette: SymbolPalette,
+    pub char_map: CharMap,
 }
 
 impl From<(&ColorPalette, &SymbolPalette)> for ConfigV1 {
@@ -36,6 +37,7 @@ impl From<(&ColorPalette, &SymbolPalette)> for ConfigV1 {
         ConfigV1 {
             color_palette: palettes.0.clone(),
             symbol_palette: palettes.1.clone(),
+            char_map: CharMap::default(),
         }
     }
 }

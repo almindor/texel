@@ -1,151 +1,125 @@
-use crate::common::Action;
+use crate::common::{Event, InputEvent, Action};
 use crate::components::{Direction, Translation};
 use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette};
 use specs::{Read, System, Write};
-use termion::event::{Event, Key};
 
 pub struct InputHandler;
 
 impl InputHandler {
-    fn objmode_event(event: Event, state: &mut State) {
+    fn objmode_event(event: InputEvent, state: &mut State) {
         let ts = termion::terminal_size().unwrap();
 
-        let action = match event {
-            Event::Key(Key::Esc) => Action::ReverseMode,
-            Event::Key(Key::Char(':')) => {
+        let action = match event.0 {
+            Event::ModeCmd => {
                 state.push_action(Action::ClearError); // clean errors when going back to cmdline
                 Action::SetMode(Mode::Command)
             }
-            Event::Key(Key::Char('e')) => Action::SetMode(Mode::Edit),
-            Event::Key(Key::Char('\t')) => Action::SelectNext(false),
+            Event::ModeEdit => Action::SetMode(Mode::Edit),
+            Event::ModeColorFG => Action::SetMode(Mode::Color(ColorMode::Fg)),
+            Event::ModeColorBG => Action::SetMode(Mode::Color(ColorMode::Bg)),
 
-            Event::Key(Key::Delete) | Event::Key(Key::Backspace) | Event::Key(Key::Char('d')) => {
-                Action::Delete
-            }
+            Event::Next => Action::SelectNext(false),
+            Event::NextWith => Action::SelectNext(true),
 
-            Event::Key(Key::Char('u')) => Action::Undo,
-            Event::Key(Key::Char('U')) => Action::Redo,
+            Event::Cancel => Action::ReverseMode,
+            Event::Delete | Event::Backspace => Action::Delete,
 
-            Event::Key(Key::Char('g')) => Action::Translate(Translation::Relative(0, 0, -1)),
-            Event::Key(Key::Char('y')) => Action::Translate(Translation::Relative(0, 0, 1)),
+            Event::Undo => Action::Undo,
+            Event::Redo => Action::Redo,
 
-            Event::Key(Key::Char('F')) => Action::SetMode(Mode::Color(ColorMode::Fg)),
-            Event::Key(Key::Char('B')) => Action::SetMode(Mode::Color(ColorMode::Bg)),
-            Event::Key(Key::Char('q')) => Action::ApplyColor(ColorMode::Fg),
-            Event::Key(Key::Char('w')) => Action::ApplyColor(ColorMode::Bg),
+            Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
+            Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 
-            Event::Key(Key::Char('h')) => Action::Translate(Translation::Relative(-1, 0, 0)),
-            Event::Key(Key::Char('j')) => Action::Translate(Translation::Relative(0, 1, 0)),
-            Event::Key(Key::Char('k')) => Action::Translate(Translation::Relative(0, -1, 0)),
-            Event::Key(Key::Char('l')) => Action::Translate(Translation::Relative(1, 0, 0)),
-            Event::Key(Key::Char('H')) => {
-                Action::Translate(Translation::ToEdge(Direction::Left(1)))
-            }
-            Event::Key(Key::Char('J')) => Action::Translate(Translation::ToEdge(Direction::Top(1))),
-            Event::Key(Key::Char('K')) => {
-                Action::Translate(Translation::ToEdge(Direction::Bottom(ts.1)))
-            }
-            Event::Key(Key::Char('L')) => {
-                Action::Translate(Translation::ToEdge(Direction::Right(ts.0)))
-            }
-            Event::Unsupported(raw) => {
-                // shift + tab
-                if raw.len() == 3 && raw[0] == 27 && raw[1] == 91 && raw[2] == 90 {
-                    Action::SelectNext(true)
-                } else {
-                    Action::None
-                }
-            }
+            Event::ApplyColorFG => Action::ApplyColor(ColorMode::Fg),
+            Event::ApplyColorBG => Action::ApplyColor(ColorMode::Bg),
+
+            Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
+            Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
+            Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
+            Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
+    
+            Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left(1))),
+            Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top(1))),
+            Event::DownEdge => Action::Translate(Translation::ToEdge(Direction::Bottom(ts.1))),
+            Event::RightEdge => Action::Translate(Translation::ToEdge(Direction::Right(ts.0))),
+
             _ => Action::None,
         };
 
         state.push_action(action);
     }
 
-    fn cmdline_event(event: Event, state: &mut State, cmdline: &mut CmdLine) {
-        match event {
-            Event::Key(k) => match cmdline.input(k) {
-                Ok(action) => {
-                    if action.is_some() && !action.is_reverse_mode() {
-                        state.push_action(Action::ReverseMode);
-                    }
-                    state.push_action(action);
-                }
-                Err(err) => {
-                    state.set_error(err);
+    fn cmdline_event(event: InputEvent, state: &mut State, cmdline: &mut CmdLine) {
+        match cmdline.input(event) {
+            Ok(action) => {
+                if action.is_some() && !action.is_reverse_mode() {
                     state.push_action(Action::ReverseMode);
                 }
-            },
-            _ => {}
+                state.push_action(action);
+            }
+            Err(err) => {
+                state.set_error(err);
+                state.push_action(Action::ReverseMode);
+            }
         };
     }
 
-    fn color_event(event: Event, state: &mut State, cm: ColorMode, palette: &ColorPalette) {
-        match event {
-            Event::Key(Key::Char(':')) => {
+    fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &ColorPalette) {
+        match event.0 {
+            Event::ModeCmd => {
                 state.push_action(Action::ReverseMode);
                 state.push_action(Action::ClearError); // clean errors when going back to cmdline
                 state.push_action(Action::SetMode(Mode::Command));
             }
-            Event::Key(Key::Char('q')) | Event::Key(Key::Esc) => {
-                state.push_action(Action::ReverseMode)
-            }
-            Event::Key(Key::Char(c)) => {
-                if let Some(index) = c.to_digit(16) {
-                    state.set_color(palette.color(index as usize), cm);
-                    state.push_action(Action::ReverseMode);
-                }
-            }
+            Event::Cancel => state.push_action(Action::ReverseMode),
             _ => {}
         };
+
+        if let Some(c) = event.1 {
+            if let Some(index) = c.to_digit(16) {
+                state.set_color(palette.color(index as usize), cm);
+                state.push_action(Action::ReverseMode);
+            }
+        }
     }
 
-    fn edit_event(event: Event, state: &mut State, palette: &SymbolPalette) {
-        let action = match event {
-            Event::Key(Key::Char(':')) => {
+    fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
+        let action = match event.0 {
+            Event::ModeCmd => {
                 state.push_action(Action::ClearError); // clean errors when going back to cmdline
                 Action::SetMode(Mode::Command)
             }
-            Event::Key(Key::Esc) => Action::ReverseMode,
+            Event::Cancel => Action::ReverseMode,
+            Event::Delete | Event::Backspace => Action::Delete,
 
-            Event::Key(Key::Delete) | Event::Key(Key::Backspace) | Event::Key(Key::Char('d')) => {
-                Action::Delete
-            }
+            Event::Undo => Action::Undo,
+            Event::Redo => Action::Redo,
 
-            Event::Key(Key::Char('u')) => Action::Undo,
-            Event::Key(Key::Char('U')) => Action::Redo,
+            Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
+            Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 
-            Event::Key(Key::Char('g')) => Action::Translate(Translation::Relative(0, 0, -1)),
-            Event::Key(Key::Char('y')) => Action::Translate(Translation::Relative(0, 0, 1)),
+            Event::ModeColorFG => Action::SetMode(Mode::Color(ColorMode::Fg)),
+            Event::ModeColorBG => Action::SetMode(Mode::Color(ColorMode::Bg)),
+            Event::ApplyColorFG => Action::ApplyColor(ColorMode::Fg),
+            Event::ApplyColorBG => Action::ApplyColor(ColorMode::Bg),
 
-            Event::Key(Key::Char('F')) => Action::SetMode(Mode::Color(ColorMode::Fg)),
-            Event::Key(Key::Char('B')) => Action::SetMode(Mode::Color(ColorMode::Bg)),
-            Event::Key(Key::Char('q')) => Action::ApplyColor(ColorMode::Fg),
-            Event::Key(Key::Char('w')) => Action::ApplyColor(ColorMode::Bg),
+            Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
+            Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
 
-            Event::Key(Key::Char('h')) => Action::Translate(Translation::Relative(-1, 0, 0)),
-            Event::Key(Key::Char('j')) => Action::Translate(Translation::Relative(0, 1, 0)),
-            Event::Key(Key::Char('k')) => Action::Translate(Translation::Relative(0, -1, 0)),
-            Event::Key(Key::Char('l')) => Action::Translate(Translation::Relative(1, 0, 0)),
+            Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
+            Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
 
-            Event::Key(Key::Char(c)) => {
+            // TODO: handle Edge movements
+
+            _ => if let Some(c) = event.1 {
                 if let Some(index) = c.to_digit(16) {
                     Action::ApplySymbol(palette.symbol(index as usize))
                 } else {
                     Action::None
                 }
+            } else {
+                Action::None
             }
-            // Event::Key(Key::Char('H')) => {
-            //     Action::Translate(Translation::ToEdge(Direction::Left(1)))
-            // }
-            // Event::Key(Key::Char('J')) => Action::Translate(Translation::ToEdge(Direction::Top(1))),
-            // Event::Key(Key::Char('K')) => {
-            //     Action::Translate(Translation::ToEdge(Direction::Bottom(ts.1)))
-            // }
-            // Event::Key(Key::Char('L')) => {
-            //     Action::Translate(Translation::ToEdge(Direction::Right(ts.0)))
-            // }
-            _ => Action::None,
         };
 
         state.push_action(action);

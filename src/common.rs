@@ -3,11 +3,13 @@ use std::env::current_dir;
 use std::path::{Path, PathBuf};
 
 mod action;
+mod input;
 mod scene;
 mod config;
 mod loader;
 
 pub use action::Action;
+pub use input::{Event, InputEvent, InputMap, CharMap};
 pub use scene::{Scene, SceneV1};
 pub use config::{Config, ConfigV1};
 pub use loader::{Loader, Loaded};
