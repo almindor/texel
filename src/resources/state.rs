@@ -1,4 +1,4 @@
-use crate::common::{Action, Error, Scene, InputEvent};
+use crate::common::{Action, Error, InputEvent, Scene};
 use crate::components::Position;
 use crate::resources::{ColorMode, ColorPalette};
 use std::collections::VecDeque;

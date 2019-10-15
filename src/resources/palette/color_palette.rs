@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::common::LazyLoaded;
+use serde::{Deserialize, Serialize};
 
 const fn cc(r: u8, g: u8, b: u8) -> u8 {
     16 + 36 * r + 6 * g + b

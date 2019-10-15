@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use termion::event::{Event as TEvent, Key};
 
@@ -79,9 +79,7 @@ impl Default for CharMap {
         map.insert('\n', Event::Confirm);
         map.insert('\t', Event::Next);
 
-        CharMap {
-            map
-        }
+        CharMap { map }
     }
 }
 
@@ -95,7 +93,7 @@ pub struct InputMap {
 impl From<CharMap> for InputMap {
     fn from(cm: CharMap) -> Self {
         let mut result = InputMap {
-            map: HashMap::with_capacity(cm.map.capacity())
+            map: HashMap::with_capacity(cm.map.capacity()),
         };
 
         for (c, v) in cm.map {
@@ -106,12 +104,18 @@ impl From<CharMap> for InputMap {
         // meta-key defaults
         result.map.insert(TEvent::Key(Key::Esc), Event::Cancel);
         result.map.insert(TEvent::Key(Key::Left), Event::ArrowLeft);
-        result.map.insert(TEvent::Key(Key::Right), Event::ArrowRight);
+        result
+            .map
+            .insert(TEvent::Key(Key::Right), Event::ArrowRight);
         result.map.insert(TEvent::Key(Key::Up), Event::ArrowUp);
         result.map.insert(TEvent::Key(Key::Down), Event::ArrowDown);
         result.map.insert(TEvent::Key(Key::Delete), Event::Delete);
-        result.map.insert(TEvent::Key(Key::Backspace), Event::Backspace);
-        result.map.insert(TEvent::Unsupported(vec!(27, 91, 90)), Event::NextWith);
+        result
+            .map
+            .insert(TEvent::Key(Key::Backspace), Event::Backspace);
+        result
+            .map
+            .insert(TEvent::Unsupported(vec![27, 91, 90]), Event::NextWith);
 
         result
     }

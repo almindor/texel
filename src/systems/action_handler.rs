@@ -1,4 +1,4 @@
-use crate::common::{cwd_path, Action, Error, Scene, SceneV1, Loaded, Loader};
+use crate::common::{cwd_path, Action, Error, Loaded, Loader, Scene, SceneV1};
 use crate::components::*;
 use crate::resources::{ColorMode, Mode, State};
 use libflate::gzip::Encoder;
@@ -7,11 +7,7 @@ use std::path::{Path, PathBuf};
 
 pub struct ActionHandler;
 
-const NEW_POSITION: Position = Position {
-    x: 10,
-    y: 10,
-    z: 0
-};
+const NEW_POSITION: Position = Position { x: 10, y: 10, z: 0 };
 
 impl ActionHandler {
     fn deselect(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) -> bool {
@@ -47,7 +43,7 @@ impl ActionHandler {
                     state.clear_error();
                     state.cursor = NEW_POSITION;
                 }
-                _ => return state.set_error(Error::execution("Multiple objects selected"))
+                _ => return state.set_error(Error::execution("Multiple objects selected")),
             }
         }
 

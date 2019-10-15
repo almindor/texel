@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::common::LazyLoaded;
+use serde::{Deserialize, Serialize};
 
 const SYMBOLS_IN_PALETTE: usize = 16;
 const DEFAULT_SYMBOLS: [char; SYMBOLS_IN_PALETTE] = [

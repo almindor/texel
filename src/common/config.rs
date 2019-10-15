@@ -1,6 +1,6 @@
+use crate::common::{CharMap, LazyLoaded};
 use crate::resources::{ColorPalette, SymbolPalette};
-use crate::common::{LazyLoaded, CharMap};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Config {
@@ -19,8 +19,7 @@ impl Config {
             Self::V1(mut config) => {
                 config.refresh();
                 config
-            },
-            // TODO: once we have V2+ we'll need to return that and convert previous
+            } // TODO: once we have V2+ we'll need to return that and convert previous
         }
     }
 }

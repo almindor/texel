@@ -1,4 +1,4 @@
-use crate::common::{Event, InputEvent, Action};
+use crate::common::{Action, Event, InputEvent};
 use crate::components::{Direction, Translation};
 use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette};
 use specs::{Read, System, Write};
@@ -39,7 +39,7 @@ impl InputHandler {
             Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
             Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
             Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
-    
+
             Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left(1))),
             Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top(1))),
             Event::DownEdge => Action::Translate(Translation::ToEdge(Direction::Bottom(ts.1))),
@@ -112,15 +112,16 @@ impl InputHandler {
             Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
 
             // TODO: handle Edge movements
-
-            _ => if let Some(c) = event.1 {
-                if let Some(index) = c.to_digit(16) {
-                    Action::ApplySymbol(palette.symbol(index as usize))
+            _ => {
+                if let Some(c) = event.1 {
+                    if let Some(index) = c.to_digit(16) {
+                        Action::ApplySymbol(palette.symbol(index as usize))
+                    } else {
+                        Action::None
+                    }
                 } else {
                     Action::None
                 }
-            } else {
-                Action::None
             }
         };
 

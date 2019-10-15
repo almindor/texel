@@ -1,4 +1,4 @@
-use crate::common::{path_base, Action, Error, InputEvent, Event};
+use crate::common::{path_base, Action, Error, Event, InputEvent};
 use crate::components::Translation;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
@@ -54,10 +54,12 @@ impl CmdLine {
             }
 
             // otherwise get char and handle
-            _ => if let Some(c) = event.1 {
-                self.append(c)
-            } else {
-                Ok(Action::None)
+            _ => {
+                if let Some(c) = event.1 {
+                    self.append(c)
+                } else {
+                    Ok(Action::None)
+                }
             }
         };
 

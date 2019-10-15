@@ -3,16 +3,18 @@ use std::env::current_dir;
 use std::path::{Path, PathBuf};
 
 mod action;
-mod input;
-mod scene;
 mod config;
+mod input;
 mod loader;
+mod program;
+mod scene;
 
 pub use action::Action;
-pub use input::{Event, InputEvent, InputMap, CharMap};
-pub use scene::{Scene, SceneV1};
 pub use config::{Config, ConfigV1};
-pub use loader::{Loader, Loaded};
+pub use input::{CharMap, Event, InputEvent, InputMap};
+pub use loader::{Loaded, Loader};
+pub use program::run;
+pub use scene::{Scene, SceneV1};
 
 // described deserializables that need "after load" refresh
 pub trait LazyLoaded {
