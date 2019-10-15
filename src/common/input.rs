@@ -27,6 +27,7 @@ pub enum Event {
     ApplyColorBG,
     Next,
     NextWith,
+    NewObject,
     // "meta" keys
     Delete,
     Backspace,
@@ -72,6 +73,8 @@ impl Default for CharMap {
 
         map.insert('u', Event::Undo);
         map.insert('U', Event::Redo);
+
+        map.insert('n', Event::NewObject);
 
         map.insert('\n', Event::Confirm);
         map.insert('\t', Event::Next);

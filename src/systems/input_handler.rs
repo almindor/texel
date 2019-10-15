@@ -27,6 +27,8 @@ impl InputHandler {
             Event::Undo => Action::Undo,
             Event::Redo => Action::Redo,
 
+            Event::NewObject => Action::NewObject,
+
             Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
             Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 

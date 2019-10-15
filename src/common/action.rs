@@ -4,6 +4,7 @@ use crate::resources::{ColorMode, Mode};
 #[derive(Debug)]
 pub enum Action {
     None,
+    NewObject,
     ClearError,
     SetMode(Mode),
     ReverseMode,

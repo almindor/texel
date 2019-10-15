@@ -7,6 +7,12 @@ use std::path::{Path, PathBuf};
 
 pub struct ActionHandler;
 
+const NEW_POSITION: Position = Position {
+    x: 10,
+    y: 10,
+    z: 0
+};
+
 impl ActionHandler {
     fn deselect(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) -> bool {
         let mut changed = false;
@@ -21,21 +27,35 @@ impl ActionHandler {
     fn set_mode(
         mode: Mode,
         state: &mut State,
+        e: &Entities,
         s: &ReadStorage<Selection>,
         p: &WriteStorage<Position>,
+        u: &LazyUpdate,
     ) -> bool {
+        let mut result = true;
+
         if mode == Mode::Edit {
-            if s.count() == 1 {
-                for (pos, _) in (p, s).join() {
-                    state.clear_error();
-                    state.cursor = *pos;
+            match s.count() {
+                1 => {
+                    for (pos, _) in (p, s).join() {
+                        state.clear_error();
+                        state.cursor = *pos;
+                    }
                 }
-            } else {
-                return state.set_error(Error::execution("One object must be selected"));
+                0 => {
+                    result = Self::new_sprite(state, e, s, u, None);
+                    state.clear_error();
+                    state.cursor = NEW_POSITION;
+                }
+                _ => return state.set_error(Error::execution("Multiple objects selected"))
             }
         }
 
-        state.set_mode(mode)
+        if result {
+            state.set_mode(mode)
+        } else {
+            false
+        }
     }
 
     fn select_next(
@@ -218,6 +238,32 @@ impl ActionHandler {
         changed
     }
 
+    fn new_sprite(
+        state: &mut State,
+        e: &Entities,
+        s: &ReadStorage<Selection>,
+        u: &LazyUpdate,
+        pos: Option<Position>,
+    ) -> bool {
+        Self::deselect(e, s, u);
+        let entity = e.create();
+        let sprite = Sprite::default();
+
+        let dim = match Dimension::for_sprite(&sprite) {
+            Ok(d) => d,
+            Err(err) => return state.set_error(err.into()),
+        };
+
+        u.insert(entity, dim);
+        u.insert(entity, pos.unwrap_or(NEW_POSITION));
+        u.insert(entity, Selection);
+        u.insert(entity, Selectable);
+        u.insert(entity, Border);
+        u.insert(entity, sprite);
+
+        true
+    }
+
     fn import_sprite(
         sprite: Sprite,
         e: &Entities,
@@ -230,7 +276,7 @@ impl ActionHandler {
         let entity = e.create();
 
         u.insert(entity, Dimension::for_sprite(&sprite)?);
-        u.insert(entity, pos.unwrap_or(Position::from_xyz(10, 10, 0)));
+        u.insert(entity, pos.unwrap_or(NEW_POSITION));
         if pre_select {
             u.insert(entity, Selection);
         }
@@ -363,8 +409,9 @@ impl<'a> System<'a> for ActionHandler {
                 Action::None => false,
                 Action::Undo => Self::undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => Self::redo(&mut state, &e, &s, &sp, &u),
+                Action::NewObject => Self::new_sprite(&mut state, &e, &s, &u, None),
                 Action::ClearError => state.clear_error(),
-                Action::SetMode(mode) => Self::set_mode(mode, &mut state, &s, &p),
+                Action::SetMode(mode) => Self::set_mode(mode, &mut state, &e, &s, &p, &u),
                 Action::ApplyColor(cm) => Self::apply_color_to_selected(cm, &state, &mut sp, &s),
                 Action::ApplySymbol(sym) => {
                     Self::apply_symbol_to_selected(sym, &mut state, &mut sp, &s, &mut p, &mut d)
