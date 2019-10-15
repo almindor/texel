@@ -23,7 +23,7 @@ fn load_from(
             // single non-existing file -> make it
             if (&args[1..]).len() == 1 && !std::path::Path::new(&args[1]).exists() {
                 let path = args.get(1).unwrap();
-                state.push_action(Action::Write(Some(path.into())));
+                state.saved(Some(path.into())); // consider this file our save file
             } else {
                 for path in &args[1..] {
                     state.push_action(Action::Read(String::from(path)));
