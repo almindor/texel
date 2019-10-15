@@ -68,8 +68,8 @@ impl Default for CharMap {
         map.insert('K', Event::UpEdge);
         map.insert('L', Event::RightEdge);
 
-        map.insert('=', Event::Above);
-        map.insert('-', Event::Below);
+        map.insert('-', Event::Above);
+        map.insert('=', Event::Below);
 
         map.insert('u', Event::Undo);
         map.insert('U', Event::Redo);

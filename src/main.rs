@@ -29,15 +29,12 @@ fn main() {
 
     let config_dir = dirs::config_dir().unwrap();
     let config_file = config_dir.join("texel/texel.ron");
-    writeln!(std::io::stderr(), "Config file: {:?}", &config_file).unwrap();
 
     let input_map = {
         let config = match Loader::from_config_file(&config_file) {
             Ok(val) => val.current(), // ensures we upgrade if there's a version change
             Err(_) => Config::default().current(),
         };
-
-        writeln!(std::io::stderr(), "CM: {:?}", config.char_map).unwrap();
 
         // prep resources
         world.insert(resources::SyncTerm::new());
@@ -47,9 +44,6 @@ fn main() {
 
         InputMap::from(config.char_map)
     };
-
-    writeln!(std::io::stderr(), "EM: {:?}", input_map).unwrap();
-
 
     // create dispatchers
     let mut updater = DispatcherBuilder::new()

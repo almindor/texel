@@ -156,9 +156,6 @@ impl State {
     }
 
     pub fn push_event(&mut self, event: InputEvent) {
-        use std::io::Write;
-        writeln!(std::io::stderr(), "I: {:?}", event).unwrap();
-
         self.events.push_back(event)
     }
 
