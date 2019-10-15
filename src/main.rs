@@ -76,8 +76,14 @@ fn main() {
         {
             let mut state = world.fetch_mut::<resources::State>();
 
-            for path in &args[1..] {
-                state.push_action(common::Action::Read(String::from(path)));
+            // single non-existing file -> make it
+            if (&args[1..]).len() == 1 && !std::path::Path::new(&args[1]).exists() {
+                let path = args.get(1).unwrap();
+                state.push_action(common::Action::Write(Some(path.into())));
+            } else {
+                for path in &args[1..] {
+                    state.push_action(common::Action::Read(String::from(path)));
+                }
             }
         }
 
@@ -97,9 +103,11 @@ fn main() {
             // loaded multiple, store save state but with no file
             state.saved(None);
         }
+    } else {
+        // render first time
+        renderer.dispatch(&world);
     }
-    // render first time
-    renderer.dispatch(&world);
+    
     // flush buffers to terminal
     world
         .fetch_mut::<resources::SyncTerm>()
