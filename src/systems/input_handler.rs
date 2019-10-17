@@ -77,11 +77,9 @@ impl InputHandler {
             _ => {}
         };
 
-        if let Some(c) = event.1 {
-            if let Some(index) = c.to_digit(16) {
-                state.set_color(palette.color(index as usize), cm);
-                state.push_action(Action::ReverseMode);
-            }
+        if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
+            state.set_color(palette.color(index as usize), cm);
+            state.push_action(Action::ReverseMode);
         }
     }
 
@@ -91,6 +89,7 @@ impl InputHandler {
                 state.push_action(Action::ClearError); // clean errors when going back to cmdline
                 Action::SetMode(Mode::Command)
             }
+            Event::ModeSymbol(index) => Action::SetMode(Mode::Symbol(index)),
             Event::Cancel => Action::ReverseMode,
             Event::Delete | Event::Backspace => Action::Delete,
 
@@ -113,12 +112,8 @@ impl InputHandler {
 
             // TODO: handle Edge movements
             _ => {
-                if let Some(c) = event.1 {
-                    if let Some(index) = c.to_digit(16) {
-                        Action::ApplySymbol(palette.symbol(index as usize))
-                    } else {
-                        Action::None
-                    }
+                if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
+                    Action::ApplySymbol(palette.symbol(index as usize))
                 } else {
                     Action::None
                 }
@@ -127,22 +122,39 @@ impl InputHandler {
 
         state.push_action(action);
     }
+
+    fn symbol_event(event: InputEvent, state: &mut State, index: usize, palette: &mut SymbolPalette) {
+        match event.0 {
+            Event::Cancel => state.push_action(Action::ReverseMode),
+            _ => {
+                if let Some(c) = event.1 {
+                    match palette.set_symbol(index, c) {
+                        Ok(_) => state.push_action(Action::ReverseMode),
+                        Err(err) => {
+                            state.set_error(err);
+                        },
+                    };
+                }
+            }
+        };
+    }
 }
 
 impl<'a> System<'a> for InputHandler {
     type SystemData = (
         Write<'a, State>,
         Write<'a, CmdLine>,
+        Write<'a, SymbolPalette>,
         Read<'a, ColorPalette>,
-        Read<'a, SymbolPalette>,
     );
 
-    fn run(&mut self, (mut state, mut cmdline, color_palette, symbol_palette): Self::SystemData) {
+    fn run(&mut self, (mut state, mut cmdline, mut symbol_palette, color_palette): Self::SystemData) {
         while let Some(event) = state.pop_event() {
             match state.mode() {
                 Mode::Command => Self::cmdline_event(event, &mut state, &mut cmdline),
                 Mode::Object => Self::objmode_event(event, &mut state),
                 Mode::Color(cm) => Self::color_event(event, &mut state, cm, &color_palette),
+                Mode::Symbol(index) => Self::symbol_event(event, &mut state, index, &mut symbol_palette),
                 Mode::Edit => Self::edit_event(event, &mut state, &symbol_palette),
                 Mode::Quitting(_) => {}
             }

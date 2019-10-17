@@ -1,4 +1,4 @@
-use crate::common::LazyLoaded;
+use crate::common::{Error, LazyLoaded};
 use serde::{Deserialize, Serialize};
 
 const SYMBOLS_IN_PALETTE: usize = 16;
@@ -67,6 +67,17 @@ impl SymbolPalette {
         }
 
         self.symbols[i]
+    }
+
+    pub fn set_symbol(&mut self, index: usize, symbol: char) -> Result<(), Error> {
+        if index >= self.symbols.len() {
+            return Err(Error::execution("Symbol index out of bounds"))
+        }
+
+        self.symbols[index] = symbol;
+        self.line_str = Self::to_line_string(&self.symbols);
+
+        Ok(())
     }
 
     pub fn line_str(&self) -> &str {

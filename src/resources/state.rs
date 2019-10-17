@@ -7,6 +7,7 @@ use std::collections::VecDeque;
 pub enum Mode {
     Object,
     Color(ColorMode),
+    Symbol(usize), // index for which symbol 0 -> 16 (0x0 to 0xF)
     Edit,
     Command,
     Quitting(bool), // true for force quit
@@ -24,6 +25,7 @@ impl Mode {
             Mode::Object => "OBJECT",
             Mode::Color(ColorMode::Fg) => "COLOR[FG]",
             Mode::Color(ColorMode::Bg) => "COLOR[BG]",
+            Mode::Symbol(_) => "SYMBOL",
             Mode::Edit => "EDIT",
             Mode::Command => "COMMAND",
             Mode::Quitting(_) => "QUITTING",

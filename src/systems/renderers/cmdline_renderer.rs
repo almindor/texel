@@ -107,7 +107,7 @@ impl<'a> System<'a> for CmdLineRenderer {
         match mode {
             Mode::Quitting(_) => return,
             Mode::Command => Self::print_cmd(&mut out, cmdline.cmd(), h),
-            Mode::Object => Self::print_mode(&mut out, mode, w, h),
+            Mode::Object | Mode::Symbol(_) => Self::print_mode(&mut out, mode, w, h),
             Mode::Edit => Self::print_edit(&mut out, &state, &symbol_palette, h),
             Mode::Color(cm) => Self::print_color(&mut out, &color_palette, cm, w, h),
         }

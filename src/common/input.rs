@@ -21,6 +21,7 @@ pub enum Event {
     DownEdge,
     ModeCmd,
     ModeEdit,
+    ModeSymbol(usize), // index of symbol, 0x0-0xF as usize <0, 16)
     ModeColorFG,
     ModeColorBG,
     ApplyColorFG,
@@ -54,9 +55,29 @@ impl Default for CharMap {
 
         map.insert(':', Event::ModeCmd);
         map.insert('e', Event::ModeEdit);
+        // 1-0 + A,B,C,D,E,F (HEX) are symbol overrides
+        map.insert('!', Event::ModeSymbol(0));
+        map.insert('@', Event::ModeSymbol(1));
+        map.insert('#', Event::ModeSymbol(2));
+        map.insert('$', Event::ModeSymbol(3));
+        map.insert('%', Event::ModeSymbol(4));
+        map.insert('^', Event::ModeSymbol(5));
+        map.insert('&', Event::ModeSymbol(6));
+        map.insert('*', Event::ModeSymbol(7));
+        map.insert('(', Event::ModeSymbol(8));
+        map.insert(')', Event::ModeSymbol(9));
+        map.insert('A', Event::ModeSymbol(10));
+        map.insert('B', Event::ModeSymbol(11));
+        map.insert('C', Event::ModeSymbol(12));
+        map.insert('D', Event::ModeSymbol(13));
+        map.insert('E', Event::ModeSymbol(14));
+        map.insert('F', Event::ModeSymbol(16));
 
-        map.insert('F', Event::ModeColorFG);
-        map.insert('B', Event::ModeColorBG);
+        map.insert('Z', Event::ModeColorFG);
+        map.insert('X', Event::ModeColorBG);
+
+        map.insert('z', Event::ApplyColorFG);
+        map.insert('x', Event::ApplyColorBG);
 
         map.insert('h', Event::Left);
         map.insert('j', Event::Down);
