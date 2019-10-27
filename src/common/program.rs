@@ -126,7 +126,7 @@ pub fn run(args: Vec<String>) {
     check_terminal_size();
 
     let mut world = World::new();
-    let config_file = dirs::config_dir().unwrap().join("texel/texel.ron");
+    let config_file = dirs::config_dir().unwrap().join("texel/config.ron");
     let input_map = load_input_map(&config_file, &mut world);
 
     let (mut updater, mut renderer) = build_dispatchers();
