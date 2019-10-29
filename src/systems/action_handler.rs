@@ -143,14 +143,23 @@ impl ActionHandler {
         cm: ColorMode,
         state: &State,
         sp: &mut WriteStorage<Sprite>,
+        p: &WriteStorage<Position>,
         s: &ReadStorage<Selection>,
     ) -> bool {
         let mut changed = false;
         let color = state.color(cm);
 
-        for (sprite, _) in (sp, s).join() {
-            sprite.fill(cm, color);
-            changed = true;
+        for (sprite, pos, _) in (sp, p, s).join() {
+            if state.mode() == Mode::Edit {
+                let rel_pos = state.cursor - *pos;
+                if sprite.apply_color(cm, color, rel_pos) {
+                    changed = true;
+                }
+            } else {
+                if sprite.fill(cm, color) {
+                    changed = true;
+                }
+            }
         }
 
         changed
@@ -408,7 +417,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::NewObject => Self::new_sprite(&mut state, &e, &s, &u, None),
                 Action::ClearError => state.clear_error(),
                 Action::SetMode(mode) => Self::set_mode(mode, &mut state, &e, &s, &p, &u),
-                Action::ApplyColor(cm) => Self::apply_color_to_selected(cm, &state, &mut sp, &s),
+                Action::ApplyColor(cm) => Self::apply_color_to_selected(cm, &state, &mut sp, &p, &s),
                 Action::ApplySymbol(sym) => {
                     Self::apply_symbol_to_selected(sym, &mut state, &mut sp, &s, &mut p, &mut d)
                 }

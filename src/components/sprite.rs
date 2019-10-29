@@ -58,13 +58,27 @@ impl Sprite {
         Sprite { texels }
     }
 
-    pub fn fill(&mut self, cm: ColorMode, color: u8) {
+    pub fn fill(&mut self, cm: ColorMode, color: u8) -> bool {
+        let mut changed = false;
+
         for texel in self.texels.iter_mut() {
             match cm {
-                ColorMode::Fg => texel.fg = color,
-                ColorMode::Bg => texel.bg = color,
+                ColorMode::Fg => {
+                    if texel.fg != color {
+                        texel.fg = color;
+                        changed = true;
+                    }
+                },
+                ColorMode::Bg => {
+                    if texel.bg != color {
+                        texel.bg = color;
+                        changed = true;
+                    }
+                },
             }
         }
+
+        changed
     }
 
     pub fn apply_symbol(
@@ -80,14 +94,14 @@ impl Sprite {
             .filter(|t| t.x == pos.x && t.y == pos.y)
         {
             if t.symbol == symbol && t.bg == bg && t.fg == fg {
-                return Ok(None);
+                return Ok(None)
             }
 
             t.symbol = symbol;
             t.bg = bg;
             t.fg = fg;
 
-            return Ok(Some(self.calculate_bounds()?)); // TODO: not needed, just need to know we did something
+            return Ok(Some(self.calculate_bounds()?)) // TODO: not needed, just need to know we did something
         }
 
         self.texels.push(Texel {
@@ -99,6 +113,29 @@ impl Sprite {
         });
 
         Ok(Some(self.calculate_bounds()?))
+    }
+
+    // TODO: handle empty symbols with BG colors!
+    pub fn apply_color(&mut self, cm: ColorMode, color: u8, pos: Position) -> bool {
+        for t in self
+            .texels
+            .iter_mut()
+            .filter(|t| t.x == pos.x && t.y == pos.y)
+        {
+            if (cm == ColorMode::Bg && t.bg == color)
+            || (cm == ColorMode::Fg && t.fg == color) {
+                return false
+            }
+
+            match cm {
+                ColorMode::Bg => t.bg = color,
+                ColorMode::Fg => t.fg = color,
+            }
+
+            return true
+        }
+
+        false
     }
 
     pub fn clear_symbol(&mut self, pos: Position) -> Result<Option<(Position, Dimension)>, Error> {
