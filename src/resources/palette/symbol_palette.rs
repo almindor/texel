@@ -71,7 +71,7 @@ impl SymbolPalette {
 
     pub fn set_symbol(&mut self, index: usize, symbol: char) -> Result<(), Error> {
         if index >= self.symbols.len() {
-            return Err(Error::execution("Symbol index out of bounds"))
+            return Err(Error::execution("Symbol index out of bounds"));
         }
 
         self.symbols[index] = symbol;

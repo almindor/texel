@@ -15,10 +15,7 @@ pub enum Loaded {
 impl Loader {
     pub fn from_file(path: &str) -> Result<Loaded, Error> {
         match Path::new(path).extension() {
-            Some(ext) => match ext
-                .to_str()
-                .ok_or(Error::execution("Unable to parse extension"))?
-            {
+            Some(ext) => match ext.to_str().ok_or(Error::execution("Unable to parse extension"))? {
                 "rgz" => Self::from_rgz_file(path),
                 _ => Ok(Loaded::Sprite(Self::from_txt_file(path)?)),
             },
@@ -34,9 +31,7 @@ impl Loader {
     }
 
     pub fn to_config_file(config: Config, path: &Path) -> Result<(), Error> {
-        let parent = path
-            .parent()
-            .ok_or(Error::execution("Unable to create config dif"))?;
+        let parent = path.parent().ok_or(Error::execution("Unable to create config dif"))?;
         std::fs::create_dir_all(parent)?;
 
         let serialized = ron::ser::to_string_pretty(&config, ron::ser::PrettyConfig::default())?;

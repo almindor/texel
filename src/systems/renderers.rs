@@ -4,9 +4,11 @@ use std::io::Write;
 
 mod cmdline_renderer;
 mod sprite_renderer;
+mod color_palette_renderer;
 
-pub use cmdline_renderer::CmdLineRenderer;
+pub use cmdline_renderer::{CmdLineRenderer, PALETTE_OFFSET};
 pub use sprite_renderer::SpriteRenderer;
+pub use color_palette_renderer::ColorPaletteRenderer;
 
 pub struct ClearScreen;
 

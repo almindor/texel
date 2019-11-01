@@ -1,4 +1,4 @@
-use crate::common::LazyLoaded;
+use crate::common::{Error, LazyLoaded};
 use serde::{Deserialize, Serialize};
 
 const fn cc(r: u8, g: u8, b: u8) -> u8 {
@@ -106,6 +106,18 @@ impl ColorPalette {
         }
 
         self.colors[i]
+    }
+
+    pub fn set_color(&mut self, index: usize, color: u8) -> Result<(), Error> {
+        if index >= self.colors.len() {
+            return Err(Error::execution("Index out of bounds"));
+        }
+
+        self.colors[index] = color;
+        self.bg_string = Self::to_line_string(&self.colors, ColorMode::Bg);
+        self.fg_string = Self::to_line_string(&self.colors, ColorMode::Fg);
+
+        Ok(())
     }
 
     pub fn default_fg_u8() -> u8 {

@@ -31,13 +31,7 @@ impl SpriteRenderer {
         let b_w = i32::from(d.w + 1);
         let b_h = i32::from(d.h + 1);
 
-        write!(
-            out,
-            "{}{}",
-            ColorPalette::default_bg(),
-            ColorPalette::default_fg()
-        )
-        .unwrap();
+        write!(out, "{}{}", ColorPalette::default_bg(), ColorPalette::default_fg()).unwrap();
 
         for y in min_y..=min_y + b_h {
             if y <= 0 {
@@ -91,13 +85,7 @@ impl<'a> System<'a> for SpriteRenderer {
             }
         }
 
-        write!(
-            out,
-            "{}{}",
-            ColorPalette::default_bg(),
-            ColorPalette::default_fg()
-        )
-        .unwrap();
+        write!(out, "{}{}", ColorPalette::default_bg(), ColorPalette::default_fg()).unwrap();
 
         // location info status line
         if let Some(loc) = loc_info {

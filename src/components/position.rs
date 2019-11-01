@@ -42,12 +42,7 @@ impl Position {
         Position { x, y, z }
     }
 
-    pub fn apply(
-        &mut self,
-        translation: Translation,
-        dim: &Dimension,
-        bounds: Option<(Position, Dimension)>,
-    ) -> bool {
+    pub fn apply(&mut self, translation: Translation, dim: &Dimension, bounds: Option<(Position, Dimension)>) -> bool {
         match translation {
             Translation::None => {}
             Translation::Relative(x, y, z) => {

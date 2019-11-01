@@ -21,7 +21,7 @@ pub enum Event {
     DownEdge,
     ModeCmd,
     ModeEdit,
-    ModeSymbol(usize), // index of symbol, 0x0-0xF as usize <0, 16)
+    EditPalette(usize), // index of symbol/color, 0x0-0xF as usize <0, 16)
     ModeColorFG,
     ModeColorBG,
     ApplyColorFG,
@@ -56,22 +56,22 @@ impl Default for CharMap {
         map.insert(':', Event::ModeCmd);
         map.insert('e', Event::ModeEdit);
         // 1-0 + A,B,C,D,E,F (HEX) are symbol overrides
-        map.insert('!', Event::ModeSymbol(0));
-        map.insert('@', Event::ModeSymbol(1));
-        map.insert('#', Event::ModeSymbol(2));
-        map.insert('$', Event::ModeSymbol(3));
-        map.insert('%', Event::ModeSymbol(4));
-        map.insert('^', Event::ModeSymbol(5));
-        map.insert('&', Event::ModeSymbol(6));
-        map.insert('*', Event::ModeSymbol(7));
-        map.insert('(', Event::ModeSymbol(8));
-        map.insert(')', Event::ModeSymbol(9));
-        map.insert('A', Event::ModeSymbol(10));
-        map.insert('B', Event::ModeSymbol(11));
-        map.insert('C', Event::ModeSymbol(12));
-        map.insert('D', Event::ModeSymbol(13));
-        map.insert('E', Event::ModeSymbol(14));
-        map.insert('F', Event::ModeSymbol(16));
+        map.insert('!', Event::EditPalette(0));
+        map.insert('@', Event::EditPalette(1));
+        map.insert('#', Event::EditPalette(2));
+        map.insert('$', Event::EditPalette(3));
+        map.insert('%', Event::EditPalette(4));
+        map.insert('^', Event::EditPalette(5));
+        map.insert('&', Event::EditPalette(6));
+        map.insert('*', Event::EditPalette(7));
+        map.insert('(', Event::EditPalette(8));
+        map.insert(')', Event::EditPalette(9));
+        map.insert('A', Event::EditPalette(10));
+        map.insert('B', Event::EditPalette(11));
+        map.insert('C', Event::EditPalette(12));
+        map.insert('D', Event::EditPalette(13));
+        map.insert('E', Event::EditPalette(14));
+        map.insert('F', Event::EditPalette(16));
 
         map.insert('Z', Event::ModeColorFG);
         map.insert('X', Event::ModeColorBG);
@@ -125,15 +125,11 @@ impl From<CharMap> for InputMap {
         // meta-key defaults
         result.map.insert(TEvent::Key(Key::Esc), Event::Cancel);
         result.map.insert(TEvent::Key(Key::Left), Event::ArrowLeft);
-        result
-            .map
-            .insert(TEvent::Key(Key::Right), Event::ArrowRight);
+        result.map.insert(TEvent::Key(Key::Right), Event::ArrowRight);
         result.map.insert(TEvent::Key(Key::Up), Event::ArrowUp);
         result.map.insert(TEvent::Key(Key::Down), Event::ArrowDown);
         result.map.insert(TEvent::Key(Key::Delete), Event::Delete);
-        result
-            .map
-            .insert(TEvent::Key(Key::Backspace), Event::Backspace);
+        result.map.insert(TEvent::Key(Key::Backspace), Event::Backspace);
         result
             .map
             .insert(TEvent::Unsupported(vec![27, 91, 90]), Event::NextWith);

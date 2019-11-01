@@ -108,3 +108,16 @@ pub fn path_base(path: &str) -> String {
 
     String::default()
 }
+
+pub fn index_from_one(index: usize) -> i32 {
+    match index {
+        10 => 0,
+        _ => {
+            if index < 10 {
+                (index + 1) as i32
+            } else {
+                index as i32
+            }
+        }
+    }
+}

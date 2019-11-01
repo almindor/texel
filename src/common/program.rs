@@ -10,12 +10,7 @@ use crate::systems::*;
 
 type Terminal = termion::input::MouseTerminal<termion::raw::RawTerminal<std::io::Stdout>>;
 
-fn load_from(
-    args: Vec<String>,
-    world: &mut World,
-    updater: &mut Dispatcher,
-    renderer: &mut Dispatcher,
-) {
+fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher, renderer: &mut Dispatcher) {
     if args.len() > 1 {
         {
             let mut state = world.fetch_mut::<State>();
@@ -70,12 +65,8 @@ fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
 
 fn check_terminal_size() {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
-    if ts.0 < 80 || ts.1 < 15 {
-        writeln!(
-            std::io::stderr(),
-            "Terminal size too small, minimum 80x15 is required"
-        )
-        .unwrap();
+    if ts.0 < 60 || ts.1 < 16 {
+        writeln!(std::io::stderr(), "Terminal size too small, minimum 60x16 is required").unwrap();
         std::process::exit(1);
     }
 }
@@ -109,7 +100,8 @@ fn build_dispatchers<'a, 'b>() -> (Dispatcher<'a, 'b>, Dispatcher<'a, 'b>) {
         .with(HistoryHandler, "history_handler", &[]) // needs to run after world.update
         .with(ClearScreen, "clear_screen", &[])
         .with(SpriteRenderer, "sprite_renderer", &["clear_screen"])
-        .with(CmdLineRenderer, "cmdline_renderer", &["sprite_renderer"])
+        .with(ColorPaletteRenderer, "color_palette_renderer", &["sprite_renderer"])
+        .with(CmdLineRenderer, "cmdline_renderer", &["clear_screen", "color_palette_renderer", "sprite_renderer"])
         .build();
 
     (updater, renderer)

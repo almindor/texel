@@ -7,8 +7,8 @@ use std::collections::VecDeque;
 pub enum Mode {
     Object,
     Color(ColorMode),
-//    ColorSet(usize), // index for which color 0 -> 16 (0x0 to 0xF)
-    Symbol(usize), // index for which symbol 0 -> 16 (0x0 to 0xF)
+    SelectColor(usize),  // index for which color 0 -> 16 (0x0 to 0xF)
+    SelectSymbol(usize), // index for which symbol 0 -> 16 (0x0 to 0xF)
     Edit,
     Command,
     Quitting(bool), // true for force quit
@@ -26,11 +26,18 @@ impl Mode {
             Mode::Object => "OBJECT",
             Mode::Color(ColorMode::Fg) => "COLOR[FG]",
             Mode::Color(ColorMode::Bg) => "COLOR[BG]",
-//            Mode::ColorSet()
-            Mode::Symbol(_) => "SYMBOL",
+            Mode::SelectColor(_) => "COLOR[SET]", // TODO: construct static numbered index
+            Mode::SelectSymbol(_) => "SYMBOL[SET]", // TODO: construct static numbered index
             Mode::Edit => "EDIT",
             Mode::Command => "COMMAND",
             Mode::Quitting(_) => "QUITTING",
+        }
+    }
+
+    pub fn is_color_palette(&self) -> bool {
+        match self {
+            Mode::SelectColor(_) => true,
+            _ => false,
         }
     }
 }
@@ -112,9 +119,7 @@ impl State {
     pub fn set_mode(&mut self, mode: Mode) -> bool {
         if self.mode() != mode {
             if mode == Mode::Quitting(false) && self.save_state.1 > 0 {
-                self.set_error(Error::execution(
-                    "Unsaved changes, use q! to quit without saving",
-                ));
+                self.set_error(Error::execution("Unsaved changes, use q! to quit without saving"));
                 return false;
             }
 

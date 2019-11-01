@@ -68,13 +68,13 @@ impl Sprite {
                         texel.fg = color;
                         changed = true;
                     }
-                },
+                }
                 ColorMode::Bg => {
                     if texel.bg != color {
                         texel.bg = color;
                         changed = true;
                     }
-                },
+                }
             }
         }
 
@@ -88,20 +88,16 @@ impl Sprite {
         fg: u8,
         pos: Position,
     ) -> Result<Option<(Position, Dimension)>, Error> {
-        for t in self
-            .texels
-            .iter_mut()
-            .filter(|t| t.x == pos.x && t.y == pos.y)
-        {
+        for t in self.texels.iter_mut().filter(|t| t.x == pos.x && t.y == pos.y) {
             if t.symbol == symbol && t.bg == bg && t.fg == fg {
-                return Ok(None)
+                return Ok(None);
             }
 
             t.symbol = symbol;
             t.bg = bg;
             t.fg = fg;
 
-            return Ok(Some(self.calculate_bounds()?)) // TODO: not needed, just need to know we did something
+            return Ok(Some(self.calculate_bounds()?)); // TODO: not needed, just need to know we did something
         }
 
         self.texels.push(Texel {
@@ -117,14 +113,9 @@ impl Sprite {
 
     // TODO: handle empty symbols with BG colors!
     pub fn apply_color(&mut self, cm: ColorMode, color: u8, pos: Position) -> bool {
-        for t in self
-            .texels
-            .iter_mut()
-            .filter(|t| t.x == pos.x && t.y == pos.y)
-        {
-            if (cm == ColorMode::Bg && t.bg == color)
-            || (cm == ColorMode::Fg && t.fg == color) {
-                return false
+        for t in self.texels.iter_mut().filter(|t| t.x == pos.x && t.y == pos.y) {
+            if (cm == ColorMode::Bg && t.bg == color) || (cm == ColorMode::Fg && t.fg == color) {
+                return false;
             }
 
             match cm {
@@ -132,7 +123,7 @@ impl Sprite {
                 ColorMode::Fg => t.fg = color,
             }
 
-            return true
+            return true;
         }
 
         false
@@ -177,10 +168,7 @@ impl Sprite {
             }
         }
 
-        Ok((
-            Position::from_xyz(min_x, min_y, 0),
-            Dimension::for_sprite(self)?,
-        ))
+        Ok((Position::from_xyz(min_x, min_y, 0), Dimension::for_sprite(self)?))
     }
 }
 
