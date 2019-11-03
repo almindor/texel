@@ -110,14 +110,11 @@ pub fn path_base(path: &str) -> String {
 }
 
 pub fn index_from_one(index: usize) -> i32 {
-    match index {
-        10 => 0,
-        _ => {
-            if index < 10 {
-                (index + 1) as i32
-            } else {
-                index as i32
-            }
-        }
+    if index < 9 {
+        (index + 1) as i32
+    } else if index == 9 {
+        0
+    } else {
+        index as i32
     }
 }

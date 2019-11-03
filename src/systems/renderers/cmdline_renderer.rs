@@ -29,6 +29,10 @@ impl<'a> System<'a> for CmdLineRenderer {
         }
 
         let mode = state.mode();
+
+        use std::io::Write;
+        writeln!(std::io::stderr(), "RCM: {:?}", mode).unwrap();
+
         match mode {
             Mode::Quitting(_) => return,
             Mode::Command => print_cmd(&mut out, cmdline.cmd(), h),
@@ -117,8 +121,6 @@ fn print_color(out: &mut SyncTerm, palette: &ColorPalette, cm: ColorMode, w: i32
 }
 
 fn print_palette(out: &mut SyncTerm, mode: Mode, index: usize, w: i32, h: i32) {
-    let i = crate::common::index_from_one(index);
-
     write!(
         out,
         "{}{}{}--{}--{}\t{}{:x?}{}",
@@ -127,8 +129,8 @@ fn print_palette(out: &mut SyncTerm, mode: Mode, index: usize, w: i32, h: i32) {
         termion::color::Fg(termion::color::White),
         mode.to_str(),
         termion::style::Reset,
-        crate::common::goto(PALETTE_OFFSET + i - 1, h),
-        i,
+        crate::common::goto(PALETTE_OFFSET + index as i32, h),
+        crate::common::index_from_one(index),
         crate::common::goto(w, h),
     )
     .unwrap();

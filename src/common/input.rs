@@ -71,7 +71,7 @@ impl Default for CharMap {
         map.insert('C', Event::EditPalette(12));
         map.insert('D', Event::EditPalette(13));
         map.insert('E', Event::EditPalette(14));
-        map.insert('F', Event::EditPalette(16));
+        map.insert('F', Event::EditPalette(15));
 
         map.insert('Z', Event::ModeColorFG);
         map.insert('X', Event::ModeColorBG);

@@ -97,13 +97,13 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
         }
         Event::EditPalette(index) => state.push_action(Action::SetMode(Mode::SelectColor(index))),
         Event::Cancel => state.push_action(Action::ReverseMode),
-        _ => {}
+        _ => {
+            if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
+                state.set_color(palette.color(index as usize), cm);
+                state.push_action(Action::ReverseMode);
+            }
+        }
     };
-
-    if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
-        state.set_color(palette.color(index as usize), cm);
-        state.push_action(Action::ReverseMode);
-    }
 }
 
 fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
