@@ -30,16 +30,13 @@ impl<'a> System<'a> for CmdLineRenderer {
 
         let mode = state.mode();
 
-        use std::io::Write;
-        writeln!(std::io::stderr(), "RCM: {:?}", mode).unwrap();
-
         match mode {
             Mode::Quitting(_) => return,
             Mode::Command => print_cmd(&mut out, cmdline.cmd(), h),
             Mode::Object => print_mode(&mut out, mode, w, h),
             Mode::Edit => print_edit(&mut out, &state, &symbol_palette, h),
             Mode::Color(cm) => print_color(&mut out, &color_palette, cm, w, h),
-            Mode::SelectSymbol(i) | Mode::SelectColor(i) => print_palette(&mut out, mode, i, w, h),
+            Mode::SelectSymbol(i) | Mode::SelectColor(i) => print_palette(&mut out, &state, i, h),
         }
     }
 }
@@ -120,18 +117,18 @@ fn print_color(out: &mut SyncTerm, palette: &ColorPalette, cm: ColorMode, w: i32
     .unwrap();
 }
 
-fn print_palette(out: &mut SyncTerm, mode: Mode, index: usize, w: i32, h: i32) {
+fn print_palette(out: &mut SyncTerm, state: &State, index: usize, h: i32) {
     write!(
         out,
         "{}{}{}--{}--{}\t{}{:x?}{}",
         crate::common::goto(1, h),
         termion::style::Bold,
         termion::color::Fg(termion::color::White),
-        mode.to_str(),
+        state.mode().to_str(),
         termion::style::Reset,
         crate::common::goto(PALETTE_OFFSET + index as i32, h),
         crate::common::index_from_one(index),
-        crate::common::goto(w, h),
+        crate::common::goto(state.cursor.x, state.cursor.y),
     )
     .unwrap();
 }

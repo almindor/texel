@@ -163,8 +163,15 @@ fn symbol_select_event(event: InputEvent, state: &mut State, index: usize, palet
 }
 
 fn color_select_event(event: InputEvent, state: &mut State, index: usize, palette: &mut ColorPalette) {
-    match event.0 {
-        Event::Cancel => state.push_action(Action::ReverseMode),
-        _ => {} // TODO
+    let action = match event.0 {
+        Event::Cancel => Action::ReverseMode,
+        Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
+
+        Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
+        _ => Action::None,
     };
+
+    state.push_action(action);
 }

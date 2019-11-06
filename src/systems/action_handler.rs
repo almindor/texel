@@ -181,22 +181,31 @@ fn translate_selected(
     s: &ReadStorage<Selection>,
     d: &WriteStorage<Dimension>,
 ) -> bool {
-    let mut changed = false;
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
     let screen_dim = Dimension::from_wh(ts.0, ts.1 - 1);
     let screen_bounds = (Position::default(), screen_dim);
 
-    for (position, _, dim) in (p, s, d).join() {
-        if state.mode() == Mode::Edit {
-            // moving around in edit mode amounts to no changes
-            state.cursor.apply(t, dim, Some(screen_bounds));
-        } else {
-            position.apply(t, dim, None);
-            changed = true;
-        }
-    }
+    let mode = state.mode();
 
-    changed
+    match mode {
+        Mode::Object | Mode::Edit => {
+            let mut changed = false;
+
+            for (position, _, dim) in (p, s, d).join() {
+                if match state.mode() {
+                    Mode::Edit => state.cursor.apply(t, dim, Some(screen_bounds)),
+                    Mode::Object => position.apply(t, dim, None),
+                    _ => false,
+                } {
+                    changed = true;
+                }
+            }
+
+            changed
+        }
+        Mode::SelectColor(_) => state.cursor.apply(t, &screen_dim, Some(screen_bounds)),
+        _ => false,
+    }
 }
 
 fn apply_color_to_selected(

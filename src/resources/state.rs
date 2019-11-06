@@ -179,6 +179,10 @@ impl State {
     }
 
     pub fn push_action(&mut self, action: Action) {
+        if !action.is_some() {
+            return;
+        }
+
         self.actions.push_back(action);
     }
 
