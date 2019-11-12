@@ -29,8 +29,6 @@ impl<'a> System<'a> for InputHandler {
 }
 
 fn objmode_event(event: InputEvent, state: &mut State) {
-    let ts = termion::terminal_size().unwrap();
-
     let action = match event.0 {
         Event::ModeCmd => {
             state.push_action(Action::ClearError); // clean errors when going back to cmdline
@@ -62,10 +60,10 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
         Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
 
-        Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left(1))),
-        Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top(1))),
-        Event::DownEdge => Action::Translate(Translation::ToEdge(Direction::Bottom(ts.1))),
-        Event::RightEdge => Action::Translate(Translation::ToEdge(Direction::Right(ts.0))),
+        Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left)),
+        Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top)),
+        Event::DownEdge => Action::Translate(Translation::ToEdge(Direction::Bottom)),
+        Event::RightEdge => Action::Translate(Translation::ToEdge(Direction::Right)),
 
         _ => Action::None,
     };
@@ -129,11 +127,14 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
 
         Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
         Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
-
         Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
         Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
 
-        // TODO: handle Edge movements
+        Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left)),
+        Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top)),
+        Event::DownEdge => Action::Translate(Translation::ToEdge(Direction::Bottom)),
+        Event::RightEdge => Action::Translate(Translation::ToEdge(Direction::Right)),
+
         _ => {
             if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
                 Action::ApplySymbol(palette.symbol(index as usize))

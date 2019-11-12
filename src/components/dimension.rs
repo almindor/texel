@@ -21,6 +21,17 @@ impl From<(u16, u16)> for Dimension {
     }
 }
 
+impl std::ops::Sub for Dimension {
+    type Output = Dimension;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Dimension {
+            w: self.w - other.w,
+            h: self.h - other.h,
+        }
+    }
+}
+
 impl Dimension {
     pub fn for_sprite(sprite: &Sprite) -> Result<Self, std::num::TryFromIntError> {
         let mut w = 0i32;

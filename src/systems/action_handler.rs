@@ -88,26 +88,29 @@ fn set_mode(
     p: &WriteStorage<Position>,
     u: &LazyUpdate,
 ) -> bool {
-    let mut result = true;
-
-    if mode == Mode::Edit {
-        match s.count() {
+    if match mode {
+        Mode::Edit => match s.count() {
             1 => {
+                state.clear_error();
                 for (pos, _) in (p, s).join() {
-                    state.clear_error();
                     state.cursor = *pos;
                 }
+                true
             }
             0 => {
-                result = new_sprite(state, e, s, u, None);
                 state.clear_error();
                 state.cursor = NEW_POSITION;
+                new_sprite(state, e, s, u, None)
             }
-            _ => return state.set_error(Error::execution("Multiple objects selected")),
+            _ => state.set_error(Error::execution("Multiple objects selected")),
+        },
+        Mode::SelectColor(_) => {
+            let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+            state.cursor = Position::from_xyz(crate::systems::PALETTE_OFFSET, i32::from(ts.1) - 14, 0);
+            true
         }
-    }
-
-    if result {
+        _ => true,
+    } {
         state.set_mode(mode)
     } else {
         false
@@ -183,7 +186,9 @@ fn translate_selected(
 ) -> bool {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
     let screen_dim = Dimension::from_wh(ts.0, ts.1 - 1);
-    let screen_bounds = (Position::default(), screen_dim);
+    let palette_pos = Position::from_xyz(crate::systems::PALETTE_OFFSET, i32::from(ts.1) - 14, 0);
+    let palette_dim = Dimension::from_wh(16, 14);
+    let palette_bounds = Bounds::Binding(palette_pos, palette_dim);
 
     let mode = state.mode();
 
@@ -192,9 +197,12 @@ fn translate_selected(
             let mut changed = false;
 
             for (position, _, dim) in (p, s, d).join() {
+                let sprite_bounds = Bounds::Binding(*position, *dim);
+                let screen_bounds = Bounds::Free(Position::default(), screen_dim - *dim);
+
                 if match state.mode() {
-                    Mode::Edit => state.cursor.apply(t, dim, Some(screen_bounds)),
-                    Mode::Object => position.apply(t, dim, None),
+                    Mode::Edit => state.cursor.apply(t, sprite_bounds),
+                    Mode::Object => position.apply(t, screen_bounds),
                     _ => false,
                 } {
                     changed = true;
@@ -203,7 +211,7 @@ fn translate_selected(
 
             changed
         }
-        Mode::SelectColor(_) => state.cursor.apply(t, &screen_dim, Some(screen_bounds)),
+        Mode::SelectColor(_) => state.cursor.apply(t, palette_bounds),
         _ => false,
     }
 }

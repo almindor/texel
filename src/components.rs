@@ -3,7 +3,7 @@ mod position;
 mod sprite;
 
 pub use dimension::Dimension;
-pub use position::{Direction, Position, Translation};
+pub use position::{Bounds, Direction, Position, Translation};
 pub use sprite::Sprite;
 
 // flags

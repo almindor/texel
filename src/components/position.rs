@@ -9,6 +9,36 @@ pub struct Position {
     pub z: i32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Bounds {
+    Binding(Position, Dimension),
+    Free(Position, Dimension),
+}
+
+impl Bounds {
+    pub fn position(&self) -> &Position {
+        match self {
+            Bounds::Binding(p, _) => p,
+            Bounds::Free(p, _) => p,
+        }
+    }
+
+    pub fn dimension(&self) -> &Dimension {
+        match self {
+            Bounds::Binding(_, d) => d,
+            Bounds::Free(_, d) => d,
+        }
+    }
+
+    pub fn right(&self) -> i32 {
+        self.position().x + i32::from(self.dimension().w) - 1
+    }
+
+    pub fn bottom(&self) -> i32 {
+        self.position().y + i32::from(self.dimension().h) - 1
+    }
+}
+
 impl Default for Position {
     fn default() -> Self {
         Position { x: 1, y: 1, z: 0 }
@@ -42,7 +72,7 @@ impl Position {
         Position { x, y, z }
     }
 
-    pub fn apply(&mut self, translation: Translation, dim: &Dimension, bounds: Option<(Position, Dimension)>) -> bool {
+    pub fn apply(&mut self, translation: Translation, bounds: Bounds) -> bool {
         match translation {
             Translation::None => {}
             Translation::Relative(x, y, z) => {
@@ -58,33 +88,33 @@ impl Position {
                 }
             }
             Translation::ToEdge(dir) => match dir {
-                Direction::Left(x) => self.x = i32::from(x),
-                Direction::Top(y) => self.y = i32::from(y),
-                Direction::Bottom(y) => self.y = i32::from(y - dim.h),
-                Direction::Right(x) => self.x = i32::from(x - dim.w),
+                Direction::Left => self.x = bounds.position().x,
+                Direction::Top => self.y = bounds.position().y,
+                Direction::Bottom => self.y = bounds.position().y + i32::from(bounds.dimension().h),
+                Direction::Right => self.x = bounds.position().x + i32::from(bounds.dimension().w),
             },
         }
 
-        if let Some(bounds) = bounds {
-            if self.x < bounds.0.x {
-                self.x = bounds.0.x;
-                return false;
+        match bounds {
+            Bounds::Binding(p, _) => {
+                if self.x < p.x {
+                    self.x = p.x;
+                    false
+                } else if self.y < p.y {
+                    self.y = p.y;
+                    false
+                } else if self.x > bounds.right() {
+                    self.x = bounds.right();
+                    false
+                } else if self.y > bounds.bottom() {
+                    self.y = bounds.bottom();
+                    false
+                } else {
+                    true
+                }
             }
-            if self.y < bounds.0.y {
-                self.y = bounds.0.y;
-                return false;
-            }
-            if self.x > i32::from(bounds.1.w) {
-                self.x = i32::from(bounds.1.w);
-                return false;
-            }
-            if self.y > i32::from(bounds.1.h) {
-                self.y = i32::from(bounds.1.h);
-                return false;
-            }
+            _ => true,
         }
-
-        true
     }
 }
 
@@ -94,10 +124,10 @@ impl Component for Position {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
-    Left(u16),
-    Top(u16),
-    Bottom(u16),
-    Right(u16),
+    Left,
+    Top,
+    Bottom,
+    Right,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
