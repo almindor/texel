@@ -36,7 +36,8 @@ impl<'a> System<'a> for CmdLineRenderer {
             Mode::Object => print_mode(&mut out, mode, w, h),
             Mode::Edit => print_edit(&mut out, &state, &symbol_palette, h),
             Mode::Color(cm) => print_color(&mut out, &color_palette, cm, w, h),
-            Mode::SelectSymbol(i) | Mode::SelectColor(i) => print_palette(&mut out, &state, i, h),
+            Mode::SelectSymbol(i) => print_palette(&mut out, &state, i, h),
+            Mode::SelectColor(_) => {}, // handled in its own renderer
         }
     }
 }

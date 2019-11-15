@@ -51,8 +51,8 @@ impl Default for ColorPalette {
     fn default() -> ColorPalette {
         ColorPalette {
             colors: DEFAULT_PALETTE_COLORS,
-            fg_string: Self::to_line_string(&DEFAULT_PALETTE_COLORS, ColorMode::Fg),
-            bg_string: Self::to_line_string(&DEFAULT_PALETTE_COLORS, ColorMode::Bg),
+            fg_string: to_line_string(&DEFAULT_PALETTE_COLORS, ColorMode::Fg),
+            bg_string: to_line_string(&DEFAULT_PALETTE_COLORS, ColorMode::Bg),
         }
     }
 }
@@ -61,8 +61,8 @@ impl From<[u8; COLORS_IN_PALETTE]> for ColorPalette {
     fn from(colors: [u8; COLORS_IN_PALETTE]) -> Self {
         ColorPalette {
             colors,
-            fg_string: Self::to_line_string(&colors, ColorMode::Fg),
-            bg_string: Self::to_line_string(&colors, ColorMode::Bg),
+            fg_string: to_line_string(&colors, ColorMode::Fg),
+            bg_string: to_line_string(&colors, ColorMode::Bg),
         }
     }
 }
@@ -77,8 +77,8 @@ impl From<&[u8]> for ColorPalette {
 
         ColorPalette {
             colors: palette_colors,
-            fg_string: Self::to_line_string(&palette_colors, ColorMode::Fg),
-            bg_string: Self::to_line_string(&palette_colors, ColorMode::Bg),
+            fg_string: to_line_string(&palette_colors, ColorMode::Fg),
+            bg_string: to_line_string(&palette_colors, ColorMode::Bg),
         }
     }
 }
@@ -86,11 +86,11 @@ impl From<&[u8]> for ColorPalette {
 impl LazyLoaded for ColorPalette {
     fn refresh(&mut self) {
         if self.fg_string.is_empty() {
-            self.fg_string = Self::to_line_string(&self.colors, ColorMode::Fg);
+            self.fg_string = to_line_string(&self.colors, ColorMode::Fg);
         }
 
         if self.bg_string.is_empty() {
-            self.bg_string = Self::to_line_string(&self.colors, ColorMode::Bg);
+            self.bg_string = to_line_string(&self.colors, ColorMode::Bg);
         }
     }
 }
@@ -114,8 +114,8 @@ impl ColorPalette {
         }
 
         self.colors[index] = color;
-        self.bg_string = Self::to_line_string(&self.colors, ColorMode::Bg);
-        self.fg_string = Self::to_line_string(&self.colors, ColorMode::Fg);
+        self.bg_string = to_line_string(&self.colors, ColorMode::Bg);
+        self.fg_string = to_line_string(&self.colors, ColorMode::Fg);
 
         Ok(())
     }
@@ -144,58 +144,6 @@ impl ColorPalette {
         termion::color::AnsiValue(color).bg_string()
     }
 
-    fn re_rgb(color: u8) -> (u8, u8, u8) {
-        let base = color - 16;
-        (base / 36, (base / 6) % 6, base % 6)
-    }
-
-    fn luminance(color: u8) -> u8 {
-        let (r, g, b) = Self::re_rgb(color);
-        // get luminance according to spec (output is in 0..6 tho same as ansivalue bases)
-        let y = (0.2126 * f32::from(r) + 0.7151 * f32::from(g) + 0.0721 * f32::from(b)) as u8;
-        y
-    }
-
-    fn invert_fg(color: u8) -> String {
-        if Self::luminance(color) > 2 {
-            termion::color::AnsiValue::grayscale(5).fg_string()
-        } else {
-            termion::color::AnsiValue::grayscale(17).fg_string()
-        }
-    }
-
-    fn invert_bg(color: u8) -> String {
-        if Self::luminance(color) > 2 {
-            termion::color::AnsiValue::grayscale(5).bg_string()
-        } else {
-            termion::color::AnsiValue::grayscale(17).bg_string()
-        }
-    }
-
-    fn u8_to_bg_string(color: u8) -> String {
-        Self::u8_to_bg(color) + &Self::invert_fg(color)
-    }
-
-    fn u8_to_fg_string(color: u8) -> String {
-        Self::invert_bg(color) + &Self::u8_to_fg(color)
-    }
-
-    fn to_line_string(pc: &[u8], cm: ColorMode) -> String {
-        let mut result = String::with_capacity(COLORS_IN_PALETTE * 20);
-
-        for (i, c) in pc.iter().enumerate() {
-            let color_string = match cm {
-                ColorMode::Fg => Self::u8_to_fg_string(*c),
-                ColorMode::Bg => Self::u8_to_bg_string(*c),
-            };
-
-            result += &color_string;
-            result.push(COLOR_SELECTOR[i]);
-        }
-
-        result
-    }
-
     // lazy load so we can skip serializing but don't need to do custom serde crap
     pub fn line_str(&self, cm: ColorMode) -> &str {
         match cm {
@@ -203,4 +151,56 @@ impl ColorPalette {
             ColorMode::Bg => &self.bg_string,
         }
     }
+}
+
+fn re_rgb(color: u8) -> (u8, u8, u8) {
+    let base = color - 16;
+    (base / 36, (base / 6) % 6, base % 6)
+}
+
+fn luminance(color: u8) -> u8 {
+    let (r, g, b) = re_rgb(color);
+    // get luminance according to spec (output is in 0..6 tho same as ansivalue bases)
+    let y = (0.2126 * f32::from(r) + 0.7151 * f32::from(g) + 0.0721 * f32::from(b)) as u8;
+    y
+}
+
+fn invert_fg(color: u8) -> String {
+    if luminance(color) > 2 {
+        termion::color::AnsiValue::grayscale(5).fg_string()
+    } else {
+        termion::color::AnsiValue::grayscale(17).fg_string()
+    }
+}
+
+fn invert_bg(color: u8) -> String {
+    if luminance(color) > 2 {
+        termion::color::AnsiValue::grayscale(5).bg_string()
+    } else {
+        termion::color::AnsiValue::grayscale(17).bg_string()
+    }
+}
+
+fn u8_to_bg_string(color: u8) -> String {
+    ColorPalette::u8_to_bg(color) + &invert_fg(color)
+}
+
+fn u8_to_fg_string(color: u8) -> String {
+    invert_bg(color) + &ColorPalette::u8_to_fg(color)
+}
+
+fn to_line_string(pc: &[u8], cm: ColorMode) -> String {
+    let mut result = String::with_capacity(COLORS_IN_PALETTE * 20);
+
+    for (i, c) in pc.iter().enumerate() {
+        let color_string = match cm {
+            ColorMode::Fg => u8_to_fg_string(*c),
+            ColorMode::Bg => u8_to_bg_string(*c),
+        };
+
+        result += &color_string;
+        result.push(COLOR_SELECTOR[i]);
+    }
+
+    result
 }

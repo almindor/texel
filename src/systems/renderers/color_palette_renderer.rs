@@ -1,56 +1,77 @@
-use crate::resources::{State, SyncTerm};
+use crate::resources::{State, SyncTerm, Mode};
+use crate::components::Position;
 use specs::System;
 use std::io::Write;
 
 pub struct ColorPaletteRenderer;
 
+const MAX_COLOR_INDEX: u8 = 6 * 6 * 6;
+const PALETTE_W: i32 = 16;
+const PALETTE_H: i32 = 14;
+const PALETTE_OFFSET: i32 = 24;
+
 impl<'a> System<'a> for ColorPaletteRenderer {
-    type SystemData = (specs::Write<'a, SyncTerm>, specs::Read<'a, State>);
+    type SystemData = (
+        specs::Write<'a, SyncTerm>,
+        specs::Read<'a, State>,
+    );
 
     fn run(&mut self, (mut out, state): Self::SystemData) {
-        if !state.mode().is_color_palette() {
-            return;
-        }
-
-        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
-        let h = i32::from(ts.1);
-        let min_x = crate::systems::PALETTE_OFFSET;
-        let min_y = h - 14;
-        let mut r = 0;
-        let mut g = 0;
-        let mut b = 0;
-        let mut count = 0;
-
-        for x in min_x..min_x + 16 {
-            for y in min_y..min_y + 14 {
-                if count > 6 * 6 * 6 {
-                    continue;
-                }
-                count += 1;
-
-                write!(
-                    out,
-                    "{}{} ",
-                    crate::common::goto(x, y),
-                    termion::color::AnsiValue::rgb(r, g, b).bg_string(),
-                )
-                .unwrap();
-
-                r += 1;
-                if r > 5 {
-                    r = 0;
-                    g += 1;
-                }
-
-                if g > 5 {
-                    g = 0;
-                    b += 1;
-                }
-
-                if b > 5 {
-                    b = 0;
-                }
-            }
+        match state.mode() {
+            Mode::SelectColor(i) => print_palette(&mut out, &state, i),
+            _ => {}
         }
     }
+}
+
+fn print_palette(out: &mut SyncTerm, state: &State, index: usize) {
+    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+    let h = i32::from(ts.1);
+    let min = Position::from_xyz(crate::systems::PALETTE_OFFSET, h - PALETTE_H, 0);
+    let mut count = 0;
+
+    for y in min.y..min.y + PALETTE_H {
+        for x in min.x..min.x + PALETTE_W {
+            if count >= MAX_COLOR_INDEX {
+                break;
+            }
+
+            let (r, g, b) = base_to_rgb(count);
+            count += 1;
+
+            write!(
+                out,
+                "{}{} ",
+                crate::common::goto(x, y),
+                termion::color::AnsiValue::rgb(r, g, b).bg_string(),
+            )
+            .unwrap();
+        }
+    }
+
+    let normalized_cursor = state.cursor - min;
+    let base = pos_to_base(normalized_cursor);
+    if base >= MAX_COLOR_INDEX {
+        return
+    }
+    
+    let (r, g, b) = base_to_rgb(base);
+
+    write!(
+        out,
+        "{}{}{}{}",
+        crate::common::goto(PALETTE_OFFSET + index as i32, h),
+        termion::color::AnsiValue::rgb(r, g, b).bg_string(),
+        crate::common::index_from_one(index),
+        crate::common::goto(state.cursor.x, state.cursor.y),
+    )
+    .unwrap();
+}
+
+const fn base_to_rgb(base: u8) -> (u8, u8, u8) {
+    (base / 36, (base / 6) % 6, base % 6)
+}
+
+const fn pos_to_base(pos: Position) -> u8 {
+    (pos.y * PALETTE_W) as u8 + pos.x as u8
 }
