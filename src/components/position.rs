@@ -9,6 +9,13 @@ pub struct Position {
     pub z: i32,
 }
 
+// used to keep cursor position etc.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Position2D {
+    pub x: i32,
+    pub y: i32,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Bounds {
     Binding(Position, Dimension),
@@ -45,6 +52,21 @@ impl Default for Position {
     }
 }
 
+impl Default for Position2D {
+    fn default() -> Self {
+        Position2D { x: 1, y: 1 }
+    }
+}
+
+impl From<&Position> for Position2D {
+    fn from(pos: &Position) -> Position2D {
+        Position2D {
+            x: pos.x,
+            y: pos.y,
+        }
+    }
+}
+
 impl std::fmt::Display for Position {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.z != 0 {
@@ -63,6 +85,28 @@ impl std::ops::Sub for Position {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
+        }
+    }
+}
+
+impl std::ops::Sub for Position2D {
+    type Output = Position2D;
+
+    fn sub(self, other: Self) -> Self {
+        Position2D {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+}
+
+impl std::ops::Sub<Position> for Position2D {
+    type Output = Position2D;
+
+    fn sub(self, other: Position) -> Self {
+        Position2D {
+            x: self.x - other.x,
+            y: self.y - other.y,
         }
     }
 }
@@ -118,7 +162,25 @@ impl Position {
     }
 }
 
+impl Position2D {
+    pub fn apply(&mut self, translation: Translation, bounds: Bounds) -> bool {
+        let mut pos3d = Position { x: self.x, y: self.y, z: 0 };
+
+        if pos3d.apply(translation, bounds) {
+            self.x = pos3d.x;
+            self.y = pos3d.y;
+            true
+        } else {
+            false
+        }
+    }
+}
+
 impl Component for Position {
+    type Storage = VecStorage<Self>;
+}
+
+impl Component for Position2D {
     type Storage = VecStorage<Self>;
 }
 

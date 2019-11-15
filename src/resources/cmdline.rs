@@ -36,6 +36,10 @@ impl CmdLine {
         &self.cmd
     }
 
+    pub fn cursor_pos(&self) -> usize {
+        self.cursor_pos
+    }
+
     pub fn input(&mut self, event: InputEvent) -> Result<Action, Error> {
         let mut clear_ac = true;
         let result = match event.0 {

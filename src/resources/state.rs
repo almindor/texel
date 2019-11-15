@@ -1,5 +1,5 @@
 use crate::common::{Action, Error, InputEvent, Scene};
-use crate::components::Position;
+use crate::components::Position2D;
 use crate::resources::{ColorMode, ColorPalette};
 use std::collections::VecDeque;
 
@@ -33,13 +33,6 @@ impl Mode {
             Mode::Quitting(_) => "QUITTING",
         }
     }
-
-    pub fn is_color_palette(&self) -> bool {
-        match self {
-            Mode::SelectColor(_) => true,
-            _ => false,
-        }
-    }
 }
 
 const HISTORY_CAPACITY: usize = 20usize;
@@ -55,7 +48,7 @@ pub struct State {
     selected_color: (u8, u8),
     save_state: (Option<String>, usize),
     dirty: bool,
-    pub cursor: Position,
+    pub cursor: Position2D,
 }
 
 impl Default for State {
@@ -70,7 +63,7 @@ impl Default for State {
             selected_color: (ColorPalette::default_bg_u8(), ColorPalette::default_fg_u8()),
             save_state: (None, 0),
             dirty: false,
-            cursor: Position::default(),
+            cursor: Position2D::default(),
         };
 
         result.modes.push_back(Mode::default()); // there is always a mode!

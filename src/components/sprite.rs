@@ -1,5 +1,5 @@
 use crate::common::{cwd_path, Error, Texel};
-use crate::components::{Dimension, Position};
+use crate::components::{Dimension, Position2D};
 use crate::resources::{ColorMode, ColorPalette};
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
@@ -86,8 +86,8 @@ impl Sprite {
         symbol: char,
         bg: u8,
         fg: u8,
-        pos: Position,
-    ) -> Result<Option<(Position, Dimension)>, Error> {
+        pos: Position2D,
+    ) -> Result<Option<(Position2D, Dimension)>, Error> {
         for t in self.texels.iter_mut().filter(|t| t.x == pos.x && t.y == pos.y) {
             if t.symbol == symbol && t.bg == bg && t.fg == fg {
                 return Ok(None);
@@ -112,7 +112,7 @@ impl Sprite {
     }
 
     // TODO: handle empty symbols with BG colors!
-    pub fn apply_color(&mut self, cm: ColorMode, color: u8, pos: Position) -> bool {
+    pub fn apply_color(&mut self, cm: ColorMode, color: u8, pos: Position2D) -> bool {
         for t in self.texels.iter_mut().filter(|t| t.x == pos.x && t.y == pos.y) {
             if (cm == ColorMode::Bg && t.bg == color) || (cm == ColorMode::Fg && t.fg == color) {
                 return false;
@@ -129,7 +129,7 @@ impl Sprite {
         false
     }
 
-    pub fn clear_symbol(&mut self, pos: Position) -> Result<Option<(Position, Dimension)>, Error> {
+    pub fn clear_symbol(&mut self, pos: Position2D) -> Result<Option<(Position2D, Dimension)>, Error> {
         let count = self.texels.len();
         self.texels.retain(|t| t.x != pos.x || t.y != pos.y);
 
@@ -142,7 +142,7 @@ impl Sprite {
 
     // goes through texels so we can calculate dimension and move position if
     // needed. TODO: optimize, we're doing 3 loops here for no good reason
-    fn calculate_bounds(&mut self) -> Result<(Position, Dimension), Error> {
+    fn calculate_bounds(&mut self) -> Result<(Position2D, Dimension), Error> {
         let mut min_x = i32::max_value();
         let mut min_y = i32::max_value();
 
@@ -168,7 +168,7 @@ impl Sprite {
             }
         }
 
-        Ok((Position::from_xyz(min_x, min_y, 0), Dimension::for_sprite(self)?))
+        Ok((Position2D { x: min_x, y: min_y }, Dimension::for_sprite(self)?))
     }
 }
 

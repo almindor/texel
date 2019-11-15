@@ -103,7 +103,7 @@ fn render_border(out: &mut SyncTerm, p: &Position, d: &Dimension) {
             }
         }
 
-        if min_x + b_w <= i32::from(ts.0) { 
+        if min_x + b_w <= i32::from(ts.0) {
             write!(out, "{}|", crate::common::goto(min_x + b_w, y)).unwrap();
         }
 

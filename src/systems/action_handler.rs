@@ -93,20 +93,21 @@ fn set_mode(
             1 => {
                 state.clear_error();
                 for (pos, _) in (p, s).join() {
-                    state.cursor = *pos;
+                    // TODO: get 2d cursor pos if assigned
+                    state.cursor = pos.into();
                 }
                 true
             }
             0 => {
                 state.clear_error();
-                state.cursor = NEW_POSITION;
+                state.cursor = (&NEW_POSITION).into();
                 new_sprite(state, e, s, u, None)
             }
             _ => state.set_error(Error::execution("Multiple objects selected")),
         },
         Mode::SelectColor(_) => {
             let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
-            state.cursor = Position::from_xyz(crate::systems::PALETTE_OFFSET, i32::from(ts.1) - 14, 0);
+            state.cursor = Position2D { x: crate::systems::PALETTE_OFFSET, y: i32::from(ts.1) - 14 };
             true
         }
         _ => true,
