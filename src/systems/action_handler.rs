@@ -71,7 +71,13 @@ impl<'a> System<'a> for ActionHandler {
     }
 }
 
-fn reverse_mode(e: &Entities, state: &mut State, s: &ReadStorage<Selection>, cur_pos: &mut WriteStorage<Position2D>, u: &LazyUpdate) -> bool {
+fn reverse_mode(
+    e: &Entities,
+    state: &mut State,
+    s: &ReadStorage<Selection>,
+    cur_pos: &mut WriteStorage<Position2D>,
+    u: &LazyUpdate,
+) -> bool {
     for (entity, _) in (e, s).join() {
         if let Some(cp) = cur_pos.get_mut(entity) {
             *cp = state.cursor; // update last cursor position
@@ -124,7 +130,10 @@ fn set_mode(
         },
         Mode::SelectColor(_) => {
             let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
-            state.cursor = Position2D { x: PALETTE_OFFSET, y: i32::from(ts.1) - 14 };
+            state.cursor = Position2D {
+                x: PALETTE_OFFSET,
+                y: i32::from(ts.1) - 14,
+            };
             true
         }
         _ => true,

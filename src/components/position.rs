@@ -60,10 +60,7 @@ impl Default for Position2D {
 
 impl From<&Position> for Position2D {
     fn from(pos: &Position) -> Position2D {
-        Position2D {
-            x: pos.x,
-            y: pos.y,
-        }
+        Position2D { x: pos.x, y: pos.y }
     }
 }
 
@@ -164,7 +161,11 @@ impl Position {
 
 impl Position2D {
     pub fn apply(&mut self, translation: Translation, bounds: Bounds) -> bool {
-        let mut pos3d = Position { x: self.x, y: self.y, z: 0 };
+        let mut pos3d = Position {
+            x: self.x,
+            y: self.y,
+            z: 0,
+        };
 
         if pos3d.apply(translation, bounds) {
             self.x = pos3d.x;

@@ -1,5 +1,5 @@
 use crate::common::Error;
-use crate::resources::{CmdLine, ColorMode, ColorPalette, PALETTE_OFFSET, Mode, State, SymbolPalette, SyncTerm};
+use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
 use specs::System;
 use std::io::Write;
 
@@ -64,7 +64,8 @@ fn print_cmdline(out: &mut SyncTerm, cmdline: &CmdLine, h: i32) {
         crate::common::goto(1, h),
         cmdline.cmd(),
         crate::common::goto(2 + cmdline.cursor_pos() as i32, h), // account for :
-    ).unwrap();
+    )
+    .unwrap();
 }
 
 fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {

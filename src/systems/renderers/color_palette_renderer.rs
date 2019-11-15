@@ -1,10 +1,9 @@
 use crate::components::Position2D;
-use crate::resources::{Mode, State, SyncTerm, ColorPalette, PALETTE_W, PALETTE_H, PALETTE_OFFSET, MAX_COLOR_INDEX};
+use crate::resources::{ColorPalette, Mode, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::System;
 use std::io::Write;
 
 pub struct ColorPaletteRenderer;
-
 
 impl<'a> System<'a> for ColorPaletteRenderer {
     type SystemData = (specs::Write<'a, SyncTerm>, specs::Read<'a, State>);
@@ -20,7 +19,10 @@ impl<'a> System<'a> for ColorPaletteRenderer {
 fn print_palette(out: &mut SyncTerm, state: &State, index: usize) {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
     let h = i32::from(ts.1);
-    let min = Position2D { x: PALETTE_OFFSET, y: h - PALETTE_H };
+    let min = Position2D {
+        x: PALETTE_OFFSET,
+        y: h - PALETTE_H,
+    };
     let mut count = 0;
 
     for y in min.y..min.y + PALETTE_H {
