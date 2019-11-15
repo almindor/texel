@@ -1,6 +1,6 @@
 use crate::common::{cwd_path, Action, Error, Loaded, Loader, Scene, SceneV1};
 use crate::components::*;
-use crate::resources::{ColorMode, Mode, State};
+use crate::resources::{ColorMode, Mode, State, PALETTE_OFFSET};
 use libflate::gzip::Encoder;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use std::path::{Path, PathBuf};
@@ -16,12 +16,13 @@ impl<'a> System<'a> for ActionHandler {
         WriteStorage<'a, Position>,
         ReadStorage<'a, Selectable>,
         ReadStorage<'a, Selection>,
+        WriteStorage<'a, Position2D>, // cursor position saved to sprite
         WriteStorage<'a, Dimension>,
         WriteStorage<'a, Sprite>,
         Read<'a, LazyUpdate>,
     );
 
-    fn run(&mut self, (e, mut state, mut p, sel, s, mut d, mut sp, u): Self::SystemData) {
+    fn run(&mut self, (e, mut state, mut p, sel, s, mut cur_pos, mut d, mut sp, u): Self::SystemData) {
         while let Some(action) = state.pop_action() {
             let keep_history = action.keeps_history();
 
@@ -31,10 +32,10 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Redo => redo(&mut state, &e, &s, &sp, &u),
                 Action::NewObject => new_sprite(&mut state, &e, &s, &u, None),
                 Action::ClearError => state.clear_error(),
-                Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &p, &u),
+                Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &p, &cur_pos, &u),
                 Action::ApplyColor(cm) => apply_color_to_selected(cm, &state, &mut sp, &p, &s),
                 Action::ApplySymbol(sym) => apply_symbol_to_selected(sym, &mut state, &mut sp, &s, &mut p, &mut d),
-                Action::ReverseMode => state.reverse_mode(),
+                Action::ReverseMode => reverse_mode(&e, &mut state, &s, &mut cur_pos, &u),
                 Action::Deselect => deselect(&e, &s, &u),
                 Action::SelectNext(keep) => select_next(&e, &sel, &s, &u, keep),
                 Action::Translate(t) => translate_selected(t, &mut state, &mut p, &s, &d),
@@ -70,6 +71,18 @@ impl<'a> System<'a> for ActionHandler {
     }
 }
 
+fn reverse_mode(e: &Entities, state: &mut State, s: &ReadStorage<Selection>, cur_pos: &mut WriteStorage<Position2D>, u: &LazyUpdate) -> bool {
+    for (entity, _) in (e, s).join() {
+        if let Some(cp) = cur_pos.get_mut(entity) {
+            *cp = state.cursor; // update last cursor position
+        } else {
+            u.insert(entity, state.cursor); // insert last cursor position
+        }
+    }
+
+    state.reverse_mode()
+}
+
 fn deselect(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) -> bool {
     let mut changed = false;
     for (entity, _) in (e, s).join() {
@@ -86,15 +99,19 @@ fn set_mode(
     e: &Entities,
     s: &ReadStorage<Selection>,
     p: &WriteStorage<Position>,
+    cur_pos: &WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
     if match mode {
         Mode::Edit => match s.count() {
             1 => {
                 state.clear_error();
-                for (pos, _) in (p, s).join() {
-                    // TODO: get 2d cursor pos if assigned
-                    state.cursor = pos.into();
+                for (entity, pos, _) in (e, p, s).join() {
+                    if let Some(cp) = cur_pos.get(entity) {
+                        state.cursor = *cp;
+                    } else {
+                        state.cursor = pos.into();
+                    }
                 }
                 true
             }
@@ -107,7 +124,7 @@ fn set_mode(
         },
         Mode::SelectColor(_) => {
             let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
-            state.cursor = Position2D { x: crate::systems::PALETTE_OFFSET, y: i32::from(ts.1) - 14 };
+            state.cursor = Position2D { x: PALETTE_OFFSET, y: i32::from(ts.1) - 14 };
             true
         }
         _ => true,
@@ -187,7 +204,7 @@ fn translate_selected(
 ) -> bool {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
     let screen_dim = Dimension::from_wh(ts.0, ts.1 - 1);
-    let palette_pos = Position::from_xyz(crate::systems::PALETTE_OFFSET, i32::from(ts.1) - 14, 0);
+    let palette_pos = Position::from_xyz(PALETTE_OFFSET, i32::from(ts.1) - 14, 0);
     let palette_dim = Dimension::from_wh(16, 14);
     let palette_bounds = Bounds::Binding(palette_pos, palette_dim);
 

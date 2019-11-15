@@ -1,11 +1,9 @@
 use crate::common::Error;
-use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette, SyncTerm};
+use crate::resources::{CmdLine, ColorMode, ColorPalette, PALETTE_OFFSET, Mode, State, SymbolPalette, SyncTerm};
 use specs::System;
 use std::io::Write;
 
 pub struct CmdLineRenderer;
-
-pub const PALETTE_OFFSET: i32 = 24;
 
 impl<'a> System<'a> for CmdLineRenderer {
     type SystemData = (

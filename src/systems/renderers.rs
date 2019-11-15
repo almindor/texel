@@ -6,7 +6,7 @@ mod cmdline_renderer;
 mod color_palette_renderer;
 mod sprite_renderer;
 
-pub use cmdline_renderer::{CmdLineRenderer, PALETTE_OFFSET};
+pub use cmdline_renderer::CmdLineRenderer;
 pub use color_palette_renderer::ColorPaletteRenderer;
 pub use sprite_renderer::SpriteRenderer;
 

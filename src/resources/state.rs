@@ -117,9 +117,6 @@ impl State {
             }
 
             self.modes.push_back(mode);
-            use std::io::Write;
-            writeln!(std::io::stderr(), "SM: {:?}/{:?}", mode, self.mode()).unwrap();
-
             return true;
         }
 
@@ -128,9 +125,6 @@ impl State {
 
     pub fn reverse_mode(&mut self) -> bool {
         if self.modes.len() > 1 {
-            use std::io::Write;
-            writeln!(std::io::stderr(), "RM: {:?}", self.mode()).unwrap();
-
             self.modes.pop_back();
             return true;
         }

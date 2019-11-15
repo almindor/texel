@@ -166,9 +166,15 @@ fn symbol_select_event(event: InputEvent, state: &mut State, index: usize, palet
 fn color_select_event(event: InputEvent, state: &mut State, index: usize, palette: &mut ColorPalette) {
     let action = match event.0 {
         Event::Cancel => Action::ReverseMode,
+        Event::Confirm => {
+            if let Err(err) = palette.set_color(index, ColorPalette::pos_to_color(state.cursor)) {
+                state.set_error(err);
+            }
+            Action::ReverseMode
+        }
+
         Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
         Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
-
         Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
         Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
         _ => Action::None,

@@ -1,9 +1,15 @@
+use crate::components::Position2D;
 use crate::common::{Error, LazyLoaded};
 use serde::{Deserialize, Serialize};
 
 const fn cc(r: u8, g: u8, b: u8) -> u8 {
     16 + 36 * r + 6 * g + b
 }
+
+pub const PALETTE_W: i32 = 16;
+pub const PALETTE_H: i32 = 14;
+pub const PALETTE_OFFSET: i32 = 24;
+pub const MAX_COLOR_INDEX: u8 = 6 * 6 * 6;
 
 const COLORS_IN_PALETTE: usize = 16;
 
@@ -142,6 +148,25 @@ impl ColorPalette {
 
     pub fn u8_to_bg(color: u8) -> String {
         termion::color::AnsiValue(color).bg_string()
+    }
+
+    pub fn pos_to_color(pos: Position2D) -> u8 {
+        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+        let min = Position2D { x: PALETTE_OFFSET, y: i32::from(ts.1) - PALETTE_H };
+        let mut base = Self::pos_to_base(pos - min);
+        if base > MAX_COLOR_INDEX {
+            base = 0; // black on black
+        }
+
+        base + 16
+    }
+
+    pub const fn base_to_rgb(base: u8) -> (u8, u8, u8) {
+        (base / 36, (base / 6) % 6, base % 6)
+    }
+    
+    pub const fn pos_to_base(pos: Position2D) -> u8 {
+        (pos.y * PALETTE_W) as u8 + pos.x as u8
     }
 
     // lazy load so we can skip serializing but don't need to do custom serde crap
