@@ -35,7 +35,7 @@ impl<'a> System<'a> for CmdLineRenderer {
             Mode::Edit => print_edit(&mut out, &state, &symbol_palette, h),
             Mode::Color(cm) => print_color(&mut out, &color_palette, cm, w, h),
             Mode::SelectSymbol(i) => print_palette(&mut out, &state, i, w, h),
-            Mode::SelectColor(_) => print_cursor(&mut out, &state), // has its own renderer, we just put cursor to the right spot
+            Mode::SelectColor(_, _) => print_cursor(&mut out, &state), // has its own renderer, we just put cursor to the right spot
         }
     }
 }

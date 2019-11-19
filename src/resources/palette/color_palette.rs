@@ -54,8 +54,8 @@ pub struct ColorPalette {
 }
 
 impl Default for ColorPalette {
-    fn default() -> ColorPalette {
-        ColorPalette {
+    fn default() -> Self {
+        Self {
             colors: DEFAULT_PALETTE_COLORS,
             fg_string: to_line_string(&DEFAULT_PALETTE_COLORS, ColorMode::Fg),
             bg_string: to_line_string(&DEFAULT_PALETTE_COLORS, ColorMode::Bg),
@@ -150,6 +150,14 @@ impl ColorPalette {
         termion::color::AnsiValue(color).bg_string()
     }
 
+    pub fn u8_to_bg_string(color: u8) -> String {
+        ColorPalette::u8_to_bg(color) + &invert_fg(color)
+    }
+    
+    pub fn u8_to_fg_string(color: u8) -> String {
+        invert_bg(color) + &ColorPalette::u8_to_fg(color)
+    }
+
     pub fn pos_to_color(pos: Position2D) -> u8 {
         let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
         let min = Position2D {
@@ -157,7 +165,8 @@ impl ColorPalette {
             y: i32::from(ts.1) - PALETTE_H,
         };
         let mut base = Self::pos_to_base(pos - min);
-        if base > MAX_COLOR_INDEX {
+        
+        if base >= MAX_COLOR_INDEX {
             base = 0; // black on black
         }
 
@@ -209,21 +218,13 @@ fn invert_bg(color: u8) -> String {
     }
 }
 
-fn u8_to_bg_string(color: u8) -> String {
-    ColorPalette::u8_to_bg(color) + &invert_fg(color)
-}
-
-fn u8_to_fg_string(color: u8) -> String {
-    invert_bg(color) + &ColorPalette::u8_to_fg(color)
-}
-
 fn to_line_string(pc: &[u8], cm: ColorMode) -> String {
     let mut result = String::with_capacity(COLORS_IN_PALETTE * 20);
 
     for (i, c) in pc.iter().enumerate() {
         let color_string = match cm {
-            ColorMode::Fg => u8_to_fg_string(*c),
-            ColorMode::Bg => u8_to_bg_string(*c),
+            ColorMode::Fg => ColorPalette::u8_to_fg_string(*c),
+            ColorMode::Bg => ColorPalette::u8_to_bg_string(*c),
         };
 
         result += &color_string;

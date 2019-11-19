@@ -128,12 +128,13 @@ fn set_mode(
             }
             _ => state.set_error(Error::execution("Multiple objects selected")),
         },
-        Mode::SelectColor(_) => {
+        Mode::SelectColor(_, _) => {
             let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
             state.cursor = Position2D {
                 x: PALETTE_OFFSET,
                 y: i32::from(ts.1) - 14,
             };
+
             true
         }
         _ => true,
@@ -238,7 +239,7 @@ fn translate_selected(
 
             changed
         }
-        Mode::SelectColor(_) => state.cursor.apply(t, palette_bounds),
+        Mode::SelectColor(_, _) => state.cursor.apply(t, palette_bounds),
         _ => false,
     }
 }

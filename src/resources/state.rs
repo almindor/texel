@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 pub enum Mode {
     Object,
     Color(ColorMode),
-    SelectColor(usize),  // index for which color 0 -> 16 (0x0 to 0xF)
+    SelectColor(usize, ColorMode),  // index for which color 0 -> 16 (0x0 to 0xF)
     SelectSymbol(usize), // index for which symbol 0 -> 16 (0x0 to 0xF)
     Edit,
     Command,
@@ -26,7 +26,8 @@ impl Mode {
             Mode::Object => "OBJECT",
             Mode::Color(ColorMode::Fg) => "COLOR[FG]",
             Mode::Color(ColorMode::Bg) => "COLOR[BG]",
-            Mode::SelectColor(_) => "COLOR[SET]", // TODO: construct static numbered index
+            Mode::SelectColor(_, ColorMode::Fg) => "COLOR[SET-FG]", // TODO: construct static numbered index
+            Mode::SelectColor(_, ColorMode::Bg) => "COLOR[SET-BG]", // TODO: construct static numbered index
             Mode::SelectSymbol(_) => "SYMBOL[SET]", // TODO: construct static numbered index
             Mode::Edit => "EDIT",
             Mode::Command => "COMMAND",

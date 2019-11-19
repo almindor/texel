@@ -20,7 +20,7 @@ impl<'a> System<'a> for InputHandler {
                 Mode::Object => objmode_event(event, &mut state),
                 Mode::Color(cm) => color_event(event, &mut state, cm, &color_palette),
                 Mode::SelectSymbol(index) => symbol_select_event(event, &mut state, index, &mut symbol_palette),
-                Mode::SelectColor(index) => color_select_event(event, &mut state, index, &mut color_palette),
+                Mode::SelectColor(index, _) => color_select_event(event, &mut state, index, &mut color_palette),
                 Mode::Edit => edit_event(event, &mut state, &symbol_palette),
                 Mode::Quitting(_) => {}
             }
@@ -93,7 +93,7 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
             state.push_action(Action::ClearError); // clean errors when going back to cmdline
             state.push_action(Action::SetMode(Mode::Command));
         }
-        Event::EditPalette(index) => state.push_action(Action::SetMode(Mode::SelectColor(index))),
+        Event::EditPalette(index) => state.push_action(Action::SetMode(Mode::SelectColor(index, cm))),
         Event::Cancel => state.push_action(Action::ReverseMode),
         _ => {
             if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
