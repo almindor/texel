@@ -177,6 +177,12 @@ fn color_select_event(event: InputEvent, state: &mut State, index: usize, palett
         Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
         Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
         Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
+
+        Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left)),
+        Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top)),
+        Event::DownEdge => Action::Translate(Translation::ToEdge(Direction::Bottom)),
+        Event::RightEdge => Action::Translate(Translation::ToEdge(Direction::Right)),
+
         _ => Action::None,
     };
 

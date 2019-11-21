@@ -18,12 +18,12 @@ pub struct Position2D {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Bounds {
-    Binding(Position, Dimension),
-    Free(Position, Dimension),
+    Binding(Position2D, Dimension),
+    Free(Position2D, Dimension),
 }
 
 impl Bounds {
-    pub fn position(&self) -> &Position {
+    pub fn position(&self) -> &Position2D {
         match self {
             Bounds::Binding(p, _) => p,
             Bounds::Free(p, _) => p,
@@ -55,6 +55,12 @@ impl Default for Position {
 impl Default for Position2D {
     fn default() -> Self {
         Position2D { x: 1, y: 1 }
+    }
+}
+
+impl From<&mut Position> for Position2D {
+    fn from(pos: &mut Position) -> Position2D {
+        Position2D { x: pos.x, y: pos.y }
     }
 }
 
@@ -109,10 +115,6 @@ impl std::ops::Sub<Position> for Position2D {
 }
 
 impl Position {
-    pub fn from_xyz(x: i32, y: i32, z: i32) -> Self {
-        Position { x, y, z }
-    }
-
     pub fn apply(&mut self, translation: Translation, bounds: Bounds) -> bool {
         match translation {
             Translation::None => {}
@@ -131,8 +133,8 @@ impl Position {
             Translation::ToEdge(dir) => match dir {
                 Direction::Left => self.x = bounds.position().x,
                 Direction::Top => self.y = bounds.position().y,
-                Direction::Bottom => self.y = bounds.position().y + i32::from(bounds.dimension().h),
-                Direction::Right => self.x = bounds.position().x + i32::from(bounds.dimension().w),
+                Direction::Bottom => self.y = bounds.bottom(),
+                Direction::Right => self.x = bounds.right(),
             },
         }
 
