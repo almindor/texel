@@ -22,6 +22,7 @@ impl<'a> System<'a> for InputHandler {
                 Mode::SelectSymbol(index) => symbol_select_event(event, &mut state, index, &mut symbol_palette),
                 Mode::SelectColor(index, _) => color_select_event(event, &mut state, index, &mut color_palette),
                 Mode::Edit => edit_event(event, &mut state, &symbol_palette),
+                Mode::Write => write_event(event, &mut state),
                 Mode::Quitting(_) => {}
             }
         }
@@ -30,14 +31,7 @@ impl<'a> System<'a> for InputHandler {
 
 fn objmode_event(event: InputEvent, state: &mut State) {
     let action = match event.0 {
-        Event::ModeCmd => {
-            state.push_action(Action::ClearError); // clean errors when going back to cmdline
-            Action::SetMode(Mode::Command)
-        }
-        Event::ModeEdit => Action::SetMode(Mode::Edit),
-        Event::ModeColorFG => Action::SetMode(Mode::Color(ColorMode::Fg)),
-        Event::ModeColorBG => Action::SetMode(Mode::Color(ColorMode::Bg)),
-
+        Event::Mode(mode) => Action::SetMode(mode),
         Event::Next => Action::SelectNext(false),
         Event::NextWith => Action::SelectNext(true),
 
@@ -88,9 +82,8 @@ fn cmdline_event(event: InputEvent, state: &mut State, cmdline: &mut CmdLine) {
 
 fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &ColorPalette) {
     match event.0 {
-        Event::ModeCmd => {
+        Event::Mode(Mode::Command) => {
             state.push_action(Action::ReverseMode);
-            state.push_action(Action::ClearError); // clean errors when going back to cmdline
             state.push_action(Action::SetMode(Mode::Command));
         }
         Event::EditPalette(index) => state.push_action(Action::SetMode(Mode::SelectColor(index, cm))),
@@ -104,12 +97,39 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
     };
 }
 
+fn write_event(event: InputEvent, state: &mut State) {
+    let action = match event.0 {
+        Event::Cancel => Action::ReverseMode,
+
+        Event::ArrowLeft => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::ArrowUp => Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::ArrowDown => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::ArrowRight => Action::Translate(Translation::Relative(1, 0, 0)),
+
+        Event::Confirm => {
+            state.push_action(Action::Translate(Translation::ToEdge(Direction::Left)));
+            Action::Translate(Translation::Relative(0, 1, 0))
+        }
+
+        Event::Delete | Event::Backspace => {
+            state.push_action(Action::Translate(Translation::Relative(-1, 0, 0))); // TODO: let action handler keep bounds and move up
+            Action::Delete
+        }
+
+        _ => if let Some(c) = event.1 {
+            state.push_action(Action::ApplySymbol(c));
+            Action::Translate(Translation::Relative(1, 0, 0))
+        } else {
+            Action::None
+        }
+    };
+
+    state.push_action(action);
+}
+
 fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
     let action = match event.0 {
-        Event::ModeCmd => {
-            state.push_action(Action::ClearError); // clean errors when going back to cmdline
-            Action::SetMode(Mode::Command)
-        }
+        Event::Mode(Mode::Command) => Action::SetMode(Mode::Command),
         Event::EditPalette(index) => Action::SetMode(Mode::SelectSymbol(index)),
         Event::Cancel => Action::ReverseMode,
         Event::Delete | Event::Backspace => Action::Delete,
@@ -120,8 +140,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
         Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 
-        Event::ModeColorFG => Action::SetMode(Mode::Color(ColorMode::Fg)),
-        Event::ModeColorBG => Action::SetMode(Mode::Color(ColorMode::Bg)),
+        Event::Mode(Mode::SelectColor(i, cm)) => Action::SetMode(Mode::SelectColor(i, cm)),
         Event::ApplyColorFG => Action::ApplyColor(ColorMode::Fg),
         Event::ApplyColorBG => Action::ApplyColor(ColorMode::Bg),
 

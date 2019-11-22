@@ -32,6 +32,7 @@ impl<'a> System<'a> for CmdLineRenderer {
             Mode::Quitting(_) => return,
             Mode::Command => print_cmdline(&mut out, &cmdline, h),
             Mode::Object => print_mode(&mut out, mode, w, h),
+            Mode::Write => print_write(&mut out, &state, h),
             Mode::Edit => print_edit(&mut out, &state, &symbol_palette, h),
             Mode::Color(cm) => print_color(&mut out, &color_palette, cm, w, h),
             Mode::SelectSymbol(i) => print_palette(&mut out, &state, i, w, h),
@@ -82,6 +83,20 @@ fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
         ColorPalette::default_fg(),
         ColorPalette::default_bg(),
         crate::common::goto(w, h),
+    )
+    .unwrap();
+}
+
+fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
+    write!(
+        out,
+        "{}{}{}--{}--{}{}",
+        crate::common::goto(1, h),
+        termion::style::Bold,
+        termion::color::Fg(termion::color::White),
+        state.mode().to_str(),
+        termion::style::Reset,
+        crate::common::goto(state.cursor.x, state.cursor.y),
     )
     .unwrap();
 }

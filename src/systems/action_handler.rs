@@ -40,7 +40,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::SelectNext(keep) => select_next(&e, &sel, &s, &u, keep),
                 Action::Translate(t) => translate_selected(t, &mut state, &mut p, &s, &d),
                 Action::Delete => {
-                    if state.mode() == Mode::Edit {
+                    if state.mode() == Mode::Edit || state.mode() == Mode::Write {
                         clear_symbol_on_selected(&mut state, &mut sp, &s, &mut p, &mut d)
                     } else if let Err(err) = delete_selected(&e, &s) {
                         state.set_error(err)
@@ -109,7 +109,7 @@ fn set_mode(
     u: &LazyUpdate,
 ) -> bool {
     if match mode {
-        Mode::Edit => match s.count() {
+        Mode::Edit | Mode::Write => match s.count() {
             1 => {
                 state.clear_error();
                 for (entity, pos, _) in (e, p, s).join() {
@@ -221,7 +221,7 @@ fn translate_selected(
     let mode = state.mode();
 
     match mode {
-        Mode::Object | Mode::Edit => {
+        Mode::Object | Mode::Edit | Mode::Write => {
             let mut changed = false;
 
             for (position, _, dim) in (p, s, d).join() {
@@ -229,7 +229,7 @@ fn translate_selected(
                 let screen_bounds = Bounds::Free(Position2D::default(), screen_dim - *dim);
 
                 if match state.mode() {
-                    Mode::Edit => state.cursor.apply(t, sprite_bounds),
+                    Mode::Edit | Mode::Write => state.cursor.apply(t, sprite_bounds),
                     Mode::Object => position.apply(t, screen_bounds),
                     _ => false,
                 } {

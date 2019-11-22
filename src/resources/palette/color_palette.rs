@@ -36,7 +36,7 @@ const COLOR_SELECTOR: [char; COLORS_IN_PALETTE] = [
     '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'a', 'b', 'c', 'd', 'e', 'f',
 ];
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ColorMode {
     Bg,
     Fg,

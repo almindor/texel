@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use termion::event::{Event as TEvent, Key};
+use crate::resources::{Mode, ColorMode};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Event {
@@ -19,11 +20,8 @@ pub enum Event {
     UpEdge,
     RightEdge,
     DownEdge,
-    ModeCmd,
-    ModeEdit,
+    Mode(Mode),
     EditPalette(usize), // index of symbol/color, 0x0-0xF as usize <0, 16)
-    ModeColorFG,
-    ModeColorBG,
     ApplyColorFG,
     ApplyColorBG,
     Next,
@@ -53,8 +51,9 @@ impl Default for CharMap {
     fn default() -> Self {
         let mut map = HashMap::with_capacity(30);
 
-        map.insert(':', Event::ModeCmd);
-        map.insert('e', Event::ModeEdit);
+        map.insert(':', Event::Mode(Mode::Command));
+        map.insert('e', Event::Mode(Mode::Edit));
+        map.insert('w', Event::Mode(Mode::Write));
         // 1-0 + A,B,C,D,E,F (HEX) are symbol overrides
         map.insert('!', Event::EditPalette(0));
         map.insert('@', Event::EditPalette(1));
@@ -73,8 +72,8 @@ impl Default for CharMap {
         map.insert('E', Event::EditPalette(14));
         map.insert('F', Event::EditPalette(15));
 
-        map.insert('Z', Event::ModeColorFG);
-        map.insert('X', Event::ModeColorBG);
+        map.insert('Z', Event::Mode(Mode::SelectColor(0, ColorMode::Fg)));
+        map.insert('X', Event::Mode(Mode::SelectColor(0, ColorMode::Bg)));
 
         map.insert('z', Event::ApplyColorFG);
         map.insert('x', Event::ApplyColorBG);
