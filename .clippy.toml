@@ -1,2 +1,9 @@
+# ECS/specs forces use of fairly complex SystemData definitions which
+# don't really make much sense being split into subtypes
 type-complexity-threshold = 500
+
+# TODO: this should be refactored but mainly in action_handler.rs I used
+# a bunch of single char names to keep things short since the list of params
+# is big. The whole setup should be remade, possibly when switching to
+# [DCES](https://crates.io/crates/dces)
 single-char-binding-names-threshold = 8
