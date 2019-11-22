@@ -200,7 +200,7 @@ impl State {
             self.history.pop_front();
         }
 
-        if self.history.len() > 0 && self.history_index != self.history.len() - 1 {
+        if !self.history.is_empty() && self.history_index != self.history.len() - 1 {
             self.history.truncate(self.history_index + 1);
         }
 
@@ -227,7 +227,7 @@ impl State {
     }
 
     pub fn redo(&mut self) -> Option<Scene> {
-        if self.history.len() == 0 || self.history_index >= self.history.len() - 1 {
+        if self.history.is_empty() || self.history_index >= self.history.len() - 1 {
             return None;
         }
 

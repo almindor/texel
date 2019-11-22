@@ -21,7 +21,7 @@ impl Default for SymbolPalette {
     fn default() -> Self {
         SymbolPalette {
             symbols: DEFAULT_SYMBOLS,
-            line_str: Self::to_line_string(&DEFAULT_SYMBOLS),
+            line_str: build_line_string(&DEFAULT_SYMBOLS),
         }
     }
 }
@@ -30,7 +30,7 @@ impl From<[char; SYMBOLS_IN_PALETTE]> for SymbolPalette {
     fn from(symbols: [char; SYMBOLS_IN_PALETTE]) -> Self {
         SymbolPalette {
             symbols,
-            line_str: Self::to_line_string(&symbols),
+            line_str: build_line_string(&symbols),
         }
     }
 }
@@ -45,14 +45,14 @@ impl From<&[char]> for SymbolPalette {
 
         SymbolPalette {
             symbols: symbol_chars,
-            line_str: Self::to_line_string(&symbol_chars),
+            line_str: build_line_string(&symbol_chars),
         }
     }
 }
 
 impl LazyLoaded for SymbolPalette {
     fn refresh(&mut self) {
-        self.line_str = Self::to_line_string(&self.symbols);
+        self.line_str = build_line_string(&self.symbols);
     }
 }
 
@@ -75,7 +75,7 @@ impl SymbolPalette {
         }
 
         self.symbols[index] = symbol;
-        self.line_str = Self::to_line_string(&self.symbols);
+        self.line_str = build_line_string(&self.symbols);
 
         Ok(())
     }
@@ -83,20 +83,20 @@ impl SymbolPalette {
     pub fn line_str(&self) -> &str {
         &self.line_str
     }
+}
 
-    fn to_line_string(symbols: &[char]) -> String {
-        let mut result = String::with_capacity(SYMBOLS_IN_PALETTE * 4 + 40);
-        result += termion::color::Reset.bg_str();
-        result += termion::color::Reset.fg_str();
-        result += termion::style::Reset.as_ref();
+fn build_line_string(symbols: &[char]) -> String {
+    let mut result = String::with_capacity(SYMBOLS_IN_PALETTE * 4 + 40);
+    result += termion::color::Reset.bg_str();
+    result += termion::color::Reset.fg_str();
+    result += termion::style::Reset.as_ref();
 
-        for (i, c) in symbols.iter().enumerate() {
-            result.push(SYMBOL_SELECTOR[i]);
-            result.push(':');
-            result.push(*c);
-            result.push(' ');
-        }
-
-        result
+    for (i, c) in symbols.iter().enumerate() {
+        result.push(SYMBOL_SELECTOR[i]);
+        result.push(':');
+        result.push(*c);
+        result.push(' ');
     }
+
+    result
 }

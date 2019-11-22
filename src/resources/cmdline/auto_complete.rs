@@ -26,7 +26,7 @@ impl FileComplete {
             if index < self.completions.len() - 1 {
                 self.index = Some(index + 1);
                 return Ok(self.completions.get(index + 1));
-            } else if self.completions.len() > 0 {
+            } else if !self.completions.is_empty() {
                 self.index = Some(0);
                 return Ok(self.completions.first());
             }
@@ -36,25 +36,25 @@ impl FileComplete {
 
         let loc_path = Path::new(raw_path);
         let abs_path = cwd_path(loc_path)?;
-        let mut loc_parent = loc_path.parent().unwrap_or(Path::new(""));
+        let mut loc_parent = loc_path.parent().unwrap_or_else(|| Path::new(""));
         let abs_parent = if abs_path.is_dir() {
             loc_parent = loc_path;
             &abs_path
         } else {
-            abs_path.parent().unwrap_or(Path::new("/"))
+            abs_path.parent().unwrap_or_else(|| Path::new("/"))
         };
 
         if let Some(name) = loc_path.file_name() {
-            let str_name = name.to_str().unwrap_or("");
+            let str_name = name.to_str().unwrap_or_else(|| "");
 
             self.completions = read_dir(abs_parent)?
                 .filter_map(|e| {
-                    if let Some(entry) = e.ok() {
+                    if let Ok(entry) = e {
                         return match entry.file_name().to_str() {
                             None => None,
                             Some(s) => {
                                 if abs_path.is_dir() || s.starts_with(str_name) {
-                                    Some(String::from(loc_parent.join(s).to_str().unwrap_or("???")))
+                                    Some(String::from(loc_parent.join(s).to_str().unwrap_or_else(|| "???")))
                                 } else {
                                     None
                                 }

@@ -109,7 +109,7 @@ fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
 fn check_terminal_size() {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
     if ts.0 < 60 || ts.1 < 16 {
-        writeln!(std::io::stderr(), "Terminal size too small, minimum 60x16 is required").unwrap();
+        eprintln!("Terminal size too small, minimum 60x16 is required");
         std::process::exit(1);
     }
 }
@@ -158,5 +158,5 @@ fn save_config(config_file: &Path, world: &World) {
     let cp = world.fetch::<ColorPalette>();
     let sp = world.fetch::<SymbolPalette>();
     let config = Config::V1(ConfigV1::from((&*cp, &*sp)));
-    Loader::to_config_file(config, config_file).unwrap();
+    config.to_config_file(config_file).unwrap();
 }

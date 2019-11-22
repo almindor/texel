@@ -119,9 +119,9 @@ impl Position {
         match translation {
             Translation::None => {}
             Translation::Relative(x, y, z) => {
-                self.x += i32::from(x);
-                self.y += i32::from(y);
-                self.z += i32::from(z);
+                self.x += x;
+                self.y += y;
+                self.z += z;
             }
             Translation::Absolute(x, y, z) => {
                 self.x = x;

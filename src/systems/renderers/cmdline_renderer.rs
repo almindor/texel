@@ -29,7 +29,7 @@ impl<'a> System<'a> for CmdLineRenderer {
         let mode = state.mode();
 
         match mode {
-            Mode::Quitting(_) => return,
+            Mode::Quitting(_) => {}
             Mode::Command => print_cmdline(&mut out, &cmdline, h),
             Mode::Object => print_mode(&mut out, mode, w, h),
             Mode::Write => print_write(&mut out, &state, h),
@@ -75,11 +75,10 @@ fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
 
     write!(
         out,
-        "{}{}{}{}{}{}{}",
+        "{}{}{}▞{}{}{}",
         crate::common::goto(w - 12, h),
         ColorPalette::u8_to_bg(sc.0),
         ColorPalette::u8_to_fg(sc.1),
-        "▞",
         ColorPalette::default_fg(),
         ColorPalette::default_bg(),
         crate::common::goto(w, h),

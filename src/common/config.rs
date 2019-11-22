@@ -1,6 +1,7 @@
-use crate::common::{CharMap, LazyLoaded};
+use crate::common::{CharMap, Error, LazyLoaded};
 use crate::resources::{ColorPalette, SymbolPalette};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Config {
@@ -21,6 +22,18 @@ impl Config {
                 config
             } // TODO: once we have V2+ we'll need to return that and convert previous
         }
+    }
+
+    pub fn to_config_file(&self, path: &Path) -> Result<(), Error> {
+        let parent = path
+            .parent()
+            .ok_or_else(|| Error::execution("Unable to create config dif"))?;
+        std::fs::create_dir_all(parent)?;
+
+        let serialized = ron::ser::to_string_pretty(self, ron::ser::PrettyConfig::default())?;
+        std::fs::write(path, serialized)?;
+
+        Ok(())
     }
 }
 

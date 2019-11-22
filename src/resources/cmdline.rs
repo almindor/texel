@@ -95,7 +95,7 @@ impl CmdLine {
     }
 
     fn previous(&mut self) -> Result<Action, Error> {
-        if self.history.len() > 0 {
+        if !self.history.is_empty() {
             if self.history_index.is_none() {
                 self.history_index = Some(self.history.len() - 1);
             }

@@ -30,7 +30,7 @@ impl<'a> System<'a> for SpriteRenderer {
             render_sprite(&mut out, &pos, &sprite);
 
             if b.contains(entity) && sel.contains(entity) {
-                render_border(&mut out, &pos, &dim);
+                render_border(&mut out, &pos, *dim);
                 loc_info = Some(pos);
             }
         }
@@ -59,28 +59,24 @@ fn print_texel(out: &mut SyncTerm, p: &Position, t: &Texel) {
     .unwrap();
 }
 
-fn is_visible(x: i32, y: i32, ts: &(u16, u16)) -> bool {
+fn is_visible(x: i32, y: i32, ts: (u16, u16)) -> bool {
     let w = i32::from(ts.0);
     let h = i32::from(ts.1);
 
-    if x <= 0 || x > w || y <= 0 || y > h {
-        false
-    } else {
-        true
-    }
+    x > 0 && x <= w && y > 0 && y <= h
 }
 
 fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
 
     for t in s.texels.iter().filter(|t| p.x + t.x > 0 && p.y + t.y > 0) {
-        if is_visible(p.x + t.x, p.y + t.y, &ts) {
+        if is_visible(p.x + t.x, p.y + t.y, ts) {
             print_texel(out, p, t);
         }
     }
 }
 
-fn render_border(out: &mut SyncTerm, p: &Position, d: &Dimension) {
+fn render_border(out: &mut SyncTerm, p: &Position, d: Dimension) {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
     let min_x = p.x - 1;
     let min_y = p.y - 1;
@@ -97,7 +93,7 @@ fn render_border(out: &mut SyncTerm, p: &Position, d: &Dimension) {
         if y == min_y || y == min_y + b_h {
             let a = if y == min_y { '-' } else { '_' };
             for x in min_x..=min_x + b_w {
-                if is_visible(x, y, &ts) {
+                if is_visible(x, y, ts) {
                     write!(out, "{}{}", crate::common::goto(x, y), a).unwrap();
                 }
             }

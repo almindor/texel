@@ -198,8 +198,7 @@ fn re_rgb(color: u8) -> (u8, u8, u8) {
 fn luminance(color: u8) -> u8 {
     let (r, g, b) = re_rgb(color);
     // get luminance according to spec (output is in 0..6 tho same as ansivalue bases)
-    let y = (0.2126 * f32::from(r) + 0.7151 * f32::from(g) + 0.0721 * f32::from(b)) as u8;
-    y
+    (0.2126 * f32::from(r) + 0.7151 * f32::from(g) + 0.0721 * f32::from(b)) as u8
 }
 
 fn invert_fg(color: u8) -> String {

@@ -191,11 +191,11 @@ fn delete_selected(e: &Entities, s: &ReadStorage<Selection>) -> Result<(), Error
     let mut deleted = 0usize;
 
     for (entity, _) in (e, s).join() {
-        if let Err(_) = e.delete(entity) {
+        if e.delete(entity).is_err() {
             return Err(Error::execution("Error deleting entity"));
-        } else {
-            deleted += 1;
         }
+
+        deleted += 1;
     }
 
     if deleted == 0 {
@@ -263,10 +263,8 @@ fn apply_color_to_selected(
             if sprite.apply_color(cm, color, rel_pos) {
                 changed = true;
             }
-        } else {
-            if sprite.fill(cm, color) {
-                changed = true;
-            }
+        } else if sprite.fill(cm, color) {
+            changed = true;
         }
     }
 
@@ -422,7 +420,7 @@ fn save_scene(
     let mut encoder = Encoder::new(file)?;
 
     use std::io::Write;
-    encoder.write(ronified.as_ref())?;
+    encoder.write_all(ronified.as_ref())?;
     encoder.finish().into_result()?;
     Ok(())
 }
@@ -473,10 +471,10 @@ fn undo(
     u: &LazyUpdate,
 ) -> bool {
     if let Some(scene) = state.undo() {
-        return match apply_scene(scene, &e, &s, &sp, &u) {
+        match apply_scene(scene, &e, &s, &sp, &u) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
-        };
+        }
     } else {
         state.set_error(Error::execution("Nothing to undo"));
         false
@@ -491,10 +489,10 @@ fn redo(
     u: &LazyUpdate,
 ) -> bool {
     if let Some(scene) = state.redo() {
-        return match apply_scene(scene, &e, &s, &sp, &u) {
+        match apply_scene(scene, &e, &s, &sp, &u) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
-        };
+        }
     } else {
         state.set_error(Error::execution("Nothing to redo"));
         false

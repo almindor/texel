@@ -88,7 +88,7 @@ impl Sprite {
         fg: u8,
         pos: Position2D,
     ) -> Result<Option<(Position2D, Dimension)>, Error> {
-        for t in self.texels.iter_mut().filter(|t| t.x == pos.x && t.y == pos.y) {
+        if let Some(t) = self.texels.iter_mut().find(|t| t.x == pos.x && t.y == pos.y) {
             if t.symbol == symbol && t.bg == bg && t.fg == fg {
                 return Ok(None);
             }
@@ -113,7 +113,7 @@ impl Sprite {
 
     // TODO: handle empty symbols with BG colors!
     pub fn apply_color(&mut self, cm: ColorMode, color: u8, pos: Position2D) -> bool {
-        for t in self.texels.iter_mut().filter(|t| t.x == pos.x && t.y == pos.y) {
+        if let Some(t) = self.texels.iter_mut().find(|t| t.x == pos.x && t.y == pos.y) {
             if (cm == ColorMode::Bg && t.bg == color) || (cm == ColorMode::Fg && t.fg == color) {
                 return false;
             }

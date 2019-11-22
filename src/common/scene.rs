@@ -48,7 +48,7 @@ impl<'a>
         let (e, sp, p, s) = storage;
 
         for (entity, sprite, pos) in (e, sp, p).join() {
-            objects.push((sprite.clone(), pos.clone(), s.contains(entity)));
+            objects.push((sprite.clone(), *pos, s.contains(entity)));
         }
 
         SceneV1 { objects }

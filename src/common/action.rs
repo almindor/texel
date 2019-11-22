@@ -79,7 +79,7 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&'static str; 8] = [
+        const ACTION_WORDS: [&str; 8] = [
             "import",
             "read",
             "write",

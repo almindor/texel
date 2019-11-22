@@ -11,9 +11,8 @@ impl<'a> System<'a> for ColorPaletteRenderer {
     type SystemData = (specs::Write<'a, SyncTerm>, specs::Read<'a, State>);
 
     fn run(&mut self, (mut out, state): Self::SystemData) {
-        match state.mode() {
-            Mode::SelectColor(i, cm) => print_palette(&mut out, &state, i, cm),
-            _ => {}
+        if let Mode::SelectColor(i, cm) = state.mode() {
+            print_palette(&mut out, &state, i, cm)
         }
     }
 }
