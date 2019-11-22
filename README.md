@@ -67,7 +67,7 @@ The `Command` mode can be entered from any mode except `Write` (so you can type 
 `n`            - add empty object
 `e`            - edit selected (new if none, switch to `Edit` mode)
 `w`            - write to selected directly (new if none, switch to `Write` mode)
-`z, x`         - apply fg/bg color
+`z, x`         - apply fg/bg color to all texels in selected
 `Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
 
 #### Edit Mode
@@ -75,3 +75,10 @@ The `Command` mode can be entered from any mode except `Write` (so you can type 
 `w`            - write to edited directly (switch to `Write` mode)
 `0..9, a..f`   - apply symbol from palette (think hex index)
 `!..), A..F`   - set symbol on palette (think hex index)
+`z, x`         - apply fg/bg color to selected texel
+`Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
+
+#### ColorPalette | SymbolPalette Mode
+
+`0..9, a..f`   - apply color/symbol from palette (think hex index)
+`!..), A..F`   - set color/symbol on palette (think hex index)
