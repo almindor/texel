@@ -153,7 +153,7 @@ impl ColorPalette {
     pub fn u8_to_bg_string(color: u8) -> String {
         ColorPalette::u8_to_bg(color) + &invert_fg(color)
     }
-    
+
     pub fn u8_to_fg_string(color: u8) -> String {
         invert_bg(color) + &ColorPalette::u8_to_fg(color)
     }
@@ -165,7 +165,7 @@ impl ColorPalette {
             y: i32::from(ts.1) - PALETTE_H,
         };
         let mut base = Self::pos_to_base(pos - min);
-        
+
         if base >= MAX_COLOR_INDEX {
             base = 0; // black on black
         }

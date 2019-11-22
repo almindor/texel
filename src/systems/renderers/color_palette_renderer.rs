@@ -1,15 +1,14 @@
 use crate::components::Position2D;
-use crate::resources::{ColorPalette, ColorMode, Mode, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
+use crate::resources::{
+    ColorMode, ColorPalette, Mode, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W,
+};
 use specs::System;
 use std::io::Write;
 
 pub struct ColorPaletteRenderer;
 
 impl<'a> System<'a> for ColorPaletteRenderer {
-    type SystemData = (
-        specs::Write<'a, SyncTerm>,
-        specs::Read<'a, State>,
-    );
+    type SystemData = (specs::Write<'a, SyncTerm>, specs::Read<'a, State>);
 
     fn run(&mut self, (mut out, state): Self::SystemData) {
         match state.mode() {

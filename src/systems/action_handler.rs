@@ -1,6 +1,6 @@
 use crate::common::{cwd_path, Action, Error, Loaded, Loader, Scene, SceneV1};
 use crate::components::*;
-use crate::resources::{ColorMode, Mode, State, PALETTE_OFFSET, PALETTE_W, PALETTE_H};
+use crate::resources::{ColorMode, Mode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use libflate::gzip::Encoder;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use std::path::{Path, PathBuf};
@@ -214,7 +214,10 @@ fn translate_selected(
 ) -> bool {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
     let screen_dim = Dimension::from_wh(ts.0, ts.1);
-    let palette_pos = Position2D { x: PALETTE_OFFSET, y: i32::from(ts.1) - 14 };
+    let palette_pos = Position2D {
+        x: PALETTE_OFFSET,
+        y: i32::from(ts.1) - 14,
+    };
     let palette_dim = Dimension::from_wh(PALETTE_W as u16, PALETTE_H as u16);
     let palette_bounds = Bounds::Binding(palette_pos, palette_dim);
 

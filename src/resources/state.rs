@@ -1,15 +1,15 @@
 use crate::common::{Action, Error, InputEvent, Scene};
 use crate::components::Position2D;
 use crate::resources::{ColorMode, ColorPalette};
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Mode {
     Object,
     Color(ColorMode),
-    SelectColor(usize, ColorMode),  // index for which color 0 -> 16 (0x0 to 0xF)
-    SelectSymbol(usize), // index for which symbol 0 -> 16 (0x0 to 0xF)
+    SelectColor(usize, ColorMode), // index for which color 0 -> 16 (0x0 to 0xF)
+    SelectSymbol(usize),           // index for which symbol 0 -> 16 (0x0 to 0xF)
     Edit,
     Write,
     Command,
@@ -30,7 +30,7 @@ impl Mode {
             Mode::Color(ColorMode::Bg) => "COLOR[BG]",
             Mode::SelectColor(_, ColorMode::Fg) => "COLOR[SET-FG]", // TODO: construct static numbered index
             Mode::SelectColor(_, ColorMode::Bg) => "COLOR[SET-BG]", // TODO: construct static numbered index
-            Mode::SelectSymbol(_) => "SYMBOL[SET]", // TODO: construct static numbered index
+            Mode::SelectSymbol(_) => "SYMBOL[SET]",                 // TODO: construct static numbered index
             Mode::Edit => "EDIT",
             Mode::Write => "WRITE",
             Mode::Command => "COMMAND",

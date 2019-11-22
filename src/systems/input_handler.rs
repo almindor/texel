@@ -116,11 +116,13 @@ fn write_event(event: InputEvent, state: &mut State) {
             Action::Delete
         }
 
-        _ => if let Some(c) = event.1 {
-            state.push_action(Action::ApplySymbol(c));
-            Action::Translate(Translation::Relative(1, 0, 0))
-        } else {
-            Action::None
+        _ => {
+            if let Some(c) = event.1 {
+                state.push_action(Action::ApplySymbol(c));
+                Action::Translate(Translation::Relative(1, 0, 0))
+            } else {
+                Action::None
+            }
         }
     };
 

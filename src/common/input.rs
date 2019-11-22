@@ -1,7 +1,7 @@
+use crate::resources::{ColorMode, Mode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use termion::event::{Event as TEvent, Key};
-use crate::resources::{Mode, ColorMode};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Event {
