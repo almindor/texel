@@ -40,45 +40,45 @@ The default mode is `Object`. Each mode can be reversed to previous one via `ESC
 The `Command` mode can be entered from any mode except `Write` (so you can type `:` directly).
 
 ### Commands in Command mode
-`q, quit`               - quit
-`q!, quit!`             - force quit (don't save)
-`r, read [filename]`    - read a file
-`w, write [filename]`   - save a file
-`import <filename>`     - import object/sprite from text file
-`export <filename>`     - export selected object/sprite to text file
-`delete`                - delete selected
-`deselect`              - deselect all
+* `q, quit`               - quit
+* `q!, quit!`             - force quit (don't save)
+* `r, read [filename]`    - read a file
+* `w, write [filename]`   - save a file
+* `import <filename>`     - import object/sprite from text file
+* `export <filename>`     - export selected object/sprite to text file
+* `delete`                - delete selected
+* `deselect`              - deselect all
 
 ### Keymap
 
 #### All Modes
-`ESC`          - cancel/return
-`ENTER/RETURN` - confirm/select
-`ARROW KEYS`   - movement
-`h, j, k, l`   - movement
-`:`            - command mode
-`u, U`         - undo/redo
+* `ESC`          - cancel/return
+* `ENTER/RETURN` - confirm/select
+* `ARROW KEYS`   - movement
+* `h, j, k, l`   - movement
+* `:`            - command mode
+* `u, U`         - undo/redo
 
 #### Object Mode
-`DELETE`       - delete selected
-`TAB`          - select next
-`SHIT + TAB`   - add next to selection
-`H, J, K, L`   - movement to edge
-`n`            - add empty object
-`e`            - edit selected (new if none, switch to `Edit` mode)
-`w`            - write to selected directly (new if none, switch to `Write` mode)
-`z, x`         - apply fg/bg color to all texels in selected
-`Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
+* `DELETE`       - delete selected
+* `TAB`          - select next
+* `SHIT + TAB`   - add next to selection
+* `H, J, K, L`   - movement to edge
+* `n`            - add empty object
+* `e`            - edit selected (new if none, switch to `Edit` mode)
+* `w`            - write to selected directly (new if none, switch to `Write` mode)
+* `z, x`         - apply fg/bg color to all texels in selected
+* `Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
 
 #### Edit Mode
 
-`w`            - write to edited directly (switch to `Write` mode)
-`0..9, a..f`   - apply symbol from palette (think hex index)
-`!..), A..F`   - set symbol on palette (think hex index)
-`z, x`         - apply fg/bg color to selected texel
-`Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
+* `w`            - write to edited directly (switch to `Write` mode)
+* `0..9, a..f`   - apply symbol from palette (think hex index)
+* `!..), A..F`   - set symbol on palette (think hex index)
+* `z, x`         - apply fg/bg color to selected texel
+* `Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
 
 #### ColorPalette | SymbolPalette Mode
 
-`0..9, a..f`   - apply color/symbol from palette (think hex index)
-`!..), A..F`   - set color/symbol on palette (think hex index)
+* `0..9, a..f`   - apply color/symbol from palette (think hex index)
+* `!..), A..F`   - set color/symbol on palette (think hex index)
