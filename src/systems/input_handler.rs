@@ -130,6 +130,7 @@ fn write_event(event: InputEvent, state: &mut State) {
 fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
     let action = match event.0 {
         Event::Mode(Mode::Command) => Action::SetMode(Mode::Command),
+        Event::Mode(Mode::Write) => Action::SetMode(Mode::Write),
         Event::EditPalette(index) => Action::SetMode(Mode::SelectSymbol(index)),
         Event::Cancel => Action::ReverseMode,
         Event::Delete | Event::Backspace => Action::Delete,
