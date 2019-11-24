@@ -1,4 +1,4 @@
-use crate::common::{CharMap, Error, LazyLoaded};
+use crate::common::{CharMap, Error};
 use crate::resources::{ColorPalette, SymbolPalette};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -17,10 +17,8 @@ impl Default for Config {
 impl Config {
     pub fn current(self) -> ConfigV1 {
         match self {
-            Self::V1(mut config) => {
-                config.refresh();
-                config
-            } // TODO: once we have V2+ we'll need to return that and convert previous
+            Self::V1(config) => config,
+            // TODO: once we have V2+ we'll need to return that and convert previous
         }
     }
 
@@ -51,12 +49,5 @@ impl From<(&ColorPalette, &SymbolPalette)> for ConfigV1 {
             symbol_palette: palettes.1.clone(),
             char_map: CharMap::default(),
         }
-    }
-}
-
-impl LazyLoaded for ConfigV1 {
-    fn refresh(&mut self) {
-        self.color_palette.refresh();
-        self.symbol_palette.refresh();
     }
 }

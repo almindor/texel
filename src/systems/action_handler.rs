@@ -287,12 +287,8 @@ fn clear_symbol_on_selected(
             Ok(None) => {} // no change, symbol was applied in bounds
             Ok(Some(bounds)) => {
                 // changed pos or dim => apply new bounds
-                if rel_pos.x < 0 {
-                    pos.x += bounds.0.x;
-                }
-                if rel_pos.y < 0 {
-                    pos.y += bounds.0.y;
-                }
+                pos.x = pos.x + bounds.0.x;
+                pos.y = pos.y + bounds.0.y;
 
                 dim.w = bounds.1.w;
                 dim.h = bounds.1.h;
@@ -328,12 +324,8 @@ fn apply_symbol_to_selected(
             Ok(None) => {} // no change, symbol was applied in bounds
             Ok(Some(bounds)) => {
                 // changed pos or dim => apply new bounds
-                if rel_pos.x < 0 {
-                    pos.x += bounds.0.x;
-                }
-                if rel_pos.y < 0 {
-                    pos.y += bounds.0.y;
-                }
+                pos.x += bounds.0.x;
+                pos.y += bounds.0.y;
 
                 dim.w = bounds.1.w;
                 dim.h = bounds.1.h;

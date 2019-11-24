@@ -1,6 +1,5 @@
 use crate::resources::SyncTerm;
 use specs::System;
-use std::io::Write;
 
 mod cmdline_renderer;
 mod color_palette_renderer;
@@ -16,6 +15,6 @@ impl<'a> System<'a> for ClearScreen {
     type SystemData = specs::Write<'a, SyncTerm>;
 
     fn run(&mut self, mut out: Self::SystemData) {
-        write!(out, "{}", termion::clear::All).unwrap();
+        out.flip_buffers();
     }
 }

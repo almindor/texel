@@ -1,7 +1,7 @@
-use crate::common::Error;
+use crate::common::{Error, SymbolStyle};
 use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
+use big_enum_set::BigEnumSet;
 use specs::System;
-use std::io::Write;
 
 pub struct CmdLineRenderer;
 
@@ -22,7 +22,7 @@ impl<'a> System<'a> for CmdLineRenderer {
         print_status_line(&mut out, &state, w, h);
 
         if let Some(error) = state.error() {
-            print_error(&mut out, error, w, h);
+            print_error(&mut out, error, h);
             return;
         }
 
@@ -42,119 +42,79 @@ impl<'a> System<'a> for CmdLineRenderer {
 }
 
 fn print_cursor(out: &mut SyncTerm, state: &State) {
-    write!(out, "{}", crate::common::goto(state.cursor.x, state.cursor.y),).unwrap();
+    out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
 
-fn print_error(out: &mut SyncTerm, error: &Error, w: i32, h: i32) {
-    write!(
-        out,
-        "{}{}{}{}{}",
-        crate::common::goto(1, h),
-        termion::color::Bg(termion::color::Red),
-        error,
-        termion::color::Bg(termion::color::Reset),
-        crate::common::goto(w, h),
-    )
-    .unwrap();
+fn print_error(out: &mut SyncTerm, error: &Error, h: i32) {
+    let red = termion::color::AnsiValue::rgb(5, 0, 0).0;
+    let white = termion::color::AnsiValue::rgb(5, 5, 5).0;
+    let bold = BigEnumSet::only(SymbolStyle::Bold);
+
+    out.write_line(1, h, error, red, white, bold);
 }
 
 fn print_cmdline(out: &mut SyncTerm, cmdline: &CmdLine, h: i32) {
-    write!(
-        out,
-        "{}:{}{}",
-        crate::common::goto(1, h),
-        cmdline.cmd(),
-        crate::common::goto(2 + cmdline.cursor_pos() as i32, h), // account for :
-    )
-    .unwrap();
+    let cmd_text = format!(":{}", cmdline.cmd());
+
+    out.write_line_default(1, h, cmd_text);
+    out.set_cursor_pos(2 + cmdline.cursor_pos() as i32, h); // account for :
 }
 
 fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
     // color selection
     let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
 
-    write!(
-        out,
-        "{}{}{}▞{}{}{}",
-        crate::common::goto(w - 12, h),
-        ColorPalette::u8_to_bg(sc.0),
-        ColorPalette::u8_to_fg(sc.1),
-        ColorPalette::default_fg(),
-        ColorPalette::default_bg(),
-        crate::common::goto(w, h),
-    )
-    .unwrap();
+    out.write_line(w - 12, h, "▞", sc.0, sc.1, BigEnumSet::new());
+    out.set_cursor_pos(w, h);
 }
 
 fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
-    write!(
-        out,
-        "{}{}{}--{}--{}{}",
-        crate::common::goto(1, h),
-        termion::style::Bold,
-        termion::color::Fg(termion::color::White),
-        state.mode().to_str(),
-        termion::style::Reset,
-        crate::common::goto(state.cursor.x, state.cursor.y),
-    )
-    .unwrap();
+    let white = termion::color::AnsiValue::grayscale(23).0;
+    let bold = BigEnumSet::only(SymbolStyle::Bold);
+    let text = format!("--{}--", state.mode().to_str());
+    // TODO: add support for font styles to texels/buxels!
+
+    out.write_line(1, h, text, ColorPalette::default_bg_u8(), white, bold);
+    out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
 
 fn print_mode(out: &mut SyncTerm, mode: Mode, w: i32, h: i32) {
-    write!(
-        out,
-        "{}{}{}--{}--{}{}",
-        crate::common::goto(1, h),
-        termion::style::Bold,
-        termion::color::Fg(termion::color::White),
-        mode.to_str(),
-        termion::style::Reset,
-        crate::common::goto(w, h),
-    )
-    .unwrap();
+    let white = termion::color::AnsiValue::grayscale(23).0;
+    let bold = BigEnumSet::only(SymbolStyle::Bold);
+    let text = format!("--{}--", mode.to_str());
+
+    out.write_line(1, h, text, ColorPalette::default_bg_u8(), white, bold);
+    out.set_cursor_pos(w, h);
 }
 
 fn print_edit(out: &mut SyncTerm, state: &State, palette: &SymbolPalette, h: i32) {
-    write!(
-        out,
-        "{}{}{}--EDIT--\t{}{}{}",
-        crate::common::goto(1, h),
-        termion::style::Bold,
-        termion::color::Fg(termion::color::White),
-        palette.line_str(),
-        termion::style::Reset,
-        crate::common::goto(state.cursor.x, state.cursor.y),
-    )
-    .unwrap();
+    let white = termion::color::AnsiValue::grayscale(23).0;
+    let bold = BigEnumSet::only(SymbolStyle::Bold);
+
+    out.write_line(1, h, "--EDIT--", ColorPalette::default_bg_u8(), white, bold);
+    out.write_texels(palette.line_texels(PALETTE_OFFSET, h));
+    out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
 
 fn print_color(out: &mut SyncTerm, palette: &ColorPalette, cm: ColorMode, w: i32, h: i32) {
-    write!(
-        out,
-        "{}{}{}--COLOR--{}{}{}{}",
-        crate::common::goto(1, h),
-        termion::style::Bold,
-        termion::color::Fg(termion::color::White),
-        crate::common::goto(PALETTE_OFFSET, h),
-        palette.line_str(cm),
-        termion::style::Reset,
-        crate::common::goto(w, h),
-    )
-    .unwrap();
+    out.write_texels(palette.line_texels(PALETTE_OFFSET, h, cm));
+    out.set_cursor_pos(w, h);
 }
 
 fn print_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32, h: i32) {
-    write!(
-        out,
-        "{}{}{}--{}--{}\t{}{:x?}{}",
-        crate::common::goto(1, h),
-        termion::style::Bold,
-        termion::color::Fg(termion::color::White),
-        state.mode().to_str(),
-        termion::style::Reset,
-        crate::common::goto(PALETTE_OFFSET + index as i32, h),
-        crate::common::index_from_one(index),
-        crate::common::goto(w, h),
-    )
-    .unwrap();
+    let white = termion::color::AnsiValue::grayscale(23).0;
+    let bold = BigEnumSet::only(SymbolStyle::Bold);
+    let text = format!("--{}--", state.mode().to_str());
+    let i_txt = format!("{}", crate::common::index_from_one(index));
+
+    out.write_line(1, h, text, ColorPalette::default_bg_u8(), white, bold);
+    out.write_line(
+        PALETTE_OFFSET + index as i32,
+        h,
+        i_txt,
+        ColorPalette::default_bg_u8(),
+        white,
+        bold,
+    );
+    out.set_cursor_pos(w, h);
 }

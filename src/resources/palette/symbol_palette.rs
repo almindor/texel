@@ -1,4 +1,6 @@
-use crate::common::{Error, LazyLoaded};
+use crate::common::{Error, Texel};
+use crate::resources::ColorPalette;
+use big_enum_set::BigEnumSet;
 use serde::{Deserialize, Serialize};
 
 const SYMBOLS_IN_PALETTE: usize = 16;
@@ -12,26 +14,19 @@ const SYMBOL_SELECTOR: [char; SYMBOLS_IN_PALETTE] = [
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolPalette {
     symbols: [char; SYMBOLS_IN_PALETTE],
-    #[serde(skip_serializing)]
-    #[serde(default)]
-    line_str: String,
 }
 
 impl Default for SymbolPalette {
     fn default() -> Self {
         SymbolPalette {
             symbols: DEFAULT_SYMBOLS,
-            line_str: build_line_string(&DEFAULT_SYMBOLS),
         }
     }
 }
 
 impl From<[char; SYMBOLS_IN_PALETTE]> for SymbolPalette {
     fn from(symbols: [char; SYMBOLS_IN_PALETTE]) -> Self {
-        SymbolPalette {
-            symbols,
-            line_str: build_line_string(&symbols),
-        }
+        SymbolPalette { symbols }
     }
 }
 
@@ -43,16 +38,7 @@ impl From<&[char]> for SymbolPalette {
             symbol_chars[i] = *symbol;
         }
 
-        SymbolPalette {
-            symbols: symbol_chars,
-            line_str: build_line_string(&symbol_chars),
-        }
-    }
-}
-
-impl LazyLoaded for SymbolPalette {
-    fn refresh(&mut self) {
-        self.line_str = build_line_string(&self.symbols);
+        SymbolPalette { symbols: symbol_chars }
     }
 }
 
@@ -75,28 +61,47 @@ impl SymbolPalette {
         }
 
         self.symbols[index] = symbol;
-        self.line_str = build_line_string(&self.symbols);
 
         Ok(())
     }
 
-    pub fn line_str(&self) -> &str {
-        &self.line_str
+    pub fn line_texels(&self, start_x: i32, y: i32) -> Vec<Texel> {
+        let mut result = Vec::with_capacity(SYMBOLS_IN_PALETTE * 4);
+
+        let mut x = start_x;
+        for (i, symbol) in DEFAULT_SYMBOLS.iter().enumerate() {
+            let selector = SYMBOL_SELECTOR[i];
+            result.push(Texel {
+                x,
+                y,
+                symbol: selector,
+                bg: ColorPalette::default_bg_u8(),
+                fg: ColorPalette::default_fg_u8(),
+                styles: BigEnumSet::new(),
+            });
+            x += 1;
+
+            result.push(Texel {
+                x,
+                y,
+                symbol: ':',
+                bg: ColorPalette::default_bg_u8(),
+                fg: ColorPalette::default_fg_u8(),
+                styles: BigEnumSet::new(),
+            });
+            x += 1;
+
+            result.push(Texel {
+                x,
+                y,
+                symbol: *symbol,
+                bg: ColorPalette::default_bg_u8(),
+                fg: ColorPalette::default_fg_u8(),
+                styles: BigEnumSet::new(),
+            });
+            x += 1;
+        }
+
+        result
     }
-}
-
-fn build_line_string(symbols: &[char]) -> String {
-    let mut result = String::with_capacity(SYMBOLS_IN_PALETTE * 4 + 40);
-    result += termion::color::Reset.bg_str();
-    result += termion::color::Reset.fg_str();
-    result += termion::style::Reset.as_ref();
-
-    for (i, c) in symbols.iter().enumerate() {
-        result.push(SYMBOL_SELECTOR[i]);
-        result.push(':');
-        result.push(*c);
-        result.push(' ');
-    }
-
-    result
 }

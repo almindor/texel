@@ -97,8 +97,10 @@ fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
         Err(_) => Config::default().current(),
     };
 
+    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+
     // prep resources
-    world.insert(SyncTerm::new());
+    world.insert(SyncTerm::new(usize::from(ts.0), usize::from(ts.1)));
     world.insert(State::default());
     world.insert(config.color_palette);
     world.insert(config.symbol_palette);

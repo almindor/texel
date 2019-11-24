@@ -25,21 +25,10 @@ impl std::ops::Sub for Dimension {
     type Output = Dimension;
 
     fn sub(self, other: Self) -> Self::Output {
-        let w = if other.w > self.w {
-            0
-        } else {
-            self.w - other.w
-        };
-        let h = if other.h > self.h {
-            0
-        } else {
-            self.h - other.h
-        };
+        let w = if other.w > self.w { 0 } else { self.w - other.w };
+        let h = if other.h > self.h { 0 } else { self.h - other.h };
 
-        Dimension {
-            w,
-            h,
-        }
+        Dimension { w, h }
     }
 }
 

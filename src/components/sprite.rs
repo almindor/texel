@@ -1,6 +1,7 @@
 use crate::common::{cwd_path, Error, Texel};
 use crate::components::{Dimension, Position2D};
 use crate::resources::{ColorMode, ColorPalette};
+use big_enum_set::BigEnumSet;
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 use std::fs::File;
@@ -43,6 +44,7 @@ impl Sprite {
                         x,
                         y,
                         symbol: c,
+                        styles: BigEnumSet::new(),
                         fg: ColorPalette::default_fg_u8(),
                         bg: ColorPalette::default_bg_u8(),
                     });
@@ -106,6 +108,7 @@ impl Sprite {
             fg,
             x: pos.x,
             y: pos.y,
+            styles: BigEnumSet::new(),
         });
 
         Ok(Some(self.calculate_bounds()?))
@@ -143,10 +146,14 @@ impl Sprite {
     // goes through texels so we can calculate dimension and move position if
     // needed. TODO: optimize, we're doing 3 loops here for no good reason
     fn calculate_bounds(&mut self) -> Result<(Position2D, Dimension), Error> {
+        if self.texels.is_empty() {
+            return Ok((Position2D { x: 0, y: 0 }, Dimension { w: 0, h: 0 }))
+        }
+
         let mut min_x = i32::max_value();
         let mut min_y = i32::max_value();
 
-        // get new symbol at negative position if any
+        // get new top/left
         for t in &self.texels {
             if t.x < min_x {
                 min_x = t.x;
@@ -156,13 +163,13 @@ impl Sprite {
             }
         }
 
-        // shift to the right/bottom as needed
-        if min_x < 0 || min_y < 0 {
+        // shift texels as needed
+        if min_x != 0 || min_y != 0 {
             for t in self.texels.iter_mut() {
-                if min_x < 0 {
+                if min_x != 0 {
                     t.x -= min_x;
                 }
-                if min_y < 0 {
+                if min_y != 0 {
                     t.y -= min_y;
                 }
             }

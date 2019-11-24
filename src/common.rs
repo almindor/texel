@@ -1,3 +1,5 @@
+use crate::resources::ColorPalette;
+use big_enum_set::{BigEnumSet, BigEnumSetType};
 use serde::{Deserialize, Serialize};
 use std::env::current_dir;
 use std::path::{Path, PathBuf};
@@ -21,19 +23,36 @@ pub trait LazyLoaded {
     fn refresh(&mut self);
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, BigEnumSetType, Serialize, Deserialize)]
+pub enum SymbolStyle {
+    Bold,
+    Italic,
+    Underline,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct Texel {
     pub x: i32,
     pub y: i32,
     pub symbol: char,
+    pub styles: BigEnumSet<SymbolStyle>, // u8
     pub fg: u8,
     pub bg: u8,
 }
 
-#[derive(Debug, Clone)]
-pub struct TexelDiff {
-    pub index: usize,
-    pub texel: Texel,
+impl std::fmt::Display for Texel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}{}{}{}{}{}",
+            crate::common::goto(self.x, self.y),
+            ColorPalette::u8_to_bg(self.bg),
+            ColorPalette::u8_to_fg(self.fg),
+            styles_to_str(self.styles),
+            self.symbol,
+            termion::style::Reset,
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -117,4 +136,19 @@ pub fn index_from_one(index: usize) -> i32 {
     } else {
         index as i32
     }
+}
+
+fn styles_to_str(styles: BigEnumSet<SymbolStyle>) -> String {
+    use termion::style::{Bold, Italic, Underline};
+    let mut result = String::with_capacity(64);
+
+    for style in styles.iter() {
+        result += match style {
+            SymbolStyle::Bold => Bold.as_ref(),
+            SymbolStyle::Italic => Italic.as_ref(),
+            SymbolStyle::Underline => Underline.as_ref(),
+        }
+    }
+
+    result
 }

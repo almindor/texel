@@ -1,8 +1,8 @@
 use crate::common::Texel;
 use crate::components::{Border, Dimension, Position, Selection, Sprite};
-use crate::resources::{ColorPalette, SyncTerm};
+use crate::resources::SyncTerm;
+use big_enum_set::BigEnumSet;
 use specs::{Entities, Join, ReadStorage, System};
-use std::io::Write;
 
 pub struct SpriteRenderer;
 
@@ -25,8 +25,6 @@ impl<'a> System<'a> for SpriteRenderer {
         sorted.sort_by(|&a, &b| b.1.z.cmp(&a.1.z));
 
         for (entity, pos, dim, sprite) in sorted {
-            write!(out, "{}", ColorPalette::default_fg()).unwrap();
-
             render_sprite(&mut out, &pos, &sprite);
 
             if b.contains(entity) && sel.contains(entity) {
@@ -35,28 +33,27 @@ impl<'a> System<'a> for SpriteRenderer {
             }
         }
 
-        write!(out, "{}{}", ColorPalette::default_bg(), ColorPalette::default_fg()).unwrap();
-
         // location info status line
         if let Some(loc) = loc_info {
             let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
             let w = i32::from(ts.0);
             let h = i32::from(ts.1);
-            write!(out, "{}{}", crate::common::goto(w - 10, h), loc).unwrap();
+            out.write_line_default(w - 10, h, loc);
         }
     }
 }
 
 fn print_texel(out: &mut SyncTerm, p: &Position, t: &Texel) {
-    write!(
-        out,
-        "{}{}{}{}",
-        crate::common::goto(p.x + t.x, p.y + t.y),
-        ColorPalette::u8_to_bg(t.bg),
-        ColorPalette::u8_to_fg(t.fg),
-        t.symbol,
-    )
-    .unwrap();
+    let abs_texel = Texel {
+        x: p.x + t.x,
+        y: p.y + t.y,
+        symbol: t.symbol,
+        bg: t.bg,
+        fg: t.fg,
+        styles: BigEnumSet::new(),
+    };
+
+    out.write_texel(abs_texel);
 }
 
 fn is_visible(x: i32, y: i32, ts: (u16, u16)) -> bool {
@@ -83,8 +80,6 @@ fn render_border(out: &mut SyncTerm, p: &Position, d: Dimension) {
     let b_w = i32::from(d.w + 1);
     let b_h = i32::from(d.h + 1);
 
-    write!(out, "{}{}", ColorPalette::default_bg(), ColorPalette::default_fg()).unwrap();
-
     for y in min_y..=min_y + b_h {
         if y <= 0 {
             continue;
@@ -94,17 +89,17 @@ fn render_border(out: &mut SyncTerm, p: &Position, d: Dimension) {
             let a = if y == min_y { '-' } else { '_' };
             for x in min_x..=min_x + b_w {
                 if is_visible(x, y, ts) {
-                    write!(out, "{}{}", crate::common::goto(x, y), a).unwrap();
+                    out.write_line_default(x, y, a);
                 }
             }
         }
 
         if min_x + b_w <= i32::from(ts.0) {
-            write!(out, "{}|", crate::common::goto(min_x + b_w, y)).unwrap();
+            out.write_line_default(min_x + b_w, y, "|");
         }
 
         if min_x > 0 {
-            write!(out, "{}|", crate::common::goto(min_x, y)).unwrap();
+            out.write_line_default(min_x, y, "|");
         }
     }
 }

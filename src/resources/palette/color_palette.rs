@@ -1,5 +1,6 @@
-use crate::common::{Error, LazyLoaded};
+use crate::common::{Error, SymbolStyle, Texel};
 use crate::components::Position2D;
+use big_enum_set::BigEnumSet;
 use serde::{Deserialize, Serialize};
 
 const fn cc(r: u8, g: u8, b: u8) -> u8 {
@@ -45,31 +46,19 @@ pub enum ColorMode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColorPalette {
     colors: [u8; COLORS_IN_PALETTE],
-    #[serde(skip_serializing)]
-    #[serde(default)]
-    fg_string: String,
-    #[serde(skip_serializing)]
-    #[serde(default)]
-    bg_string: String,
 }
 
 impl Default for ColorPalette {
     fn default() -> Self {
         Self {
             colors: DEFAULT_PALETTE_COLORS,
-            fg_string: to_line_string(&DEFAULT_PALETTE_COLORS, ColorMode::Fg),
-            bg_string: to_line_string(&DEFAULT_PALETTE_COLORS, ColorMode::Bg),
         }
     }
 }
 
 impl From<[u8; COLORS_IN_PALETTE]> for ColorPalette {
     fn from(colors: [u8; COLORS_IN_PALETTE]) -> Self {
-        ColorPalette {
-            colors,
-            fg_string: to_line_string(&colors, ColorMode::Fg),
-            bg_string: to_line_string(&colors, ColorMode::Bg),
-        }
+        ColorPalette { colors }
     }
 }
 
@@ -81,23 +70,7 @@ impl From<&[u8]> for ColorPalette {
             palette_colors[i] = *color;
         }
 
-        ColorPalette {
-            colors: palette_colors,
-            fg_string: to_line_string(&palette_colors, ColorMode::Fg),
-            bg_string: to_line_string(&palette_colors, ColorMode::Bg),
-        }
-    }
-}
-
-impl LazyLoaded for ColorPalette {
-    fn refresh(&mut self) {
-        if self.fg_string.is_empty() {
-            self.fg_string = to_line_string(&self.colors, ColorMode::Fg);
-        }
-
-        if self.bg_string.is_empty() {
-            self.bg_string = to_line_string(&self.colors, ColorMode::Bg);
-        }
+        ColorPalette { colors: palette_colors }
     }
 }
 
@@ -120,8 +93,6 @@ impl ColorPalette {
         }
 
         self.colors[index] = color;
-        self.bg_string = to_line_string(&self.colors, ColorMode::Bg);
-        self.fg_string = to_line_string(&self.colors, ColorMode::Fg);
 
         Ok(())
     }
@@ -131,15 +102,7 @@ impl ColorPalette {
     }
 
     pub fn default_bg_u8() -> u8 {
-        termion::color::AnsiValue::grayscale(0).0
-    }
-
-    pub fn default_fg() -> &'static str {
-        termion::color::Reset.fg_str()
-    }
-
-    pub fn default_bg() -> &'static str {
-        termion::color::Reset.bg_str()
+        termion::color::AnsiValue::rgb(0, 0, 0).0
     }
 
     pub fn u8_to_fg(color: u8) -> String {
@@ -148,14 +111,6 @@ impl ColorPalette {
 
     pub fn u8_to_bg(color: u8) -> String {
         termion::color::AnsiValue(color).bg_string()
-    }
-
-    pub fn u8_to_bg_string(color: u8) -> String {
-        ColorPalette::u8_to_bg(color) + &invert_fg(color)
-    }
-
-    pub fn u8_to_fg_string(color: u8) -> String {
-        invert_bg(color) + &ColorPalette::u8_to_fg(color)
     }
 
     pub fn pos_to_color(pos: Position2D) -> u8 {
@@ -181,12 +136,45 @@ impl ColorPalette {
         (pos.y * PALETTE_W) as u8 + pos.x as u8
     }
 
-    // lazy load so we can skip serializing but don't need to do custom serde crap
-    pub fn line_str(&self, cm: ColorMode) -> &str {
-        match cm {
-            ColorMode::Fg => &self.fg_string,
-            ColorMode::Bg => &self.bg_string,
+    pub fn selector_texel(&self, index: usize, x: i32, y: i32, cm: ColorMode) -> Texel {
+        let (bg, fg) = match cm {
+            ColorMode::Bg => (self.colors[index], invert_luminance(self.colors[index])),
+            ColorMode::Fg => (invert_luminance(self.colors[index]), self.colors[index]),
+        };
+        let s_u8 = crate::common::index_from_one(index) as u8;
+
+        Texel {
+            x,
+            y,
+            fg,
+            bg,
+            symbol: char::from(s_u8),
+            styles: BigEnumSet::only(SymbolStyle::Bold),
         }
+    }
+
+    pub fn line_texels(&self, start_x: i32, y: i32, cm: ColorMode) -> Vec<Texel> {
+        let mut result = Vec::with_capacity(COLORS_IN_PALETTE);
+
+        let mut x = start_x;
+        for (i, symbol) in COLOR_SELECTOR.iter().enumerate() {
+            let (bg, fg) = match cm {
+                ColorMode::Bg => (self.colors[i], invert_luminance(self.colors[i])),
+                ColorMode::Fg => (invert_luminance(self.colors[i]), self.colors[i]),
+            };
+
+            result.push(Texel {
+                x,
+                y,
+                fg,
+                bg,
+                symbol: *symbol,
+                styles: BigEnumSet::only(SymbolStyle::Bold),
+            });
+            x += 1;
+        }
+
+        result
     }
 }
 
@@ -201,34 +189,10 @@ fn luminance(color: u8) -> u8 {
     (0.2126 * f32::from(r) + 0.7151 * f32::from(g) + 0.0721 * f32::from(b)) as u8
 }
 
-fn invert_fg(color: u8) -> String {
+fn invert_luminance(color: u8) -> u8 {
     if luminance(color) > 2 {
-        termion::color::AnsiValue::grayscale(5).fg_string()
+        termion::color::AnsiValue::grayscale(5).0
     } else {
-        termion::color::AnsiValue::grayscale(17).fg_string()
+        termion::color::AnsiValue::grayscale(17).0
     }
-}
-
-fn invert_bg(color: u8) -> String {
-    if luminance(color) > 2 {
-        termion::color::AnsiValue::grayscale(5).bg_string()
-    } else {
-        termion::color::AnsiValue::grayscale(17).bg_string()
-    }
-}
-
-fn to_line_string(pc: &[u8], cm: ColorMode) -> String {
-    let mut result = String::with_capacity(COLORS_IN_PALETTE * 20);
-
-    for (i, c) in pc.iter().enumerate() {
-        let color_string = match cm {
-            ColorMode::Fg => ColorPalette::u8_to_fg_string(*c),
-            ColorMode::Bg => ColorPalette::u8_to_bg_string(*c),
-        };
-
-        result += &color_string;
-        result.push(COLOR_SELECTOR[i]);
-    }
-
-    result
 }
