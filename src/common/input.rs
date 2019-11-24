@@ -1,4 +1,5 @@
 use crate::resources::{ColorMode, Mode};
+use crate::common::SymbolStyle;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use termion::event::{Event as TEvent, Key};
@@ -21,11 +22,10 @@ pub enum Event {
     RightEdge,
     DownEdge,
     Mode(Mode),
+    ApplyStyle(SymbolStyle),
     EditPalette(usize), // index of symbol/color, 0x0-0xF as usize <0, 16)
-    ApplyColorFG,
-    ApplyColorBG,
-    Next,
-    NextWith,
+    ApplyColor(ColorMode),
+    Next(bool),
     NewObject,
     // "meta" keys
     Delete,
@@ -75,8 +75,12 @@ impl Default for CharMap {
         map.insert('Z', Event::Mode(Mode::Color(ColorMode::Fg)));
         map.insert('X', Event::Mode(Mode::Color(ColorMode::Bg)));
 
-        map.insert('z', Event::ApplyColorFG);
-        map.insert('x', Event::ApplyColorBG);
+        map.insert('z', Event::ApplyColor(ColorMode::Fg));
+        map.insert('x', Event::ApplyColor(ColorMode::Bg));
+
+        map.insert('q', Event::ApplyStyle(SymbolStyle::Italic));
+        map.insert('Q', Event::ApplyStyle(SymbolStyle::Bold));
+        map.insert('w', Event::ApplyStyle(SymbolStyle::Underline));
 
         map.insert('h', Event::Left);
         map.insert('j', Event::Down);
@@ -97,7 +101,7 @@ impl Default for CharMap {
         map.insert('n', Event::NewObject);
 
         map.insert('\n', Event::Confirm);
-        map.insert('\t', Event::Next);
+        map.insert('\t', Event::Next(false));
 
         CharMap { map }
     }
@@ -131,7 +135,7 @@ impl From<CharMap> for InputMap {
         result.map.insert(TEvent::Key(Key::Backspace), Event::Backspace);
         result
             .map
-            .insert(TEvent::Unsupported(vec![27, 91, 90]), Event::NextWith);
+            .insert(TEvent::Unsupported(vec![27, 91, 90]), Event::Next(true));
 
         result
     }

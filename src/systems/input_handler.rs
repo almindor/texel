@@ -32,8 +32,7 @@ impl<'a> System<'a> for InputHandler {
 fn objmode_event(event: InputEvent, state: &mut State) {
     let action = match event.0 {
         Event::Mode(mode) => Action::SetMode(mode),
-        Event::Next => Action::SelectNext(false),
-        Event::NextWith => Action::SelectNext(true),
+        Event::Next(sticky) => Action::SelectNext(sticky),
 
         Event::Cancel => Action::ReverseMode,
         Event::Delete | Event::Backspace => Action::Delete,
@@ -46,8 +45,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
         Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 
-        Event::ApplyColorFG => Action::ApplyColor(ColorMode::Fg),
-        Event::ApplyColorBG => Action::ApplyColor(ColorMode::Bg),
+        Event::ApplyColor(cm) => Action::ApplyColor(cm),
 
         Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
         Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
@@ -144,8 +142,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 
         Event::Mode(Mode::SelectColor(i, cm)) => Action::SetMode(Mode::SelectColor(i, cm)),
-        Event::ApplyColorFG => Action::ApplyColor(ColorMode::Fg),
-        Event::ApplyColorBG => Action::ApplyColor(ColorMode::Bg),
+        Event::ApplyColor(cm) => Action::ApplyColor(cm),
 
         Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
         Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),

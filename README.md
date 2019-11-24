@@ -77,6 +77,7 @@ The `Command` mode can be entered from any mode except `Write` (so you can type 
 * `!..), A..F`   - set symbol on palette (think hex index)
 * `z, x`         - apply fg/bg color to selected texel
 * `Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
+* `q, Q, w`      - apply/clear symbol style (italic, bold, underline)
 
 #### ColorPalette | SymbolPalette Mode
 

@@ -52,7 +52,7 @@ impl CmdLine {
             Event::ArrowRight => self.move_cursor(1),
 
             Event::Confirm => self.parse(),
-            Event::Next => {
+            Event::Next(false) => {
                 clear_ac = false;
                 self.auto_complete()
             }
