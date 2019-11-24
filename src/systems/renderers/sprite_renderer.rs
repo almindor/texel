@@ -50,7 +50,7 @@ fn print_texel(out: &mut SyncTerm, p: &Position, t: &Texel) {
         symbol: t.symbol,
         bg: t.bg,
         fg: t.fg,
-        styles: BigEnumSet::new(),
+        styles: t.styles,
     };
 
     out.write_texel(abs_texel);

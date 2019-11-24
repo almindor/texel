@@ -53,7 +53,7 @@ impl Default for CharMap {
 
         map.insert(':', Event::Mode(Mode::Command));
         map.insert('e', Event::Mode(Mode::Edit));
-        map.insert('w', Event::Mode(Mode::Write));
+        map.insert('i', Event::Mode(Mode::Write));
         // 1-0 + A,B,C,D,E,F (HEX) are symbol overrides
         map.insert('!', Event::EditPalette(0));
         map.insert('@', Event::EditPalette(1));

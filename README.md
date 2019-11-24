@@ -66,7 +66,7 @@ The `Command` mode can be entered from any mode except `Write` (so you can type 
 * `H, J, K, L`   - movement to edge
 * `n`            - add empty object
 * `e`            - edit selected (new if none, switch to `Edit` mode)
-* `w`            - write to selected directly (new if none, switch to `Write` mode)
+* `i`            - write to selected directly (new if none, switch to `Write` mode)
 * `z, x`         - apply fg/bg color to all texels in selected
 * `Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
 
