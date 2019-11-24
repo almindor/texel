@@ -1,4 +1,4 @@
-use crate::common::{cwd_path, Error, Texel};
+use crate::common::{cwd_path, Error, SymbolStyle, Texel};
 use crate::components::{Dimension, Position2D};
 use crate::resources::{ColorMode, ColorPalette};
 use big_enum_set::BigEnumSet;
@@ -60,7 +60,7 @@ impl Sprite {
         Sprite { texels }
     }
 
-    pub fn fill(&mut self, cm: ColorMode, color: u8) -> bool {
+    pub fn fill_color(&mut self, cm: ColorMode, color: u8) -> bool {
         let mut changed = false;
 
         for texel in self.texels.iter_mut() {
@@ -78,6 +78,20 @@ impl Sprite {
                     }
                 }
             }
+        }
+
+        changed
+    }
+
+    pub fn fill_style(&mut self, style: SymbolStyle) -> bool {
+        let mut changed = false;
+        for texel in self.texels.iter_mut() {
+            if texel.styles.contains(style) {
+                texel.styles.remove(style);
+            } else {
+                texel.styles.insert(style);
+            }
+            changed = true;
         }
 
         changed
@@ -132,6 +146,20 @@ impl Sprite {
         false
     }
 
+    pub fn apply_style(&mut self, style: SymbolStyle, pos: Position2D) -> bool {
+        if let Some(t) = self.texels.iter_mut().find(|t| t.x == pos.x && t.y == pos.y) {
+            if t.styles.contains(style) {
+                t.styles.remove(style);
+            } else {
+                t.styles.insert(style);
+            }
+
+            return true;
+        }
+
+        false
+    }
+
     pub fn clear_symbol(&mut self, pos: Position2D) -> Result<Option<(Position2D, Dimension)>, Error> {
         let count = self.texels.len();
         self.texels.retain(|t| t.x != pos.x || t.y != pos.y);
@@ -147,7 +175,7 @@ impl Sprite {
     // needed. TODO: optimize, we're doing 3 loops here for no good reason
     fn calculate_bounds(&mut self) -> Result<(Position2D, Dimension), Error> {
         if self.texels.is_empty() {
-            return Ok((Position2D { x: 0, y: 0 }, Dimension { w: 0, h: 0 }))
+            return Ok((Position2D { x: 0, y: 0 }, Dimension { w: 0, h: 0 }));
         }
 
         let mut min_x = i32::max_value();

@@ -143,6 +143,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
 
         Event::Mode(Mode::SelectColor(i, cm)) => Action::SetMode(Mode::SelectColor(i, cm)),
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
+        Event::ApplyStyle(style) => Action::ApplyStyle(style),
 
         Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
         Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),

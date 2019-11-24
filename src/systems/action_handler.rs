@@ -1,4 +1,4 @@
-use crate::common::{cwd_path, Action, Error, Loaded, Loader, Scene, SceneV1};
+use crate::common::{cwd_path, Action, Error, Loaded, Loader, Scene, SceneV1, SymbolStyle};
 use crate::components::*;
 use crate::resources::{ColorMode, Mode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use libflate::gzip::Encoder;
@@ -35,6 +35,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &p, &cur_pos, &u),
                 Action::ApplyColor(cm) => apply_color_to_selected(cm, &state, &mut sp, &p, &s),
                 Action::ApplySymbol(sym) => apply_symbol_to_selected(sym, &mut state, &mut sp, &s, &mut p, &mut d),
+                Action::ApplyStyle(style) => apply_style_to_selected(style, &state, &mut sp, &p, &s),
                 Action::ReverseMode => reverse_mode(&e, &mut state, &s, &mut cur_pos, &u),
                 Action::Deselect => deselect(&e, &s, &u),
                 Action::SelectNext(keep) => select_next(&e, &sel, &s, &u, keep),
@@ -263,7 +264,7 @@ fn apply_color_to_selected(
             if sprite.apply_color(cm, color, rel_pos) {
                 changed = true;
             }
-        } else if sprite.fill(cm, color) {
+        } else if sprite.fill_color(cm, color) {
             changed = true;
         }
     }
@@ -287,8 +288,8 @@ fn clear_symbol_on_selected(
             Ok(None) => {} // no change, symbol was applied in bounds
             Ok(Some(bounds)) => {
                 // changed pos or dim => apply new bounds
-                pos.x = pos.x + bounds.0.x;
-                pos.y = pos.y + bounds.0.y;
+                pos.x += bounds.0.x;
+                pos.y += bounds.0.y;
 
                 dim.w = bounds.1.w;
                 dim.h = bounds.1.h;
@@ -298,6 +299,29 @@ fn clear_symbol_on_selected(
                 // if dim is funky?
                 return state.set_error(err);
             }
+        }
+    }
+
+    changed
+}
+
+fn apply_style_to_selected(
+    style: SymbolStyle,
+    state: &State,
+    sp: &mut WriteStorage<Sprite>,
+    p: &WriteStorage<Position>,
+    s: &ReadStorage<Selection>,
+) -> bool {
+    let mut changed = false;
+
+    for (sprite, pos, _) in (sp, p, s).join() {
+        if state.mode() == Mode::Edit {
+            let rel_pos = state.cursor - *pos;
+            if sprite.apply_style(style, rel_pos) {
+                changed = true;
+            }
+        } else if sprite.fill_style(style) {
+            changed = true;
         }
     }
 

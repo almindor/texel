@@ -134,7 +134,7 @@ impl SyncTerm {
                 symbol,
                 fg,
                 bg,
-                styles: styles,
+                styles,
             });
 
             x += 1;
@@ -159,7 +159,7 @@ impl SyncTerm {
 
     pub fn flush_into(&self, out: &mut dyn Write) -> Result<(), std::io::Error> {
         let vec = TexelBuf::diff(self.buf(), self.previous_buf());
-        
+
         for texel in vec {
             write!(out, "{}", texel)?;
         }

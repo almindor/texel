@@ -1,5 +1,5 @@
-use crate::resources::{ColorMode, Mode};
 use crate::common::SymbolStyle;
+use crate::resources::{ColorMode, Mode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use termion::event::{Event as TEvent, Key};

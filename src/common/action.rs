@@ -1,3 +1,4 @@
+use crate::common::SymbolStyle;
 use crate::components::Translation;
 use crate::resources::{ColorMode, Mode};
 
@@ -11,6 +12,7 @@ pub enum Action {
     Deselect,
     ApplyColor(ColorMode),
     ApplySymbol(char),
+    ApplyStyle(SymbolStyle),
     SelectNext(bool), // select next keeping old if true
     Read(String),
     Write(Option<String>),
