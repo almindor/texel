@@ -78,8 +78,8 @@ impl Default for CharMap {
         map.insert('z', Event::ApplyColor(ColorMode::Fg));
         map.insert('x', Event::ApplyColor(ColorMode::Bg));
 
-        map.insert('q', Event::ApplyStyle(SymbolStyle::Italic));
-        map.insert('Q', Event::ApplyStyle(SymbolStyle::Bold));
+        map.insert('q', Event::ApplyStyle(SymbolStyle::Bold));
+        map.insert('Q', Event::ApplyStyle(SymbolStyle::Italic));
         map.insert('w', Event::ApplyStyle(SymbolStyle::Underline));
 
         map.insert('h', Event::Left);
