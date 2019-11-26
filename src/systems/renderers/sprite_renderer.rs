@@ -1,7 +1,6 @@
 use crate::common::Texel;
 use crate::components::{Border, Dimension, Position, Selection, Sprite};
 use crate::resources::SyncTerm;
-use big_enum_set::BigEnumSet;
 use specs::{Entities, Join, ReadStorage, System};
 
 pub struct SpriteRenderer;
