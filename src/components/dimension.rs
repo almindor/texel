@@ -1,4 +1,4 @@
-use crate::components::Sprite;
+use crate::components::{Sprite, Position2D};
 use specs::{Component, VecStorage};
 use std::convert::TryInto;
 
@@ -33,6 +33,24 @@ impl std::ops::Sub for Dimension {
 }
 
 impl Dimension {
+    pub fn unit() -> Self {
+        Dimension {
+            w: 1,
+            h: 1,
+        }
+    }
+
+    pub fn size(&self) -> usize {
+        usize::from(self.w * self.h)
+    }
+
+    pub fn for_area(top_left: Position2D, bottom_right: Position2D) -> Self {
+        Dimension {
+            w: (bottom_right.x - top_left.x + 1) as u16,
+            h: (bottom_right.y - top_left.y + 1) as u16,
+        }
+    }
+
     pub fn for_sprite(sprite: &Sprite) -> Result<Self, std::num::TryFromIntError> {
         let mut w = 0i32;
         let mut h = 0i32;

@@ -1,6 +1,5 @@
-use crate::common::{Error, Texel};
+use crate::common::{Error, Texel, SymbolStyles};
 use crate::resources::ColorPalette;
-use big_enum_set::BigEnumSet;
 use serde::{Deserialize, Serialize};
 
 const SYMBOLS_IN_PALETTE: usize = 16;
@@ -77,7 +76,7 @@ impl SymbolPalette {
                 symbol: selector,
                 bg: ColorPalette::default_bg_u8(),
                 fg: ColorPalette::default_fg_u8(),
-                styles: BigEnumSet::new(),
+                styles: SymbolStyles::new(),
             });
             x += 1;
 
@@ -87,7 +86,7 @@ impl SymbolPalette {
                 symbol: ':',
                 bg: ColorPalette::default_bg_u8(),
                 fg: ColorPalette::default_fg_u8(),
-                styles: BigEnumSet::new(),
+                styles: SymbolStyles::new(),
             });
             x += 1;
 
@@ -97,7 +96,7 @@ impl SymbolPalette {
                 symbol: *symbol,
                 bg: ColorPalette::default_bg_u8(),
                 fg: ColorPalette::default_fg_u8(),
-                styles: BigEnumSet::new(),
+                styles: SymbolStyles::new(),
             });
             x += 1;
         }

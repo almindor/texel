@@ -1,6 +1,5 @@
-use crate::common::{Error, SymbolStyle, Texel};
+use crate::common::{Error, SymbolStyle, SymbolStyles, Texel};
 use crate::components::Position2D;
-use big_enum_set::BigEnumSet;
 use serde::{Deserialize, Serialize};
 
 const fn cc(r: u8, g: u8, b: u8) -> u8 {
@@ -105,6 +104,10 @@ impl ColorPalette {
         termion::color::AnsiValue::rgb(0, 0, 0).0
     }
 
+    pub fn subselection_bg_u8() -> u8 {
+        termion::color::AnsiValue::grayscale(14).0
+    }
+
     pub fn u8_to_fg(color: u8) -> String {
         termion::color::AnsiValue(color).fg_string()
     }
@@ -149,7 +152,7 @@ impl ColorPalette {
             fg,
             bg,
             symbol: char::from(s_u8),
-            styles: BigEnumSet::only(SymbolStyle::Bold),
+            styles: SymbolStyles::only(SymbolStyle::Bold),
         }
     }
 
@@ -169,7 +172,7 @@ impl ColorPalette {
                 fg,
                 bg,
                 symbol: *symbol,
-                styles: BigEnumSet::only(SymbolStyle::Bold),
+                styles: SymbolStyles::only(SymbolStyle::Bold),
             });
             x += 1;
         }

@@ -1,4 +1,5 @@
 use crate::resources::ColorPalette;
+use crate::components::{Position2D, Dimension};
 use big_enum_set::{BigEnumSet, BigEnumSetType};
 use serde::{Deserialize, Serialize};
 use std::env::current_dir;
@@ -30,6 +31,18 @@ pub enum SymbolStyle {
     Underline,
 }
 
+pub type SymbolStyles = BigEnumSet<SymbolStyle>;
+
+#[derive(Debug, BigEnumSetType)]
+pub enum TexelField {
+    Symbol,
+    Styles,
+    Fg,
+    Bg,
+}
+
+pub type TexelFields = BigEnumSet<TexelField>;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct Texel {
     pub x: i32,
@@ -52,6 +65,19 @@ impl std::fmt::Display for Texel {
             self.symbol,
             termion::style::Reset,
         )
+    }
+}
+
+impl Texel {
+    pub fn r#override(&mut self, texel: &Texel, fields: TexelFields) {
+        for field in fields.iter() {
+            match field {
+                TexelField::Symbol => self.symbol = texel.symbol,
+                TexelField::Bg => self.bg = texel.bg,
+                TexelField::Fg => self.fg = texel.fg,
+                TexelField::Styles => self.styles = texel.styles,
+            }
+        }
     }
 }
 
@@ -135,6 +161,18 @@ pub fn index_from_one(index: usize) -> i32 {
         0
     } else {
         index as i32
+    }
+}
+
+pub fn coords_from_index(index: usize, dim: Dimension) -> Option<Position2D> {
+    let i = index as i32;
+    let w = i32::from(dim.w);
+    let h = i32::from(dim.h);
+
+    if i < w * h {
+        Some(Position2D { x: i % w, y: i / w })
+    } else {
+        None
     }
 }
 

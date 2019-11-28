@@ -72,7 +72,7 @@ The `Command` mode can be entered from any mode except `Write` (so you can type 
 
 #### Edit Mode
 
-* `w`            - write to edited directly (switch to `Write` mode)
+* `i`            - write to edited directly (switch to `Write` mode)
 * `0..9, a..f`   - apply symbol from palette (think hex index)
 * `!..), A..F`   - set symbol on palette (think hex index)
 * `z, x`         - apply fg/bg color to selected texel

@@ -1,6 +1,5 @@
-use crate::common::{SymbolStyle, Texel};
+use crate::common::{SymbolStyles, Texel, TexelFields};
 use crate::resources::ColorPalette;
-use big_enum_set::BigEnumSet;
 use std::io::Write;
 use std::vec::Vec;
 
@@ -33,24 +32,38 @@ impl TexelBuf {
                 symbol: ' ',
                 bg: ColorPalette::default_bg_u8(),
                 fg: ColorPalette::default_fg_u8(),
-                styles: BigEnumSet::new(),
+                styles: SymbolStyles::new(),
             };
 
             self.buf.push(texel);
         }
     }
 
-    pub fn set_texel(&mut self, t: Texel) {
-        let index = self.index(t.x, t.y);
+    pub fn set_texel(&mut self, texel: Texel) {
+        let index = self.index(texel.x, texel.y);
 
         if index < self.buf.len() {
-            self.buf[index] = t;
+            self.buf[index] = texel;
         }
     }
 
     pub fn set_texels(&mut self, texels: Vec<Texel>) {
         for t in texels {
             self.set_texel(t);
+        }
+    }
+
+    pub fn override_texel(&mut self, texel: Texel, fields: TexelFields) {
+        let index = self.index(texel.x, texel.y);
+
+        if index >= self.buf.len() {
+            return;
+        }
+
+        if let Some(existing) = self.buf.get_mut(index) {
+            existing.r#override(&texel, fields);
+        } else {
+            self.set_texel(texel);
         }
     }
 
@@ -114,6 +127,12 @@ impl SyncTerm {
         buf.set_texels(texels);
     }
 
+    pub fn override_texel(&mut self, texel: Texel, fields: TexelFields) {
+        let buf = self.buf_mut();
+
+        buf.override_texel(texel, fields);
+    }
+
     pub fn write_line(
         &mut self,
         start_x: i32,
@@ -121,7 +140,7 @@ impl SyncTerm {
         source: impl std::fmt::Display,
         bg: u8,
         fg: u8,
-        styles: BigEnumSet<SymbolStyle>,
+        styles: SymbolStyles,
     ) {
         let text = format!("{}", source);
         let buf = self.buf_mut();
@@ -148,7 +167,7 @@ impl SyncTerm {
             source,
             ColorPalette::default_bg_u8(),
             ColorPalette::default_fg_u8(),
-            BigEnumSet::new(),
+            SymbolStyles::new(),
         );
     }
 

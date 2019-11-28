@@ -1,6 +1,5 @@
-use crate::common::{Error, SymbolStyle};
+use crate::common::{Error, SymbolStyle, SymbolStyles};
 use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
-use big_enum_set::BigEnumSet;
 use specs::System;
 
 pub struct CmdLineRenderer;
@@ -48,7 +47,7 @@ fn print_cursor(out: &mut SyncTerm, state: &State) {
 fn print_error(out: &mut SyncTerm, error: &Error, h: i32) {
     let red = termion::color::AnsiValue::rgb(5, 0, 0).0;
     let white = termion::color::AnsiValue::rgb(5, 5, 5).0;
-    let bold = BigEnumSet::only(SymbolStyle::Bold);
+    let bold = SymbolStyles::only(SymbolStyle::Bold);
 
     out.write_line(1, h, error, red, white, bold);
 }
@@ -64,13 +63,13 @@ fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
     // color selection
     let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
 
-    out.write_line(w - 12, h, "▞", sc.0, sc.1, BigEnumSet::new());
+    out.write_line(w - 12, h, "▞", sc.0, sc.1, SymbolStyles::new());
     out.set_cursor_pos(w, h);
 }
 
 fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
     let white = termion::color::AnsiValue::grayscale(23).0;
-    let bold = BigEnumSet::only(SymbolStyle::Bold);
+    let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
     // TODO: add support for font styles to texels/buxels!
 
@@ -80,7 +79,7 @@ fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
 
 fn print_mode(out: &mut SyncTerm, mode: Mode, w: i32, h: i32) {
     let white = termion::color::AnsiValue::grayscale(23).0;
-    let bold = BigEnumSet::only(SymbolStyle::Bold);
+    let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", mode.to_str());
 
     out.write_line(1, h, text, ColorPalette::default_bg_u8(), white, bold);
@@ -89,7 +88,7 @@ fn print_mode(out: &mut SyncTerm, mode: Mode, w: i32, h: i32) {
 
 fn print_edit(out: &mut SyncTerm, state: &State, palette: &SymbolPalette, h: i32) {
     let white = termion::color::AnsiValue::grayscale(23).0;
-    let bold = BigEnumSet::only(SymbolStyle::Bold);
+    let bold = SymbolStyles::only(SymbolStyle::Bold);
 
     out.write_line(1, h, "--EDIT--", ColorPalette::default_bg_u8(), white, bold);
     out.write_texels(palette.line_texels(PALETTE_OFFSET, h));
@@ -103,7 +102,7 @@ fn print_color(out: &mut SyncTerm, palette: &ColorPalette, cm: ColorMode, w: i32
 
 fn print_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32, h: i32) {
     let white = termion::color::AnsiValue::grayscale(23).0;
-    let bold = BigEnumSet::only(SymbolStyle::Bold);
+    let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
     let i_txt = format!("{}", crate::common::index_from_one(index));
 

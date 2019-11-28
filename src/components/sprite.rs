@@ -1,7 +1,6 @@
-use crate::common::{cwd_path, Error, SymbolStyle, Texel};
-use crate::components::{Dimension, Position2D};
+use crate::common::{cwd_path, Error, SymbolStyle, SymbolStyles, Texel};
+use crate::components::{Dimension, Position2D, Bounds};
 use crate::resources::{ColorMode, ColorPalette};
-use big_enum_set::BigEnumSet;
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 use std::fs::File;
@@ -44,7 +43,7 @@ impl Sprite {
                         x,
                         y,
                         symbol: c,
-                        styles: BigEnumSet::new(),
+                        styles: SymbolStyles::new(),
                         fg: ColorPalette::default_fg_u8(),
                         bg: ColorPalette::default_bg_u8(),
                     });
@@ -102,28 +101,22 @@ impl Sprite {
         symbol: char,
         bg: u8,
         fg: u8,
-        pos: Position2D,
-    ) -> Result<Option<(Position2D, Dimension)>, Error> {
-        if let Some(t) = self.texels.iter_mut().find(|t| t.x == pos.x && t.y == pos.y) {
-            if t.symbol == symbol && t.bg == bg && t.fg == fg {
-                return Ok(None);
-            }
-
-            t.symbol = symbol;
-            t.bg = bg;
-            t.fg = fg;
-
-            return Ok(Some(self.calculate_bounds()?)); // TODO: not needed, just need to know we did something
+        area: Bounds,
+    ) -> Result<Option<Bounds>, Error> {
+        // remove texels in bounds
+        self.texels.retain(|t| !area.contains(t.x, t.y));
+        
+        // re-add them with new setup
+        for pos in area.into_iter() {
+            self.texels.push(Texel {
+                symbol,
+                bg,
+                fg,
+                x: pos.x,
+                y: pos.y,
+                styles: SymbolStyles::new(),
+            });
         }
-
-        self.texels.push(Texel {
-            symbol,
-            bg,
-            fg,
-            x: pos.x,
-            y: pos.y,
-            styles: BigEnumSet::new(),
-        });
 
         Ok(Some(self.calculate_bounds()?))
     }
@@ -146,21 +139,23 @@ impl Sprite {
         false
     }
 
-    pub fn apply_style(&mut self, style: SymbolStyle, pos: Position2D) -> bool {
-        if let Some(t) = self.texels.iter_mut().find(|t| t.x == pos.x && t.y == pos.y) {
+    pub fn apply_style(&mut self, style: SymbolStyle, area: Bounds) -> bool {
+        let mut changed = false;
+
+        for t in self.texels.iter_mut().filter(|t| area.contains(t.x, t.y)) {
             if t.styles.contains(style) {
                 t.styles.remove(style);
             } else {
                 t.styles.insert(style);
             }
 
-            return true;
+            changed = true;
         }
 
-        false
+        changed
     }
 
-    pub fn clear_symbol(&mut self, pos: Position2D) -> Result<Option<(Position2D, Dimension)>, Error> {
+    pub fn clear_symbol(&mut self, pos: Position2D) -> Result<Option<Bounds>, Error> {
         let count = self.texels.len();
         self.texels.retain(|t| t.x != pos.x || t.y != pos.y);
 
@@ -173,9 +168,9 @@ impl Sprite {
 
     // goes through texels so we can calculate dimension and move position if
     // needed. TODO: optimize, we're doing 3 loops here for no good reason
-    fn calculate_bounds(&mut self) -> Result<(Position2D, Dimension), Error> {
+    fn calculate_bounds(&mut self) -> Result<Bounds, Error> {
         if self.texels.is_empty() {
-            return Ok((Position2D { x: 0, y: 0 }, Dimension { w: 0, h: 0 }));
+            return Ok(Bounds::empty());
         }
 
         let mut min_x = i32::max_value();
@@ -203,7 +198,7 @@ impl Sprite {
             }
         }
 
-        Ok((Position2D { x: min_x, y: min_y }, Dimension::for_sprite(self)?))
+        Ok(Bounds::Free(Position2D { x: min_x, y: min_y }, Dimension::for_sprite(self)?))
     }
 }
 

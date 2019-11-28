@@ -22,7 +22,63 @@ pub enum Bounds {
     Free(Position2D, Dimension),
 }
 
+impl std::iter::IntoIterator for Bounds {
+    type Item = Position2D;
+    type IntoIter = BoundsIntoIterator;
+
+    fn into_iter(self) -> Self::IntoIter {
+        BoundsIntoIterator {
+            bounds: self,
+            index: 0
+        }
+    }
+}
+
+pub struct BoundsIntoIterator {
+    bounds: Bounds,
+    index: usize,
+}
+
+impl std::iter::Iterator for BoundsIntoIterator {
+    type Item = Position2D;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.bounds.size() {
+            return None;
+        }
+
+        let old_index = self.index;
+        self.index += 1;
+        
+        use crate::common::coords_from_index;
+        if let Some(pos) = coords_from_index(old_index, *self.bounds.dimension()) {
+            Some(pos + *self.bounds.position())
+        } else {
+            None
+        }
+    }
+}
+
+impl std::ops::Sub<Position2D> for Bounds {
+    type Output = Bounds;
+
+    fn sub(self, other: Position2D) -> Self::Output {
+        match self {
+            Bounds::Binding(pos, dim) => Bounds::Binding(pos - other, dim),
+            Bounds::Free(pos, dim) => Bounds::Free(pos - other, dim),
+        }
+    }
+}
+
 impl Bounds {
+    pub fn empty() -> Self {
+        Bounds::Free(Position2D { x: 0, y: 0 }, Dimension::default())
+    }
+
+    pub fn point(pos: Position2D) -> Self {
+        Bounds::Binding(pos, Dimension::unit())
+    }
+
     pub fn position(&self) -> &Position2D {
         match self {
             Bounds::Binding(p, _) => p,
@@ -37,12 +93,24 @@ impl Bounds {
         }
     }
 
+    pub fn size(&self) -> usize {
+        self.dimension().size()
+    }
+
     pub fn right(&self) -> i32 {
         self.position().x + i32::from(self.dimension().w) - 1
     }
 
     pub fn bottom(&self) -> i32 {
         self.position().y + i32::from(self.dimension().h) - 1
+    }
+
+    pub fn contains(&self, x: i32, y: i32) -> bool {
+        let pos = self.position();
+        let dim = self.dimension();
+
+        x >= pos.x && x < pos.x + i32::from(dim.w) &&
+        y >= pos.y && y < pos.y + i32::from(dim.h)
     }
 }
 
@@ -77,6 +145,36 @@ impl std::fmt::Display for Position {
         } else {
             write!(f, "{},{}", self.x, self.y)
         }
+    }
+}
+
+impl std::ops::Add<Position2D> for Position2D {
+    type Output = Position2D;
+
+    fn add(self, other: Position2D) -> Self::Output {
+        Position2D {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl std::ops::Add<Position2D> for Position {
+    type Output = Position;
+
+    fn add(self, other: Position2D) -> Self::Output {
+        Position {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z,
+        }
+    }
+}
+
+impl std::ops::AddAssign<Position2D> for Position {
+    fn add_assign(&mut self, other: Position2D) {
+        self.x += other.x;
+        self.y += other.y;
     }
 }
 
@@ -176,6 +274,35 @@ impl Position2D {
         } else {
             false
         }
+    }
+
+    // create bounds from two points
+    pub fn area(&self, other: Position2D) -> Bounds {
+        let top_left = Position2D {
+            x: std::cmp::min(self.x, other.x),
+            y: std::cmp::min(self.y, other.y),
+        };
+        let bottom_right = Position2D {
+            x: std::cmp::max(self.x, other.x),
+            y: std::cmp::max(self.y, other.y),
+        };
+
+        let dim = Dimension::for_area(top_left, bottom_right);
+
+        Bounds::Binding(top_left, dim)
+    }
+
+    // "create" the list of all positions in given area from self -> dim
+    pub fn area_texels(&self, dim: Dimension) -> Vec<Position2D> {
+        let mut result =  Vec::with_capacity(dim.size());
+
+        for x in self.x..self.x + i32::from(dim.w) {
+            for y in self.y..self.y + i32::from(dim.h) {
+                result.push(Position2D { x, y });
+            }
+        }
+
+        result
     }
 }
 

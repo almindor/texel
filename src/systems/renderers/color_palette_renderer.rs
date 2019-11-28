@@ -1,27 +1,31 @@
 use crate::components::Position2D;
+use crate::common::SymbolStyles;
 use crate::resources::{
     ColorMode, ColorPalette, Mode, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W,
 };
-use big_enum_set::BigEnumSet;
 use specs::System;
 
 pub struct ColorPaletteRenderer;
 
-impl<'a> System<'a> for ColorPaletteRenderer {
-    type SystemData = (
-        specs::Write<'a, SyncTerm>,
-        specs::Read<'a, State>,
-        specs::Read<'a, ColorPalette>,
-    );
+type WorldInfo<'a> = (
+    specs::Write<'a, SyncTerm>,
+    specs::Read<'a, State>,
+    specs::Read<'a, ColorPalette>,
+);
 
-    fn run(&mut self, (mut out, state, palette): Self::SystemData) {
-        if let Mode::SelectColor(i, cm) = state.mode() {
-            print_palette(&mut out, i, cm, &palette)
+impl<'a> System<'a> for ColorPaletteRenderer {
+    type SystemData = WorldInfo<'a>;
+
+    fn run(&mut self, world_info: Self::SystemData) {
+        if let Mode::SelectColor(i, cm) = world_info.1.mode() {
+            print_palette(world_info, i, cm)
         }
     }
 }
 
-fn print_palette(out: &mut SyncTerm, index: usize, cm: ColorMode, palette: &ColorPalette) {
+fn print_palette(world_info: WorldInfo, index: usize, cm: ColorMode) {
+    let (mut out, _, palette) = world_info;
+
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
     let h = i32::from(ts.1);
     let min = Position2D {
@@ -45,7 +49,7 @@ fn print_palette(out: &mut SyncTerm, index: usize, cm: ColorMode, palette: &Colo
                 " ",
                 termion::color::AnsiValue::rgb(r, g, b).0,
                 ColorPalette::default_fg_u8(),
-                BigEnumSet::new(),
+                SymbolStyles::new(),
             );
         }
     }

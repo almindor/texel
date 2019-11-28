@@ -145,6 +145,7 @@ fn build_dispatchers<'a, 'b>() -> (Dispatcher<'a, 'b>, Dispatcher<'a, 'b>) {
         .with(HistoryHandler, "history_handler", &[]) // needs to run after world.update
         .with(ClearScreen, "clear_screen", &[])
         .with(SpriteRenderer, "sprite_renderer", &["clear_screen"])
+        .with(SubselectionRenderer, "subselection_renderer", &["sprite_renderer"])
         .with(ColorPaletteRenderer, "color_palette_renderer", &["sprite_renderer"])
         .with(
             CmdLineRenderer,
