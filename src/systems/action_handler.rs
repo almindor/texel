@@ -34,7 +34,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::NewObject => new_sprite(&mut state, &e, &s, &u, None),
                 Action::ClearError => state.clear_error(),
                 Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &ss, &p, &pss, &u),
-                Action::ApplyColor(cm) => apply_color_to_selected(cm, &state, &mut sp, &p, &s),
+                Action::ApplyColor(cm) => apply_color_to_selected(cm, &state, &e, &mut sp, &p, &s, &d, &ss, &pss, &u),
                 Action::ApplySymbol(sym) => apply_symbol_to_selected(sym, &mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u),
                 Action::ApplyStyle(style) => apply_style_to_selected(style, &state, &e, &mut sp, &p, &d, &s, &ss, &pss, &u),
                 Action::ReverseMode => reverse_mode(&e, &mut state, &s, &ss, &mut pss, &u),
@@ -56,7 +56,7 @@ impl<'a> System<'a> for ActionHandler {
                 }
                 Action::Delete => {
                     if state.mode() == Mode::Edit || state.mode() == Mode::Write {
-                        clear_symbol_on_selected(&mut state, &mut sp, &s, &mut p, &mut d)
+                        clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
                     } else if let Err(err) = delete_selected(&e, &s) {
                         state.set_error(err)
                     } else {
@@ -368,19 +368,28 @@ fn translate_selected(
 fn apply_color_to_selected(
     cm: ColorMode,
     state: &State,
+    e: &Entities,
     sp: &mut WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
     s: &ReadStorage<Selection>,
+    d: &WriteStorage<Dimension>,
+    ss: &WriteStorage<Subselection>,
+    p_ss: &WriteStorage<Position2D>,
+    u: &LazyUpdate,
 ) -> bool {
     let mut changed = false;
     let color = state.color(cm);
 
     for (sprite, pos, _) in (sp, p, s).join() {
         if state.mode() == Mode::Edit {
-            let rel_pos = state.cursor - *pos;
-            if sprite.apply_color(cm, color, rel_pos) {
+            let sel_bounds = subselection(ss, p_ss, d).unwrap_or_else(|| Bounds::point(state.cursor));
+            let pos2d: Position2D = pos.into();
+            let rel_bounds = sel_bounds - pos2d;
+            
+            if sprite.apply_color(cm, color, rel_bounds) {
                 changed = true;
             }
+            clear_subselection(e, ss, u);
         } else if sprite.fill_color(cm, color) {
             changed = true;
         }
@@ -391,24 +400,35 @@ fn apply_color_to_selected(
 
 fn clear_symbol_on_selected(
     state: &mut State,
+    e: &Entities,
     sp: &mut WriteStorage<Sprite>,
     s: &ReadStorage<Selection>,
     p: &mut WriteStorage<Position>,
     d: &mut WriteStorage<Dimension>,
+    ss: &WriteStorage<Subselection>,
+    p_ss: &WriteStorage<Position2D>,
+    u: &LazyUpdate,
 ) -> bool {
     let mut changed = false;
-    for (sprite, mut pos, mut dim, _) in (sp, p, d, s).join() {
-        let rel_pos = state.cursor - *pos;
-        let changes = sprite.clear_symbol(rel_pos);
+    let sel_bounds = subselection(ss, p_ss, d).unwrap_or_else(|| Bounds::point(state.cursor));
+
+    for (sprite, pos, dim, _) in (sp, p, d, s).join() {
+        let pos2d: Position2D = pos.into();
+        let rel_bounds = sel_bounds - pos2d;
+
+        let changes = sprite.clear_symbol(rel_bounds);
 
         match changes {
-            Ok(None) => {} // no change, symbol was applied in bounds
+            Ok(None) => {
+                clear_subselection(e, ss, u);
+            } // no change, symbol was applied in bounds
             Ok(Some(bounds)) => {
                 // changed pos or dim => apply new bounds
                 *pos += *bounds.position();
                 *dim = *bounds.dimension();
 
                 changed = true;
+                clear_subselection(e, ss, u);
             }
             Err(err) => {
                 // if dim is funky?
@@ -453,9 +473,9 @@ fn apply_style_to_selected(
             let rel_bounds = sel_bounds - pos2d;
 
             if sprite.apply_style(style, rel_bounds) {
-                clear_subselection(e, ss, u);
                 changed = true;
             }
+            clear_subselection(e, ss, u);
         } else if sprite.fill_style(style) {
             changed = true;
         }
@@ -487,10 +507,7 @@ fn apply_symbol_to_selected(
         let changes = sprite.apply_symbol(symbol, bg, fg, rel_bounds);
 
         match changes {
-            Ok(None) => { // no change, symbol was applied in bounds
-                
-            }
-            Ok(Some(bounds)) => {
+            Ok(bounds) => {
                 clear_subselection(e, ss, u);
                 // changed pos or dim => apply new bounds
                 *pos += *bounds.position();

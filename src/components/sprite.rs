@@ -102,7 +102,7 @@ impl Sprite {
         bg: u8,
         fg: u8,
         area: Bounds,
-    ) -> Result<Option<Bounds>, Error> {
+    ) -> Result<Bounds, Error> {
         // remove texels in bounds
         self.texels.retain(|t| !area.contains(t.x, t.y));
         
@@ -118,14 +118,16 @@ impl Sprite {
             });
         }
 
-        Ok(Some(self.calculate_bounds()?))
+        Ok(self.calculate_bounds()?)
     }
 
     // TODO: handle empty symbols with BG colors!
-    pub fn apply_color(&mut self, cm: ColorMode, color: u8, pos: Position2D) -> bool {
-        if let Some(t) = self.texels.iter_mut().find(|t| t.x == pos.x && t.y == pos.y) {
+    pub fn apply_color(&mut self, cm: ColorMode, color: u8, area: Bounds) -> bool {
+        let mut changed = false;
+
+        for t in self.texels.iter_mut().filter(|t| area.contains(t.x, t.y)) {
             if (cm == ColorMode::Bg && t.bg == color) || (cm == ColorMode::Fg && t.fg == color) {
-                return false;
+                continue
             }
 
             match cm {
@@ -133,10 +135,10 @@ impl Sprite {
                 ColorMode::Fg => t.fg = color,
             }
 
-            return true;
+            changed = true;
         }
 
-        false
+        changed
     }
 
     pub fn apply_style(&mut self, style: SymbolStyle, area: Bounds) -> bool {
@@ -155,9 +157,9 @@ impl Sprite {
         changed
     }
 
-    pub fn clear_symbol(&mut self, pos: Position2D) -> Result<Option<Bounds>, Error> {
+    pub fn clear_symbol(&mut self, area: Bounds) -> Result<Option<Bounds>, Error> {
         let count = self.texels.len();
-        self.texels.retain(|t| t.x != pos.x || t.y != pos.y);
+        self.texels.retain(|t| !area.contains(t.x, t.y));
 
         if count != self.texels.len() {
             return Ok(Some(self.calculate_bounds()?));
