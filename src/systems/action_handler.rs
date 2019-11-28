@@ -420,6 +420,7 @@ fn clear_symbol_on_selected(
 
         match changes {
             Ok(None) => {
+                changed = true;
                 clear_subselection(e, ss, u);
             } // no change, symbol was applied in bounds
             Ok(Some(bounds)) => {
