@@ -8,14 +8,13 @@ use std::path::{Path, PathBuf};
 mod action;
 mod config;
 mod input;
-mod loader;
 mod program;
 mod scene;
+pub mod loader;
 
 pub use action::Action;
 pub use config::{Config, ConfigV1};
 pub use input::{CharMap, Event, InputEvent, InputMap};
-pub use loader::{Loaded, Loader};
 pub use program::run;
 pub use scene::{Scene, SceneV1};
 

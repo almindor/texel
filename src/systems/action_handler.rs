@@ -1,4 +1,4 @@
-use crate::common::{cwd_path, Action, Error, Loaded, Loader, Scene, SceneV1, SymbolStyle};
+use crate::common::{cwd_path, Action, Error, loader, Scene, SceneV1, SymbolStyle};
 use crate::components::*;
 use crate::resources::{ColorMode, Mode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use libflate::gzip::Encoder;
@@ -614,7 +614,9 @@ fn load_from_file(
     u: &LazyUpdate,
     path: &str,
 ) -> Result<(), Error> {
-    match Loader::from_file(path)? {
+    use loader::Loaded;
+    
+    match loader::from_file(path)? {
         Loaded::Scene(scene) => apply_scene(scene, e, s, sp, u),
         Loaded::Sprite(sprite) => import_sprite(sprite, e, s, u, None, true),
     }

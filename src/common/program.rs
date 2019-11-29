@@ -4,7 +4,7 @@ use std::path::Path;
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::IntoRawMode;
 
-use crate::common::{Action, Config, ConfigV1, Error, InputMap, Loader};
+use crate::common::{Action, Config, ConfigV1, Error, InputMap, loader};
 use crate::resources::{ColorPalette, State, SymbolPalette, SyncTerm};
 use crate::systems::*;
 
@@ -92,7 +92,7 @@ fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher, ren
 }
 
 fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
-    let config = match Loader::from_config_file(config_file) {
+    let config = match loader::from_config_file(config_file) {
         Ok(val) => val.current(), // ensures we upgrade if there's a version change
         Err(_) => Config::default().current(),
     };

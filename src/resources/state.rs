@@ -196,8 +196,6 @@ impl State {
             return;
         }
 
-        eprintln!("Pushing history");
-
         if self.history.len() >= HISTORY_CAPACITY {
             self.history.pop_front();
         }
