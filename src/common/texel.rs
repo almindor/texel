@@ -11,16 +11,6 @@ pub enum SymbolStyle {
 
 pub type SymbolStyles = BigEnumSet<SymbolStyle>;
 
-#[derive(Debug, BigEnumSetType)]
-pub enum TexelField {
-    Symbol,
-    Styles,
-    Fg,
-    Bg,
-}
-
-pub type TexelFields = BigEnumSet<TexelField>;
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct Texel {
     pub x: i32,
@@ -47,15 +37,8 @@ impl std::fmt::Display for Texel {
 }
 
 impl Texel {
-    pub fn r#override(&mut self, texel: &Texel, fields: TexelFields) {
-        for field in fields.iter() {
-            match field {
-                TexelField::Symbol => self.symbol = texel.symbol,
-                TexelField::Bg => self.bg = texel.bg,
-                TexelField::Fg => self.fg = texel.fg,
-                TexelField::Styles => self.styles = texel.styles,
-            }
-        }
+    pub fn override_bg(&mut self, bg: u8) {
+        self.bg = bg;
     }
 }
 

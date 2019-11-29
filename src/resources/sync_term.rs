@@ -1,4 +1,4 @@
-use crate::common::{SymbolStyles, Texel, TexelFields};
+use crate::common::{SymbolStyles, Texel};
 use crate::resources::ColorPalette;
 use std::io::Write;
 use std::vec::Vec;
@@ -53,7 +53,7 @@ impl TexelBuf {
         }
     }
 
-    pub fn override_texel(&mut self, texel: Texel, fields: TexelFields) {
+    pub fn override_texel_bg(&mut self, texel: Texel) {
         let index = self.index(texel.x, texel.y);
 
         if index >= self.buf.len() {
@@ -61,7 +61,7 @@ impl TexelBuf {
         }
 
         if let Some(existing) = self.buf.get_mut(index) {
-            existing.r#override(&texel, fields);
+            existing.override_bg(texel.bg);
         } else {
             self.set_texel(texel);
         }
@@ -127,10 +127,10 @@ impl SyncTerm {
         buf.set_texels(texels);
     }
 
-    pub fn override_texel(&mut self, texel: Texel, fields: TexelFields) {
+    pub fn override_texel_bg(&mut self, texel: Texel) {
         let buf = self.buf_mut();
 
-        buf.override_texel(texel, fields);
+        buf.override_texel_bg(texel);
     }
 
     pub fn write_line(

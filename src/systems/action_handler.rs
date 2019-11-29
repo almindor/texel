@@ -135,11 +135,9 @@ fn clear_subselection(e: &Entities, ss: &WriteStorage<Subselection>, u: &LazyUpd
         u.remove::<Position2D>(entity);
         u.remove::<Dimension>(entity);
         u.remove::<Subselection>(entity);
-
-        true
-    } else {
-        false
     }
+
+    false
 }
 
 fn set_mode(

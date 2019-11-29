@@ -15,7 +15,7 @@ pub use config::{Config, ConfigV1};
 pub use input::{CharMap, Event, InputEvent, InputMap};
 pub use program::run;
 pub use scene::{Scene, SceneV1};
-pub use texel::{SymbolStyle, SymbolStyles, Texel, TexelField, TexelFields};
+pub use texel::{SymbolStyle, SymbolStyles, Texel};
 
 // described deserializables that need "after load" refresh
 pub trait LazyLoaded {
