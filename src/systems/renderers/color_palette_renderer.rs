@@ -1,5 +1,5 @@
-use crate::components::Position2D;
 use crate::common::SymbolStyles;
+use crate::components::Position2D;
 use crate::resources::{
     ColorMode, ColorPalette, Mode, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W,
 };

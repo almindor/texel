@@ -1,4 +1,4 @@
-use crate::components::{Sprite, Position2D};
+use crate::components::{Position2D, Sprite};
 use specs::{Component, VecStorage};
 use std::convert::TryInto;
 
@@ -34,13 +34,10 @@ impl std::ops::Sub for Dimension {
 
 impl Dimension {
     pub fn unit() -> Self {
-        Dimension {
-            w: 1,
-            h: 1,
-        }
+        Dimension { w: 1, h: 1 }
     }
 
-    pub fn size(&self) -> usize {
+    pub fn size(self) -> usize {
         usize::from(self.w * self.h)
     }
 

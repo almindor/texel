@@ -1,6 +1,6 @@
-use big_enum_set::{BigEnumSet, BigEnumSetType};
-use serde::{Serialize, Deserialize};
 use crate::resources::ColorPalette;
+use big_enum_set::{BigEnumSet, BigEnumSetType};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, BigEnumSetType, Serialize, Deserialize)]
 pub enum SymbolStyle {

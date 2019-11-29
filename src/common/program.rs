@@ -4,7 +4,7 @@ use std::path::Path;
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::IntoRawMode;
 
-use crate::common::{Action, Config, ConfigV1, Error, InputMap, fio};
+use crate::common::{fio, Action, Config, ConfigV1, Error, InputMap};
 use crate::resources::{ColorPalette, State, SymbolPalette, SyncTerm};
 use crate::systems::*;
 

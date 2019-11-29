@@ -1,6 +1,6 @@
 use crate::common::{cwd_path, Config, Error, Scene};
 use crate::components::Sprite;
-use libflate::gzip::{Encoder, Decoder};
+use libflate::gzip::{Decoder, Encoder};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]

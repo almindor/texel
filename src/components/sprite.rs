@@ -1,5 +1,5 @@
 use crate::common::{cwd_path, Error, SymbolStyle, SymbolStyles, Texel};
-use crate::components::{Dimension, Position2D, Bounds};
+use crate::components::{Bounds, Dimension, Position2D};
 use crate::resources::{ColorMode, ColorPalette};
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
@@ -96,16 +96,10 @@ impl Sprite {
         changed
     }
 
-    pub fn apply_symbol(
-        &mut self,
-        symbol: char,
-        bg: u8,
-        fg: u8,
-        area: Bounds,
-    ) -> Result<Bounds, Error> {
+    pub fn apply_symbol(&mut self, symbol: char, bg: u8, fg: u8, area: Bounds) -> Result<Bounds, Error> {
         // remove texels in bounds
         self.texels.retain(|t| !area.contains(t.x, t.y));
-        
+
         // re-add them with new setup
         for pos in area.into_iter() {
             self.texels.push(Texel {
@@ -127,7 +121,7 @@ impl Sprite {
 
         for t in self.texels.iter_mut().filter(|t| area.contains(t.x, t.y)) {
             if (cm == ColorMode::Bg && t.bg == color) || (cm == ColorMode::Fg && t.fg == color) {
-                continue
+                continue;
             }
 
             match cm {
@@ -200,7 +194,10 @@ impl Sprite {
             }
         }
 
-        Ok(Bounds::Free(Position2D { x: min_x, y: min_y }, Dimension::for_sprite(self)?))
+        Ok(Bounds::Free(
+            Position2D { x: min_x, y: min_y },
+            Dimension::for_sprite(self)?,
+        ))
     }
 }
 

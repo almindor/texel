@@ -1,4 +1,4 @@
-use crate::common::{Action, Error, fio, Scene, SceneV1, SymbolStyle};
+use crate::common::{fio, Action, Error, Scene, SceneV1, SymbolStyle};
 use crate::components::*;
 use crate::resources::{ColorMode, Mode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
@@ -21,7 +21,7 @@ impl<'a> System<'a> for ActionHandler {
         Read<'a, LazyUpdate>,
     );
 
-    fn run(&mut self, (mut state, e, mut p, sel, s, mut ss, mut pss, mut d, mut sp, u): Self::SystemData) {        
+    fn run(&mut self, (mut state, e, mut p, sel, s, mut ss, mut pss, mut d, mut sp, u): Self::SystemData) {
         while let Some(action) = state.pop_action() {
             let keep_history = action.keeps_history();
 
@@ -30,33 +30,39 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Undo => undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => redo(&mut state, &e, &s, &sp, &u),
                 Action::NewObject => new_sprite(&mut state, &e, &s, &u, None),
-                Action::Cancel => if state.error().is_some() {
-                    state.clear_error()
-                } else {
-                    reverse_mode(&e, &mut state, &s, &ss, &mut pss, &u)
-                }                
+                Action::Cancel => {
+                    if state.error().is_some() {
+                        state.clear_error()
+                    } else {
+                        reverse_mode(&e, &mut state, &s, &ss, &mut pss, &u)
+                    }
+                }
                 Action::ClearError => state.clear_error(),
                 Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &ss, &p, &pss, &u),
                 Action::ApplyColor(cm) => apply_color_to_selected(cm, &state, &e, &mut sp, &p, &s, &d, &ss, &pss, &u),
-                Action::ApplySymbol(sym) => apply_symbol_to_selected(sym, &mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u),
-                Action::ApplyStyle(style) => apply_style_to_selected(style, &state, &e, &mut sp, &p, &d, &s, &ss, &pss, &u),
+                Action::ApplySymbol(sym) => {
+                    apply_symbol_to_selected(sym, &mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
+                }
+                Action::ApplyStyle(style) => {
+                    apply_style_to_selected(style, &state, &e, &mut sp, &p, &d, &s, &ss, &pss, &u)
+                }
                 Action::ReverseMode => reverse_mode(&e, &mut state, &s, &ss, &mut pss, &u),
                 Action::Deselect => match state.mode() {
                     Mode::Edit => clear_subselection(&e, &ss, &u),
                     _ => deselect_obj(&e, &s, &u),
-                }
+                },
                 Action::Translate(t) => match state.mode() {
                     Mode::Edit => {
                         let sprite_bounds = selected_bounds(&s, &p, &d);
                         translate_subselection(t, &mut state, &ss, &mut pss, &mut d, sprite_bounds)
-                    },
-                    _ => translate_selected(t, &mut state, &mut p, &s, &mut d),
-                }
+                    }
+                    _ => translate_selected(t, &mut state, &mut p, &s, &d),
+                },
                 Action::SelectNext(keep) => match state.mode() {
                     Mode::Object => select_next_obj(&e, &sel, &s, &u, keep),
                     Mode::Edit => select_edit(&e, &state, &mut ss, &u),
                     _ => state.set_error(Error::execution("Unexpected mode on selection")),
-                }
+                },
                 Action::Delete => {
                     if state.mode() == Mode::Edit || state.mode() == Mode::Write {
                         clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
@@ -187,12 +193,7 @@ fn set_mode(
     }
 }
 
-fn select_edit(
-    e: &Entities,
-    state: &State,
-    ss: &mut WriteStorage<Subselection>,
-    u: &LazyUpdate,
-) -> bool {
+fn select_edit(e: &Entities, state: &State, ss: &mut WriteStorage<Subselection>, u: &LazyUpdate) -> bool {
     let mut joined = (e, ss).join();
 
     let clear_edit = |entity| {
@@ -203,20 +204,23 @@ fn select_edit(
 
     let new_edit = || {
         let entity = e.create();
-        let pos: Position2D = state.cursor.into();
+        let pos = state.cursor;
         u.insert(entity, pos);
         u.insert(entity, Dimension::unit());
         u.insert(entity, Subselection::at(pos));
     };
 
-    if let Some((entity, sel)) = joined.next() { // existing selection, finish it
+    if let Some((entity, sel)) = joined.next() {
+        // existing selection, finish it
         if sel.active {
             sel.active = false; // we're done selecting
-        } else { // redo
+        } else {
+            // redo
             clear_edit(entity);
             new_edit();
         }
-    } else { // initiating new selection/edit
+    } else {
+        // initiating new selection/edit
         new_edit();
     }
 
@@ -388,7 +392,7 @@ fn apply_color_to_selected(
             let sel_bounds = subselection(ss, p_ss, d).unwrap_or_else(|| Bounds::point(state.cursor));
             let pos2d: Position2D = pos.into();
             let rel_bounds = sel_bounds - pos2d;
-            
+
             if sprite.apply_color(cm, color, rel_bounds) {
                 changed = true;
             }

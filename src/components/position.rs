@@ -27,10 +27,7 @@ impl std::iter::IntoIterator for Bounds {
     type IntoIter = BoundsIntoIterator;
 
     fn into_iter(self) -> Self::IntoIter {
-        BoundsIntoIterator {
-            bounds: self,
-            index: 0
-        }
+        BoundsIntoIterator { bounds: self, index: 0 }
     }
 }
 
@@ -49,7 +46,7 @@ impl std::iter::Iterator for BoundsIntoIterator {
 
         let old_index = self.index;
         self.index += 1;
-        
+
         use crate::common::coords_from_index;
         if let Some(pos) = coords_from_index(old_index, *self.bounds.dimension()) {
             Some(pos + *self.bounds.position())
@@ -109,8 +106,7 @@ impl Bounds {
         let pos = self.position();
         let dim = self.dimension();
 
-        x >= pos.x && x < pos.x + i32::from(dim.w) &&
-        y >= pos.y && y < pos.y + i32::from(dim.h)
+        x >= pos.x && x < pos.x + i32::from(dim.w) && y >= pos.y && y < pos.y + i32::from(dim.h)
     }
 }
 
@@ -277,7 +273,7 @@ impl Position2D {
     }
 
     // create bounds from two points
-    pub fn area(&self, other: Position2D) -> Bounds {
+    pub fn area(self, other: Position2D) -> Bounds {
         let top_left = Position2D {
             x: std::cmp::min(self.x, other.x),
             y: std::cmp::min(self.y, other.y),
@@ -293,8 +289,8 @@ impl Position2D {
     }
 
     // "create" the list of all positions in given area from self -> dim
-    pub fn area_texels(&self, dim: Dimension) -> Vec<Position2D> {
-        let mut result =  Vec::with_capacity(dim.size());
+    pub fn area_texels(self, dim: Dimension) -> Vec<Position2D> {
+        let mut result = Vec::with_capacity(dim.size());
 
         for x in self.x..self.x + i32::from(dim.w) {
             for y in self.y..self.y + i32::from(dim.h) {

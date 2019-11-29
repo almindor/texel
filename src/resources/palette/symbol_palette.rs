@@ -1,4 +1,4 @@
-use crate::common::{Error, Texel, SymbolStyles};
+use crate::common::{Error, SymbolStyles, Texel};
 use crate::resources::ColorPalette;
 use serde::{Deserialize, Serialize};
 

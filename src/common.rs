@@ -1,14 +1,14 @@
-use crate::components::{Position2D, Dimension};
+use crate::components::{Dimension, Position2D};
 use std::env::current_dir;
 use std::path::{Path, PathBuf};
 
 mod action;
 mod config;
+pub mod fio;
 mod input;
 mod program;
 mod scene;
-mod texel;
-pub mod fio; // file io
+mod texel; // file io
 
 pub use action::Action;
 pub use config::{Config, ConfigV1};
