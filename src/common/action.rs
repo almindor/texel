@@ -6,6 +6,7 @@ use crate::resources::{ColorMode, Mode};
 pub enum Action {
     None,
     NewObject,
+    Cancel,
     ClearError,
     SetMode(Mode),
     ReverseMode,

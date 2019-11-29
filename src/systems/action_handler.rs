@@ -32,6 +32,11 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Undo => undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => redo(&mut state, &e, &s, &sp, &u),
                 Action::NewObject => new_sprite(&mut state, &e, &s, &u, None),
+                Action::Cancel => if state.error().is_some() {
+                    state.clear_error()
+                } else {
+                    reverse_mode(&e, &mut state, &s, &ss, &mut pss, &u)
+                }                
                 Action::ClearError => state.clear_error(),
                 Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &ss, &p, &pss, &u),
                 Action::ApplyColor(cm) => apply_color_to_selected(cm, &state, &e, &mut sp, &p, &s, &d, &ss, &pss, &u),
@@ -305,7 +310,7 @@ fn translate_subselection(
             // if we have subselection, resize it
             if let Some((pos, dim, sel)) = (p, d, ss).join().next() {
                 if !sel.active {
-                    return true; // nothing to do
+                    return false; // nothing to do
                 }
 
                 let edit_box = sel.initial_pos.area(state.cursor);
@@ -314,7 +319,7 @@ fn translate_subselection(
                 *dim = *edit_box.dimension();
             }
 
-            true
+            false
         } else {
             false
         }

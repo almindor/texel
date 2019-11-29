@@ -34,7 +34,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Mode(mode) => Action::SetMode(mode),
         Event::Next(sticky) => Action::SelectNext(sticky),
 
-        Event::Cancel => Action::ReverseMode,
+        Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,
 
         Event::Undo => Action::Undo,
@@ -85,7 +85,7 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
             state.push_action(Action::SetMode(Mode::Command));
         }
         Event::EditPalette(index) => state.push_action(Action::SetMode(Mode::SelectColor(index, cm))),
-        Event::Cancel => state.push_action(Action::ReverseMode),
+        Event::Cancel => state.push_action(Action::Cancel),
         _ => {
             if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
                 state.set_color(palette.color(index as usize), cm);
@@ -97,7 +97,7 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
 
 fn write_event(event: InputEvent, state: &mut State) {
     let action = match event.0 {
-        Event::Cancel => Action::ReverseMode,
+        Event::Cancel => Action::Cancel,
 
         Event::ArrowLeft => Action::Translate(Translation::Relative(-1, 0, 0)),
         Event::ArrowUp => Action::Translate(Translation::Relative(0, -1, 0)),
@@ -133,7 +133,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::Mode(Mode::Write) => Action::SetMode(Mode::Write),
         Event::EditPalette(index) => Action::SetMode(Mode::SelectSymbol(index)),
 
-        Event::Cancel => Action::ReverseMode,
+        Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,
         Event::Next(false) => Action::SelectNext(false),
 
@@ -171,7 +171,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
 
 fn symbol_select_event(event: InputEvent, state: &mut State, index: usize, palette: &mut SymbolPalette) {
     match event.0 {
-        Event::Cancel => state.push_action(Action::ReverseMode),
+        Event::Cancel => state.push_action(Action::Cancel),
         _ => {
             if let Some(c) = event.1 {
                 match palette.set_symbol(index, c) {
@@ -187,7 +187,7 @@ fn symbol_select_event(event: InputEvent, state: &mut State, index: usize, palet
 
 fn color_select_event(event: InputEvent, state: &mut State, index: usize, palette: &mut ColorPalette) {
     let action = match event.0 {
-        Event::Cancel => Action::ReverseMode,
+        Event::Cancel => Action::Cancel,
         Event::Confirm => {
             if let Err(err) = palette.set_color(index, ColorPalette::pos_to_color(state.cursor)) {
                 state.set_error(err);
