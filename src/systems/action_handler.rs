@@ -1,9 +1,7 @@
-use crate::common::{cwd_path, Action, Error, loader, Scene, SceneV1, SymbolStyle};
+use crate::common::{Action, Error, loader, Scene, SceneV1, SymbolStyle};
 use crate::components::*;
 use crate::resources::{ColorMode, Mode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
-use libflate::gzip::Encoder;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
-use std::path::{Path, PathBuf};
 
 pub struct ActionHandler;
 
@@ -590,21 +588,8 @@ fn save_scene(
 ) -> Result<(), Error> {
     let path = state.save_file(new_path)?;
     let scene = Scene::V1(SceneV1::from((e, sp, p, s)));
-    let ronified = ron::ser::to_string(&scene)?;
-    let raw_path = if Path::new(&path).extension() != Some(std::ffi::OsStr::new("rgz")) {
-        Path::new(&path).with_extension("rgz")
-    } else {
-        PathBuf::from(path)
-    };
-    let abs_path = cwd_path(&raw_path)?;
 
-    let file = std::fs::File::create(abs_path)?;
-    let mut encoder = Encoder::new(file)?;
-
-    use std::io::Write;
-    encoder.write_all(ronified.as_ref())?;
-    encoder.finish().into_result()?;
-    Ok(())
+    loader::to_file(&scene, &path)
 }
 
 fn load_from_file(
@@ -615,7 +600,7 @@ fn load_from_file(
     path: &str,
 ) -> Result<(), Error> {
     use loader::Loaded;
-    
+
     match loader::from_file(path)? {
         Loaded::Scene(scene) => apply_scene(scene, e, s, sp, u),
         Loaded::Sprite(sprite) => import_sprite(sprite, e, s, u, None, true),

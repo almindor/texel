@@ -1,7 +1,4 @@
-use crate::resources::ColorPalette;
 use crate::components::{Position2D, Dimension};
-use big_enum_set::{BigEnumSet, BigEnumSetType};
-use serde::{Deserialize, Serialize};
 use std::env::current_dir;
 use std::path::{Path, PathBuf};
 
@@ -10,6 +7,7 @@ mod config;
 mod input;
 mod program;
 mod scene;
+mod texel;
 pub mod loader;
 
 pub use action::Action;
@@ -17,67 +15,11 @@ pub use config::{Config, ConfigV1};
 pub use input::{CharMap, Event, InputEvent, InputMap};
 pub use program::run;
 pub use scene::{Scene, SceneV1};
+pub use texel::{SymbolStyle, SymbolStyles, Texel, TexelField, TexelFields};
 
 // described deserializables that need "after load" refresh
 pub trait LazyLoaded {
     fn refresh(&mut self);
-}
-
-#[derive(Debug, BigEnumSetType, Serialize, Deserialize)]
-pub enum SymbolStyle {
-    Bold,
-    Italic,
-    Underline,
-}
-
-pub type SymbolStyles = BigEnumSet<SymbolStyle>;
-
-#[derive(Debug, BigEnumSetType)]
-pub enum TexelField {
-    Symbol,
-    Styles,
-    Fg,
-    Bg,
-}
-
-pub type TexelFields = BigEnumSet<TexelField>;
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
-pub struct Texel {
-    pub x: i32,
-    pub y: i32,
-    pub symbol: char,
-    pub styles: BigEnumSet<SymbolStyle>, // u8
-    pub fg: u8,
-    pub bg: u8,
-}
-
-impl std::fmt::Display for Texel {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}{}{}{}{}{}",
-            crate::common::goto(self.x, self.y),
-            ColorPalette::u8_to_bg(self.bg),
-            ColorPalette::u8_to_fg(self.fg),
-            styles_to_str(self.styles),
-            self.symbol,
-            termion::style::Reset,
-        )
-    }
-}
-
-impl Texel {
-    pub fn r#override(&mut self, texel: &Texel, fields: TexelFields) {
-        for field in fields.iter() {
-            match field {
-                TexelField::Symbol => self.symbol = texel.symbol,
-                TexelField::Bg => self.bg = texel.bg,
-                TexelField::Fg => self.fg = texel.fg,
-                TexelField::Styles => self.styles = texel.styles,
-            }
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -173,19 +115,4 @@ pub fn coords_from_index(index: usize, dim: Dimension) -> Option<Position2D> {
     } else {
         None
     }
-}
-
-fn styles_to_str(styles: BigEnumSet<SymbolStyle>) -> String {
-    use termion::style::{Bold, Italic, Underline};
-    let mut result = String::with_capacity(64);
-
-    for style in styles.iter() {
-        result += match style {
-            SymbolStyle::Bold => Bold.as_ref(),
-            SymbolStyle::Italic => Italic.as_ref(),
-            SymbolStyle::Underline => Underline.as_ref(),
-        }
-    }
-
-    result
 }

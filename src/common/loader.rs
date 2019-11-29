@@ -1,13 +1,31 @@
 use crate::common::{cwd_path, Config, Error, Scene};
 use crate::components::Sprite;
-use libflate::gzip::Decoder;
-use std::path::Path;
+use libflate::gzip::{Encoder, Decoder};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub enum Loaded {
     Sprite(Sprite),
     Scene(Scene),
     // config is not needed to be loaded "generically"
+}
+
+pub fn to_file(scene: &Scene, path: &str) -> Result<(), Error> {
+    let ronified = ron::ser::to_string(&scene)?;
+    let raw_path = if Path::new(&path).extension() != Some(std::ffi::OsStr::new("rgz")) {
+        Path::new(&path).with_extension("rgz")
+    } else {
+        PathBuf::from(path)
+    };
+    let abs_path = cwd_path(&raw_path)?;
+    let file = std::fs::File::create(abs_path)?;
+    let mut encoder = Encoder::new(file)?;
+
+    use std::io::Write;
+    encoder.write_all(ronified.as_ref())?;
+    encoder.finish().into_result()?;
+
+    Ok(())
 }
 
 pub fn from_file(path: &str) -> Result<Loaded, Error> {
