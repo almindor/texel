@@ -1,4 +1,4 @@
-use crate::common::{Action, Error, loader, Scene, SceneV1, SymbolStyle};
+use crate::common::{Action, Error, fio, Scene, SceneV1, SymbolStyle};
 use crate::components::*;
 use crate::resources::{ColorMode, Mode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
@@ -589,7 +589,7 @@ fn save_scene(
     let path = state.save_file(new_path)?;
     let scene = Scene::V1(SceneV1::from((e, sp, p, s)));
 
-    loader::to_file(&scene, &path)
+    fio::to_file(&scene, &path)
 }
 
 fn load_from_file(
@@ -599,9 +599,9 @@ fn load_from_file(
     u: &LazyUpdate,
     path: &str,
 ) -> Result<(), Error> {
-    use loader::Loaded;
+    use fio::Loaded;
 
-    match loader::from_file(path)? {
+    match fio::from_file(path)? {
         Loaded::Scene(scene) => apply_scene(scene, e, s, sp, u),
         Loaded::Sprite(sprite) => import_sprite(sprite, e, s, u, None, true),
     }

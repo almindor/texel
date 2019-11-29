@@ -8,7 +8,7 @@ mod input;
 mod program;
 mod scene;
 mod texel;
-pub mod loader;
+pub mod fio; // file io
 
 pub use action::Action;
 pub use config::{Config, ConfigV1};
