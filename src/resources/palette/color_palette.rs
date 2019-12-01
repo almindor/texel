@@ -1,4 +1,4 @@
-use crate::common::{Error, SymbolStyle, SymbolStyles, Texel};
+use crate::common::{Error, SymbolStyle, SymbolStyles, Texel, Texels};
 use crate::components::Position2D;
 use serde::{Deserialize, Serialize};
 
@@ -156,7 +156,7 @@ impl ColorPalette {
         }
     }
 
-    pub fn line_texels(&self, start_x: i32, y: i32, cm: ColorMode) -> Vec<Texel> {
+    pub fn line_texels(&self, start_x: i32, y: i32, cm: ColorMode) -> Texels {
         let mut result = Vec::with_capacity(COLORS_IN_PALETTE);
 
         let mut x = start_x;

@@ -1,4 +1,4 @@
-use crate::common::{Error, SymbolStyles, Texel};
+use crate::common::{Error, SymbolStyles, Texel, Texels};
 use crate::resources::ColorPalette;
 use serde::{Deserialize, Serialize};
 
@@ -64,7 +64,7 @@ impl SymbolPalette {
         Ok(())
     }
 
-    pub fn line_texels(&self, start_x: i32, y: i32) -> Vec<Texel> {
+    pub fn line_texels(&self, start_x: i32, y: i32) -> Texels {
         let mut result = Vec::with_capacity(SYMBOLS_IN_PALETTE * 4);
 
         let mut x = start_x;

@@ -4,18 +4,18 @@ use std::path::{Path, PathBuf};
 
 mod action;
 mod config;
-pub mod fio;
 mod input;
 mod program;
 mod scene;
-mod texel; // file io
+mod texel;
+pub mod fio; // file io
 
 pub use action::Action;
 pub use config::{Config, ConfigV1};
 pub use input::{CharMap, Event, InputEvent, InputMap};
 pub use program::run;
 pub use scene::{Scene, SceneV1};
-pub use texel::{SymbolStyle, SymbolStyles, Texel};
+pub use texel::{SymbolStyle, SymbolStyles, Texel, Texels};
 
 // described deserializables that need "after load" refresh
 pub trait LazyLoaded {

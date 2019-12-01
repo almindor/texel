@@ -21,6 +21,8 @@ pub struct Texel {
     pub bg: u8,
 }
 
+pub type Texels = Vec<Texel>;
+
 impl std::fmt::Display for Texel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(

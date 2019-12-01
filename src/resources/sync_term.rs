@@ -1,4 +1,4 @@
-use crate::common::{SymbolStyles, Texel};
+use crate::common::{SymbolStyles, Texel, Texels};
 use crate::resources::ColorPalette;
 use std::io::Write;
 use std::vec::Vec;
@@ -7,7 +7,7 @@ use std::vec::Vec;
 struct TexelBuf {
     size_x: usize,
     size_y: usize,
-    buf: Vec<Texel>,
+    buf: Texels,
 }
 
 impl TexelBuf {
@@ -47,7 +47,7 @@ impl TexelBuf {
         }
     }
 
-    pub fn set_texels(&mut self, texels: Vec<Texel>) {
+    pub fn set_texels(&mut self, texels: Texels) {
         for t in texels {
             self.set_texel(t);
         }
@@ -71,7 +71,7 @@ impl TexelBuf {
         self.buf[self.index(texel.x, texel.y)] == *texel
     }
 
-    pub fn diff(newer: &Self, older: &Self) -> Vec<Texel> {
+    pub fn diff(newer: &Self, older: &Self) -> Texels {
         let mut vec = Vec::with_capacity(newer.buf.capacity());
 
         for texel in &newer.buf {
@@ -121,7 +121,7 @@ impl SyncTerm {
         buf.set_texel(texel);
     }
 
-    pub fn write_texels(&mut self, texels: Vec<Texel>) {
+    pub fn write_texels(&mut self, texels: Texels) {
         let buf = self.buf_mut();
 
         buf.set_texels(texels);

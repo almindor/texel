@@ -1,4 +1,4 @@
-use crate::common::{cwd_path, Error, SymbolStyle, SymbolStyles, Texel};
+use crate::common::{cwd_path, Error, SymbolStyle, SymbolStyles, Texel, Texels};
 use crate::components::{Bounds, Dimension, Position2D};
 use crate::resources::{ColorMode, ColorPalette};
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ pub const SPRITE_MAX_BYTES: usize = u16::max_value() as usize;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Sprite {
-    pub texels: Vec<Texel>,
+    pub texels: Texels,
 }
 
 impl Sprite {
@@ -55,7 +55,7 @@ impl Sprite {
         Ok(Sprite::from_texels(texels))
     }
 
-    pub fn from_texels(texels: Vec<Texel>) -> Sprite {
+    pub fn from_texels(texels: Texels) -> Sprite {
         Sprite { texels }
     }
 
