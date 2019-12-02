@@ -1,5 +1,5 @@
-use crate::common::SymbolStyle;
-use crate::components::Translation;
+use crate::common::{SymbolStyle, Which};
+use crate::components::{Position2D, Translation};
 use crate::resources::{ColorMode, Mode};
 
 #[derive(Debug)]
@@ -14,7 +14,10 @@ pub enum Action {
     ApplyColor(ColorMode),
     ApplySymbol(char),
     ApplyStyle(SymbolStyle),
-    SelectNext(bool), // select next keeping old if true
+    SelectFrame(Which<usize>), // next/prev + index into number
+    DeleteFrame,
+    NewFrame,
+    SelectObject(Which<Position2D>, bool), // select next keeping old if true
     Read(String),
     Write(Option<String>),
     Translate(Translation),
@@ -82,15 +85,7 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 7] = [
-            "read",
-            "write",
-            "translate",
-            "delete",
-            "deselect",
-            "quit",
-            "quit!",
-        ];
+        const ACTION_WORDS: [&str; 7] = ["read", "write", "translate", "delete", "deselect", "quit", "quit!"];
 
         for word in &ACTION_WORDS {
             if word.starts_with(part) {

@@ -1,4 +1,5 @@
-use crate::common::SymbolStyle;
+use crate::common::{SymbolStyle, Which};
+use crate::components::Position2D;
 use crate::resources::{ColorMode, Mode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -25,7 +26,10 @@ pub enum Event {
     ApplyStyle(SymbolStyle),
     EditPalette(usize), // index of symbol/color, 0x0-0xF as usize <0, 16)
     ApplyColor(ColorMode),
-    Next(bool),
+    SelectObject(Which<Position2D>, bool), // sticky boolean
+    SelectFrame(Which<usize>),
+    NewFrame,
+    DeleteFrame,
     NewObject,
     // "meta" keys
     Delete,
@@ -95,13 +99,18 @@ impl Default for CharMap {
         map.insert('-', Event::Above);
         map.insert('=', Event::Below);
 
+        map.insert(']', Event::SelectFrame(Which::Next));
+        map.insert('[', Event::SelectFrame(Which::Previous));
+        map.insert('+', Event::NewFrame);
+        map.insert('_', Event::DeleteFrame);
+
         map.insert('u', Event::Undo);
         map.insert('U', Event::Redo);
 
         map.insert('n', Event::NewObject);
 
         map.insert('\n', Event::Confirm);
-        map.insert('\t', Event::Next(false));
+        map.insert('\t', Event::SelectObject(Which::Next, false));
 
         CharMap { map }
     }
@@ -135,7 +144,7 @@ impl From<CharMap> for InputMap {
         result.map.insert(TEvent::Key(Key::Backspace), Event::Backspace);
         result
             .map
-            .insert(TEvent::Unsupported(vec![27, 91, 90]), Event::Next(true));
+            .insert(TEvent::Key(Key::BackTab), Event::SelectObject(Which::Next, true));
 
         result
     }

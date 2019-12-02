@@ -32,10 +32,14 @@ impl<'a> System<'a> for InputHandler {
 fn objmode_event(event: InputEvent, state: &mut State) {
     let action = match event.0 {
         Event::Mode(mode) => Action::SetMode(mode),
-        Event::Next(sticky) => Action::SelectNext(sticky),
+        Event::SelectObject(which, sticky) => Action::SelectObject(which, sticky),
+        Event::SelectFrame(which) => Action::SelectFrame(which),
 
         Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,
+
+        Event::DeleteFrame => Action::DeleteFrame,
+        Event::NewFrame => Action::NewFrame,
 
         Event::Undo => Action::Undo,
         Event::Redo => Action::Redo,
@@ -135,7 +139,10 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
 
         Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,
-        Event::Next(false) => Action::SelectNext(false),
+        Event::DeleteFrame => Action::DeleteFrame,
+        Event::NewFrame => Action::NewFrame,
+        Event::SelectObject(which, false) => Action::SelectObject(which, false),
+        Event::SelectFrame(which) => Action::SelectFrame(which),
 
         Event::Undo => Action::Undo,
         Event::Redo => Action::Redo,

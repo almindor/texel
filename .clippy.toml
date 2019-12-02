@@ -7,3 +7,5 @@ type-complexity-threshold = 500
 # is big. The whole setup should be remade, possibly when switching to
 # [DCES](https://crates.io/crates/dces)
 single-char-binding-names-threshold = 8
+# Same as ^
+too-many-arguments-threshold = 10

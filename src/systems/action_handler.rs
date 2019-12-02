@@ -1,4 +1,4 @@
-use crate::common::{fio, Action, Error, Scene, SceneV1, SymbolStyle};
+use crate::common::{fio, Action, Error, Scene, SceneV1, SymbolStyle, Which};
 use crate::components::*;
 use crate::resources::{ColorMode, Mode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
@@ -30,6 +30,8 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Undo => undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => redo(&mut state, &e, &s, &sp, &u),
                 Action::NewObject => new_sprite(&mut state, &e, &s, &u, None),
+                Action::NewFrame => new_frame_on_selected(&mut state, &mut sp, &s),
+                Action::DeleteFrame => delete_frame_on_selected(&mut state, &mut sp, &s),
                 Action::Cancel => {
                     if state.error().is_some() {
                         state.clear_error()
@@ -58,8 +60,9 @@ impl<'a> System<'a> for ActionHandler {
                     }
                     _ => translate_selected(t, &mut state, &mut p, &s, &d),
                 },
-                Action::SelectNext(keep) => match state.mode() {
-                    Mode::Object => select_next_obj(&e, &sel, &s, &u, keep),
+                Action::SelectFrame(which) => change_frame_on_selected(which, &mut state, &mut sp, &s),
+                Action::SelectObject(which, sticky) => match state.mode() {
+                    Mode::Object => select_obj(which, &e, &sel, &s, &u, sticky),
                     Mode::Edit => select_edit(&e, &state, &mut ss, &u),
                     _ => state.set_error(Error::execution("Unexpected mode on selection")),
                 },
@@ -225,12 +228,13 @@ fn select_edit(e: &Entities, state: &State, ss: &mut WriteStorage<Subselection>,
     false
 }
 
-fn select_next_obj(
+fn select_obj(
+    which: Which<Position2D>, // TODO: absolute position selection via mouse
     e: &Entities,
     sel: &ReadStorage<Selectable>,
     s: &ReadStorage<Selection>,
     u: &LazyUpdate,
-    keep: bool,
+    sticky: bool,
 ) -> bool {
     let mut changed = false;
     let mut all: Vec<(Entity, bool)> = Vec::default();
@@ -252,7 +256,7 @@ fn select_next_obj(
         .take(all.len())
         .filter(|(_, is_sel)| !is_sel);
 
-    if !keep {
+    if !sticky {
         deselect_obj(e, s, u);
     }
 
@@ -456,6 +460,60 @@ fn subselection(
     } else {
         None
     }
+}
+
+fn new_frame_on_selected(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> bool {
+    let mut changed = false;
+
+    if s.count() == 0 {
+        state.set_error(Error::execution("No objects selected"));
+        return false;
+    }
+
+    for (sprite, _) in (sp, s).join() {
+        sprite.new_frame();
+        changed = true;
+    }
+
+    changed
+}
+
+fn delete_frame_on_selected(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> bool {
+    let mut changed = false;
+
+    if s.count() == 0 {
+        state.set_error(Error::execution("No objects selected"));
+        return false;
+    }
+
+    for (sprite, _) in (sp, s).join() {
+        if sprite.delete_frame() {
+            changed = true;
+        }
+    }
+
+    changed
+}
+
+fn change_frame_on_selected(
+    which: Which<usize>,
+    state: &mut State,
+    sp: &mut WriteStorage<Sprite>,
+    s: &ReadStorage<Selection>,
+) -> bool {
+    let mut changed = false;
+
+    if s.count() == 0 {
+        state.set_error(Error::execution("No objects selected"));
+        return false;
+    }
+
+    for (sprite, _) in (sp, s).join() {
+        sprite.apply_frame_change(which);
+        changed = true;
+    }
+
+    changed
 }
 
 fn apply_style_to_selected(

@@ -63,7 +63,7 @@ fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
     // color selection
     let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
 
-    out.write_line(w - 12, h, "▞", sc.0, sc.1, SymbolStyles::new());
+    out.write_line(w - 17, h, "▞", sc.0, sc.1, SymbolStyles::new());
     out.set_cursor_pos(w, h);
 }
 

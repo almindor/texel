@@ -52,7 +52,7 @@ impl Dimension {
         let mut w = 0i32;
         let mut h = 0i32;
 
-        for t in &sprite.texels {
+        for t in sprite.all_iter() {
             if t.x > w {
                 w = t.x;
             }

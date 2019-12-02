@@ -10,7 +10,7 @@ pub struct Position {
 }
 
 // used to keep cursor position etc.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Position2D {
     pub x: i32,
     pub y: i32,

@@ -17,7 +17,7 @@ impl<'a> System<'a> for SpriteRenderer {
     );
 
     fn run(&mut self, (mut out, e, p, d, s, b, sel): Self::SystemData) {
-        let mut loc_info: Option<&Position> = None;
+        let mut sprite_info: Option<(&Position, usize, usize)> = None;
 
         // TODO: optimize using FlaggedStorage
         let mut sorted = (&e, &p, &d, &s).join().collect::<Vec<_>>();
@@ -28,16 +28,18 @@ impl<'a> System<'a> for SpriteRenderer {
 
             if b.contains(entity) && sel.contains(entity) {
                 render_border(&mut out, &pos, *dim);
-                loc_info = Some(pos);
+                sprite_info = Some((pos, sprite.frame_index(), sprite.frame_count()));
             }
         }
 
         // location info status line
-        if let Some(loc) = loc_info {
+        if let Some(si) = sprite_info {
             let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
             let w = i32::from(ts.0);
             let h = i32::from(ts.1);
-            out.write_line_default(w - 10, h, loc);
+            let text = format!("[{}]::[{}/{}]", si.0, si.1, si.2);
+
+            out.write_line_default(w - 15, h, text);
         }
     }
 }
@@ -65,7 +67,7 @@ fn is_visible(x: i32, y: i32, ts: (u16, u16)) -> bool {
 fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
 
-    for t in s.texels.iter().filter(|t| p.x + t.x > 0 && p.y + t.y > 0) {
+    for t in s.frame_iter().filter(|t| p.x + t.x > 0 && p.y + t.y > 0) {
         if is_visible(p.x + t.x, p.y + t.y, ts) {
             print_texel(out, p, t);
         }
