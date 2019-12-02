@@ -1,5 +1,5 @@
-use crate::common::{Error, SymbolStyle, SymbolStyles};
-use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
+use crate::common::{Error, SymbolStyle, Mode, SymbolStyles};
+use crate::resources::{CmdLine, ColorMode, ColorPalette, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
 use specs::System;
 
 pub struct CmdLineRenderer;

@@ -1,43 +1,7 @@
-use crate::common::{Action, Error, InputEvent, Scene};
+use crate::common::{Action, Error, InputEvent, Scene, Clipboard, Mode};
 use crate::components::Position2D;
 use crate::resources::{ColorMode, ColorPalette};
-use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Mode {
-    Object,
-    Color(ColorMode),
-    SelectColor(usize, ColorMode), // index for which color 0 -> 16 (0x0 to 0xF)
-    SelectSymbol(usize),           // index for which symbol 0 -> 16 (0x0 to 0xF)
-    Edit,
-    Write,
-    Command,
-    Quitting(bool), // true for force quit
-}
-
-impl Default for Mode {
-    fn default() -> Self {
-        Mode::Object
-    }
-}
-
-impl Mode {
-    pub fn to_str(&self) -> &'static str {
-        match self {
-            Mode::Object => "OBJECT",
-            Mode::Color(ColorMode::Fg) => "COLOR[FG]",
-            Mode::Color(ColorMode::Bg) => "COLOR[BG]",
-            Mode::SelectColor(_, ColorMode::Fg) => "COLOR[SET-FG]", // TODO: construct static numbered index
-            Mode::SelectColor(_, ColorMode::Bg) => "COLOR[SET-BG]", // TODO: construct static numbered index
-            Mode::SelectSymbol(_) => "SYMBOL[SET]",                 // TODO: construct static numbered index
-            Mode::Edit => "EDIT",
-            Mode::Write => "WRITE",
-            Mode::Command => "COMMAND",
-            Mode::Quitting(_) => "QUITTING",
-        }
-    }
-}
 
 const HISTORY_CAPACITY: usize = 20usize;
 
@@ -52,6 +16,7 @@ pub struct State {
     selected_color: (u8, u8),
     save_state: (Option<String>, usize),
     dirty: bool,
+    pub clipboard: Clipboard,
     pub cursor: Position2D,
 }
 
@@ -67,6 +32,7 @@ impl Default for State {
             selected_color: (ColorPalette::default_bg_u8(), ColorPalette::default_fg_u8()),
             save_state: (None, 0),
             dirty: false,
+            clipboard: Clipboard::Empty,
             cursor: Position2D::default(),
         };
 

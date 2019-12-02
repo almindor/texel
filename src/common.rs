@@ -5,18 +5,23 @@ use std::path::{Path, PathBuf};
 
 mod action;
 mod config;
-pub mod fio;
+mod mode;
 mod input;
 mod program;
 mod scene;
-mod texel; // file io
+mod texel;
+mod clipboard;
+
+pub mod fio; // file io
 
 pub use action::Action;
 pub use config::{Config, ConfigV1};
+pub use mode::Mode;
 pub use input::{CharMap, Event, InputEvent, InputMap};
 pub use program::run;
 pub use scene::{Scene, SceneV1};
 pub use texel::{SymbolStyle, SymbolStyles, Texel, Texels};
+pub use clipboard::{Clipboard, ClipboardOp};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
@@ -50,6 +55,7 @@ impl Error {
     }
 }
 
+// generic "which" selector for selections etc.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Which<P> {
     Next,

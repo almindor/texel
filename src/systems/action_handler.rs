@@ -1,6 +1,6 @@
-use crate::common::{fio, Action, Error, Scene, SceneV1, SymbolStyle, Which};
+use crate::common::{fio, Action, Mode, Error, Scene, SceneV1, SymbolStyle, Which, Clipboard, ClipboardOp, Texels};
 use crate::components::*;
-use crate::resources::{ColorMode, Mode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
+use crate::resources::{ColorMode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 
 pub struct ActionHandler;
@@ -29,6 +29,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::None => false,
                 Action::Undo => undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => redo(&mut state, &e, &s, &sp, &u),
+                Action::Clipboard(op) => clipboard(op, &mut state, &e, &mut sp, &s, &ss, &mut p, &pss, &mut d, &u),
                 Action::NewObject => new_sprite(&mut state, &e, &s, &u, None),
                 Action::NewFrame => new_frame_on_selected(&mut state, &mut sp, &s),
                 Action::DeleteFrame => delete_frame_on_selected(&mut state, &mut sp, &s),
@@ -52,20 +53,20 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Deselect => match state.mode() {
                     Mode::Edit => clear_subselection(&e, &ss, &u),
                     _ => deselect_obj(&e, &s, &u),
-                },
+                }
                 Action::Translate(t) => match state.mode() {
                     Mode::Edit => {
                         let sprite_bounds = selected_bounds(&s, &p, &d);
                         translate_subselection(t, &mut state, &ss, &mut pss, &mut d, sprite_bounds)
                     }
                     _ => translate_selected(t, &mut state, &mut p, &s, &d),
-                },
+                }
                 Action::SelectFrame(which) => change_frame_on_selected(which, &mut state, &mut sp, &s),
                 Action::SelectObject(which, sticky) => match state.mode() {
                     Mode::Object => select_obj(which, &e, &sel, &s, &u, sticky),
                     Mode::Edit => select_edit(&e, &state, &mut ss, &u),
                     _ => state.set_error(Error::execution("Unexpected mode on selection")),
-                },
+                }
                 Action::Delete => {
                     if state.mode() == Mode::Edit || state.mode() == Mode::Write {
                         clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
@@ -236,7 +237,6 @@ fn select_obj(
     u: &LazyUpdate,
     sticky: bool,
 ) -> bool {
-    let mut changed = false;
     let mut all: Vec<(Entity, bool)> = Vec::default();
     let mut start = 0usize;
 
@@ -261,14 +261,12 @@ fn select_obj(
     }
 
     if let Some(entity) = unselected_iter.next() {
-        changed = true;
         u.insert(entity.0, Selection); // select next if possible
     } else if let Some(entity) = all.first() {
-        changed = true;
         u.insert(entity.0, Selection); // select first if "redeselecting"
     }
 
-    changed
+    false
 }
 
 fn delete_selected(e: &Entities, s: &ReadStorage<Selection>) -> Result<(), Error> {
@@ -425,9 +423,7 @@ fn clear_symbol_on_selected(
         let pos2d: Position2D = pos.into();
         let rel_bounds = sel_bounds - pos2d;
 
-        let changes = sprite.clear_symbol(rel_bounds);
-
-        match changes {
+        match sprite.clear_symbol(rel_bounds) {
             Ok(None) => {
                 changed = true;
                 clear_subselection(e, ss, u);
@@ -462,7 +458,11 @@ fn subselection(
     }
 }
 
-fn new_frame_on_selected(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> bool {
+fn new_frame_on_selected(
+    state: &mut State,
+    sp: &mut WriteStorage<Sprite>,
+    s: &ReadStorage<Selection>,
+) -> bool {
     let mut changed = false;
 
     if s.count() == 0 {
@@ -478,7 +478,11 @@ fn new_frame_on_selected(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &R
     changed
 }
 
-fn delete_frame_on_selected(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> bool {
+fn delete_frame_on_selected(
+    state: &mut State,
+    sp: &mut WriteStorage<Sprite>,
+    s: &ReadStorage<Selection>,
+) -> bool {
     let mut changed = false;
 
     if s.count() == 0 {
@@ -515,6 +519,7 @@ fn change_frame_on_selected(
 
     changed
 }
+
 
 fn apply_style_to_selected(
     style: SymbolStyle,
@@ -584,6 +589,161 @@ fn apply_symbol_to_selected(
                 return state.set_error(err);
             }
         }
+    }
+
+    changed
+}
+
+fn clipboard(
+    op: ClipboardOp,
+    state: &mut State,
+    e: &Entities,
+    sp: &mut WriteStorage<Sprite>,
+    s: &ReadStorage<Selection>,
+    ss: &WriteStorage<Subselection>,
+    p: &mut WriteStorage<Position>,
+    p_ss: &WriteStorage<Position2D>,
+    d: &mut WriteStorage<Dimension>,
+    u: &LazyUpdate,
+) -> bool {
+    match (state.mode(), op) {
+        (Mode::Edit, ClipboardOp::Copy) => copy_or_cut_subselection(op, state, e, sp, s, ss, p, p_ss, d, u),
+        (Mode::Edit, ClipboardOp::Cut) => copy_or_cut_subselection(op, state, e, sp, s, ss, p, p_ss, d, u),
+        (Mode::Edit, ClipboardOp::Paste) => paste_subselection(state, sp, s, p, d),
+
+        (Mode::Object, ClipboardOp::Copy) => copy_or_cut_selection(op, state, e, sp, s),
+        (Mode::Object, ClipboardOp::Cut) => copy_or_cut_selection(op, state, e, sp, s),
+        (Mode::Object, ClipboardOp::Paste) => paste_selection(state, e, s, u),
+        _ => false,
+        
+    }
+}
+
+fn copy_or_cut_selection(
+    op: ClipboardOp,
+    state: &mut State,
+    e: &Entities,
+    sp: &mut WriteStorage<Sprite>,
+    s: &ReadStorage<Selection>,
+) -> bool {
+    let mut sprites: Vec<Sprite> = Vec::new();
+
+    for (sprite, _) in (sp, s).join() {
+        sprites.push(sprite.clone());
+    }
+
+    if sprites.is_empty() {
+        return false;
+    }
+
+    state.clipboard = Clipboard::Sprites(sprites);
+
+    if op == ClipboardOp::Cut {
+        match delete_selected(e, s) {
+            Ok(_) => true,
+            Err(err) => state.set_error(err),
+        }
+    } else {
+        false
+    }
+}
+
+fn paste_selection(
+    state: &mut State,
+    e: &Entities,
+    s: &ReadStorage<Selection>,
+    u: &LazyUpdate,
+) -> bool {
+    let mut changed = false;
+    let sprites: Vec<Sprite> = state.clipboard.clone().into();
+
+    for sprite in sprites.into_iter() {
+        if match import_sprite(sprite, e, s, u, None, true) {
+            Ok(_) => true,
+            Err(err) => state.set_error(err),
+        } {
+            changed = true;
+        }
+    }
+
+    changed
+}
+
+fn copy_or_cut_subselection(
+    op: ClipboardOp,
+    state: &mut State,
+    e: &Entities,
+    sp: &mut WriteStorage<Sprite>,
+    s: &ReadStorage<Selection>,
+    ss: &WriteStorage<Subselection>,
+    p: &mut WriteStorage<Position>,
+    p_ss: &WriteStorage<Position2D>,
+    d: &mut WriteStorage<Dimension>,
+    u: &LazyUpdate,
+) -> bool {
+    let mut changed = false;
+    let sel_bounds = subselection(ss, p_ss, d).unwrap_or_else(|| Bounds::point(state.cursor));
+
+    if let Some((sprite, pos, dim, _)) = (sp, p, d, s).join().next() {
+        let pos2d: Position2D = pos.into();
+        let rel_bounds = sel_bounds - pos2d;
+
+        state.clipboard = Clipboard::Texels(sprite.copy_area(rel_bounds));
+
+        if op == ClipboardOp::Cut {
+            changed = match sprite.clear_symbol(rel_bounds) {
+                Ok(None) => {
+                    clear_subselection(e, ss, u);
+                    false
+                } // no change, symbol was applied in bounds
+                Ok(Some(bounds)) => {
+                    // changed pos or dim => apply new bounds
+                    *pos += *bounds.position();
+                    *dim = *bounds.dimension();
+    
+                    clear_subselection(e, ss, u);
+                    true
+                }
+                Err(err) => state.set_error(err)
+            }
+        } else {
+            clear_subselection(e, ss, u);
+        }
+    }
+
+    changed
+}
+
+fn paste_subselection(
+    state: &mut State,
+    sp: &mut WriteStorage<Sprite>,
+    s: &ReadStorage<Selection>,
+    p: &mut WriteStorage<Position>,
+    d: &mut WriteStorage<Dimension>,
+) -> bool {
+    if state.clipboard.is_empty() {
+        return false;
+    }
+
+    let mut changed = false;
+
+    if let Some((sprite, pos, dim, _)) = (sp, p, d, s).join().next() {
+        let texels: Texels = state.clipboard.clone().into();
+        let pos2d: Position2D = pos.into();
+        let rel_pos = state.cursor - pos2d;
+
+        match sprite.apply_texels(texels, rel_pos) {
+            Ok(bounds) => {
+                // changed pos or dim => apply new bounds
+                *pos += *bounds.position();
+                *dim = *bounds.dimension();
+            }
+            Err(err) => {
+                state.set_error(err);
+            },
+        }
+
+        changed = true
     }
 
     changed

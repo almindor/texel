@@ -1,6 +1,6 @@
-use crate::common::{SymbolStyle, Which};
+use crate::common::{SymbolStyle, Mode, Which, ClipboardOp};
 use crate::components::Position2D;
-use crate::resources::{ColorMode, Mode};
+use crate::resources::{ColorMode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use termion::event::{Event as TEvent, Key};
@@ -28,6 +28,7 @@ pub enum Event {
     ApplyColor(ColorMode),
     SelectObject(Which<Position2D>, bool), // sticky boolean
     SelectFrame(Which<usize>),
+    Clipboard(ClipboardOp),
     NewFrame,
     DeleteFrame,
     NewObject,
@@ -106,6 +107,10 @@ impl Default for CharMap {
 
         map.insert('u', Event::Undo);
         map.insert('U', Event::Redo);
+
+        map.insert('y', Event::Clipboard(ClipboardOp::Copy));
+        map.insert('Y', Event::Clipboard(ClipboardOp::Cut));
+        map.insert('p', Event::Clipboard(ClipboardOp::Paste));
 
         map.insert('n', Event::NewObject);
 

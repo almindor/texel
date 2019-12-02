@@ -5,5 +5,5 @@ mod sync_term;
 
 pub use cmdline::CmdLine;
 pub use palette::{ColorMode, ColorPalette, SymbolPalette, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
-pub use state::{Mode, State};
+pub use state::State;
 pub use sync_term::SyncTerm;

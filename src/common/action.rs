@@ -1,11 +1,12 @@
-use crate::common::{SymbolStyle, Which};
+use crate::common::{SymbolStyle, Which, Mode, ClipboardOp};
 use crate::components::{Position2D, Translation};
-use crate::resources::{ColorMode, Mode};
+use crate::resources::{ColorMode};
 
 #[derive(Debug)]
 pub enum Action {
     None,
     NewObject,
+    Clipboard(ClipboardOp),
     Cancel,
     ClearError,
     SetMode(Mode),

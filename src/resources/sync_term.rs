@@ -76,7 +76,7 @@ impl TexelBuf {
 
         for texel in &newer.buf {
             if !older.texel_match(texel) {
-                vec.push(*texel);
+                vec.push(texel.clone());
             }
         }
 

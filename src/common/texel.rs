@@ -1,3 +1,4 @@
+use crate::components::Position2D;
 use crate::resources::ColorPalette;
 use big_enum_set::{BigEnumSet, BigEnumSetType};
 use serde::{Deserialize, Serialize};
@@ -11,7 +12,7 @@ pub enum SymbolStyle {
 
 pub type SymbolStyles = BigEnumSet<SymbolStyle>;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Texel {
     pub x: i32,
     pub y: i32,
@@ -39,6 +40,22 @@ impl std::fmt::Display for Texel {
 }
 
 impl Texel {
+    pub fn moved_from(&self, pos: Position2D) -> Self {
+        let mut result = self.clone();
+
+        result.x -= pos.x;
+        result.y -= pos.y;
+
+        result
+    }
+
+    pub fn move_by(mut self, pos: Position2D) -> Self {
+        self.x = self.x + pos.x;
+        self.y = self.y + pos.y;
+
+        self
+    }
+
     pub fn override_bg(&mut self, bg: u8) {
         self.bg = bg;
     }

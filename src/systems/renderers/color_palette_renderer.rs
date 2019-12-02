@@ -1,7 +1,7 @@
-use crate::common::SymbolStyles;
+use crate::common::{SymbolStyles, Mode};
 use crate::components::Position2D;
 use crate::resources::{
-    ColorMode, ColorPalette, Mode, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W,
+    ColorMode, ColorPalette, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W,
 };
 use specs::System;
 

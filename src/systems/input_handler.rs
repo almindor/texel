@@ -1,6 +1,6 @@
-use crate::common::{Action, Event, InputEvent};
+use crate::common::{Action, Event, Mode, InputEvent};
 use crate::components::{Direction, Translation};
-use crate::resources::{CmdLine, ColorMode, ColorPalette, Mode, State, SymbolPalette};
+use crate::resources::{CmdLine, ColorMode, ColorPalette, State, SymbolPalette};
 use specs::{System, Write};
 
 pub struct InputHandler;
@@ -44,6 +44,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Undo => Action::Undo,
         Event::Redo => Action::Redo,
 
+        Event::Clipboard(op) => Action::Clipboard(op),
         Event::NewObject => Action::NewObject,
 
         Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
@@ -135,6 +136,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
     let action = match event.0 {
         Event::Mode(mode) => Action::SetMode(mode),
         Event::EditPalette(index) => Action::SetMode(Mode::SelectSymbol(index)),
+        Event::Clipboard(op) => Action::Clipboard(op),
 
         Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,

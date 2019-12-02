@@ -10,10 +10,33 @@ use std::path::Path;
 /// 256 * 256 ascii chars maximum
 pub const SPRITE_MAX_BYTES: usize = u16::max_value() as usize;
 
-#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Sprite {
-    frames: Vec<Texels>, // subsequent vectors are "overrides" from first frame
+    frames: Vec<Texels>,
     index: usize,
+}
+
+impl Default for Sprite {
+    fn default() -> Self {
+        Sprite {
+            frames: vec!(Texels::new()),
+            index: 0,
+        }
+    }
+}
+
+impl IntoIterator for Sprite {
+    type Item = Texel;
+    type IntoIter = ::std::vec::IntoIter<Self::Item>;
+
+    // turn sprite into active frame contents
+    fn into_iter(mut self) -> Self::IntoIter {
+        if self.frames.is_empty() {
+            Vec::new().into_iter()
+        } else {
+            self.frames.remove(self.index).into_iter()
+        }
+    }
 }
 
 impl Sprite {
@@ -58,6 +81,15 @@ impl Sprite {
         };
 
         Ok(self.index)
+    }
+
+    pub fn copy_area(&self, area: Bounds) -> Texels {
+        let mut result = Texels::new();
+        for texel in self.frame_iter().filter(|t| area.contains(t.x, t.y)) {
+            result.push(texel.moved_from(*area.position()));
+        }
+
+        result
     }
 
     pub fn all_iter(&self) -> impl Iterator<Item = &Texel> {
@@ -173,6 +205,20 @@ impl Sprite {
                 y: pos.y,
                 styles: SymbolStyles::new(),
             });
+        }
+
+        Ok(self.calculate_bounds()?)
+    }
+
+    pub fn apply_texels(&mut self, texels: Texels, pos: Position2D) -> Result<Bounds, Error> {
+        for texel in texels.into_iter() {
+            let localized = texel.move_by(pos);
+
+            if let Some(existing) = self.frames[self.index].iter_mut().find(|t| t.x == localized.x && t.y == localized.y) {
+                *existing = localized;
+            } else {
+                self.frames[self.index].push(localized);
+            }
         }
 
         Ok(self.calculate_bounds()?)
