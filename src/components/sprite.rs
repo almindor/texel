@@ -26,7 +26,7 @@ impl Sprite {
     }
 
     pub fn new_frame(&mut self) {
-        self.frames.push(Texels::new());
+        self.frames.push(self.frames[self.index].clone());
         self.apply_frame_change(Which::Next);
     }
 

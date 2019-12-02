@@ -133,8 +133,7 @@ fn write_event(event: InputEvent, state: &mut State) {
 
 fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
     let action = match event.0 {
-        Event::Mode(Mode::Command) => Action::SetMode(Mode::Command),
-        Event::Mode(Mode::Write) => Action::SetMode(Mode::Write),
+        Event::Mode(mode) => Action::SetMode(mode),
         Event::EditPalette(index) => Action::SetMode(Mode::SelectSymbol(index)),
 
         Event::Cancel => Action::Cancel,
@@ -150,7 +149,6 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
         Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 
-        Event::Mode(Mode::SelectColor(i, cm)) => Action::SetMode(Mode::SelectColor(i, cm)),
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
         Event::ApplyStyle(style) => Action::ApplyStyle(style),
 
