@@ -13,7 +13,7 @@ pub enum SymbolStyle {
 pub type SymbolStyles = BigEnumSet<SymbolStyle>;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct Texel {
+pub struct TexelV1 {
     pub x: i32,
     pub y: i32,
     pub symbol: char,
@@ -22,9 +22,10 @@ pub struct Texel {
     pub bg: u8,
 }
 
-pub type Texels = Vec<Texel>;
+pub type Texel = TexelV1; // alias so we can switch to another version easily
+pub type Texels = Vec<TexelV1>;
 
-impl std::fmt::Display for Texel {
+impl std::fmt::Display for TexelV1 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -39,7 +40,7 @@ impl std::fmt::Display for Texel {
     }
 }
 
-impl Texel {
+impl TexelV1 {
     pub fn moved_from(&self, pos: Position2D) -> Self {
         let mut result = self.clone();
 

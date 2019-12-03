@@ -1,4 +1,5 @@
-use crate::components::{Position, Selection, Sprite};
+use crate::components::{Position, Selection};
+use crate::common::SpriteV1;
 use serde::{Deserialize, Serialize};
 use specs::{Entities, Join, ReadStorage, WriteStorage};
 
@@ -25,13 +26,13 @@ impl Scene {
 // TODO: figure out a 0-copy way to keep scene serializable/deserializable
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct SceneV1 {
-    pub objects: Vec<(Sprite, Position, bool)>,
+    pub objects: Vec<(SpriteV1, Position, bool)>,
 }
 
 impl<'a>
     From<(
         &Entities<'a>,
-        &WriteStorage<'a, Sprite>,
+        &WriteStorage<'a, SpriteV1>,
         &WriteStorage<'a, Position>,
         &ReadStorage<'a, Selection>,
     )> for SceneV1
@@ -39,7 +40,7 @@ impl<'a>
     fn from(
         storage: (
             &Entities,
-            &WriteStorage<'a, Sprite>,
+            &WriteStorage<'a, SpriteV1>,
             &WriteStorage<'a, Position>,
             &ReadStorage<'a, Selection>,
         ),

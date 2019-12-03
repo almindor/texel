@@ -8,6 +8,7 @@ mod config;
 mod mode;
 mod input;
 mod program;
+mod sprite;
 mod scene;
 mod texel;
 mod clipboard;
@@ -19,8 +20,9 @@ pub use config::{Config, ConfigV1};
 pub use mode::Mode;
 pub use input::{CharMap, Event, InputEvent, InputMap};
 pub use program::run;
+pub use sprite::SpriteV1;
 pub use scene::{Scene, SceneV1};
-pub use texel::{SymbolStyle, SymbolStyles, Texel, Texels};
+pub use texel::{SymbolStyle, SymbolStyles, TexelV1, Texel, Texels};
 pub use clipboard::{Clipboard, ClipboardOp};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
