@@ -19,7 +19,7 @@ pub use mode::Mode;
 pub use input::{CharMap, Event, InputEvent, InputMap};
 pub use program::run;
 pub use scene::{Scene, SceneV1};
-pub use texel::{SymbolStyle, SymbolStyles, TexelV1, Texel, Texels};
+pub use texel::{SymbolStyle, SymbolStyles, TexelV1, Texel, Texels, texel_to_string};
 pub use clipboard::{Clipboard, ClipboardOp};
 
 // TODO re-do

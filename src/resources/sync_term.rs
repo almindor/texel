@@ -176,10 +176,11 @@ impl SyncTerm {
     }
 
     pub fn flush_into(&self, out: &mut dyn Write) -> Result<(), std::io::Error> {
+        use crate::common::texel_to_string;
         let vec = TexelBuf::diff(self.buf(), self.previous_buf());
 
         for texel in vec {
-            write!(out, "{}", texel)?;
+            write!(out, "{}", texel_to_string(&texel))?;
         }
 
         out.flush()?;

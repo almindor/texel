@@ -1,4 +1,4 @@
-use crate::texel_types::Position2D;
+use crate::components::Position2D;
 use big_enum_set::{BigEnumSet, BigEnumSetType};
 use serde::{Deserialize, Serialize};
 
