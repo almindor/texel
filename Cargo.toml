@@ -1,8 +1,14 @@
 [package]
 name = "texel"
 version = "0.1.0"
-authors = ["Ales Katona <almindor@gmail.com>"]
+authors = ["Ales Katona <ales@katona.me>"]
 edition = "2018"
+description = "ASCII art text editor"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/almindor/texel"
+keywords = ["text", "ascii", "editor", "art", "ascii-art"]
+readme = "README.md"
+categories = ["text-editors", "multimedia::images"]
 
 [dependencies]
 big_enum_set = { version = "0.1.3", features = ["serde"] }

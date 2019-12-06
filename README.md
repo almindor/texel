@@ -17,7 +17,7 @@ This editor uses [termion](https://gitlab.redox-os.org/redox-os/termion) for han
 
 ## Usage
 
-`texel [file]`
+`texel [files]`
 
 ## Configuration
 
