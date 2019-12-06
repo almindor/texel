@@ -1,5 +1,4 @@
 use crate::common::{SymbolStyles, Texel, Texels};
-use crate::resources::ColorPalette;
 use std::io::Write;
 use std::vec::Vec;
 
@@ -30,8 +29,8 @@ impl TexelBuf {
                 x,
                 y,
                 symbol: ' ',
-                bg: ColorPalette::default_bg_u8(),
-                fg: ColorPalette::default_fg_u8(),
+                bg: crate::texel_types::DEFAULT_BG_U8,
+                fg: crate::texel_types::DEFAULT_FG_U8,
                 styles: SymbolStyles::new(),
             };
 
@@ -165,8 +164,8 @@ impl SyncTerm {
             start_x,
             y,
             source,
-            ColorPalette::default_bg_u8(),
-            ColorPalette::default_fg_u8(),
+            crate::texel_types::DEFAULT_BG_U8,
+            crate::texel_types::DEFAULT_FG_U8,
             SymbolStyles::new(),
         );
     }

@@ -50,7 +50,8 @@ pub fn from_config_file(path: &Path) -> Result<Config, Error> {
 
 pub fn from_txt_file(path: &str) -> Result<Sprite, Error> {
     if path.ends_with("txt") {
-        Ok(Sprite::from_file(Path::new(path))?)
+        let abs_path = cwd_path(Path::new(path))?;
+        Ok(Sprite::from_txt_file(&abs_path)?)
     } else {
         Err(Error::execution("Unknown file type"))
     }

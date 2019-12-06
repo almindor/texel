@@ -1,5 +1,4 @@
 use crate::components::{Dimension, Position2D};
-use serde::{Deserialize, Serialize};
 use std::env::current_dir;
 use std::path::{Path, PathBuf};
 
@@ -8,7 +7,6 @@ mod config;
 mod mode;
 mod input;
 mod program;
-mod sprite;
 mod scene;
 mod texel;
 mod clipboard;
@@ -20,10 +18,13 @@ pub use config::{Config, ConfigV1};
 pub use mode::Mode;
 pub use input::{CharMap, Event, InputEvent, InputMap};
 pub use program::run;
-pub use sprite::SpriteV1;
 pub use scene::{Scene, SceneV1};
 pub use texel::{SymbolStyle, SymbolStyles, TexelV1, Texel, Texels};
 pub use clipboard::{Clipboard, ClipboardOp};
+
+// TODO re-do
+pub use crate::texel_types::ColorMode;
+pub use crate::texel_types::Which;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
@@ -55,14 +56,6 @@ impl Error {
     pub fn execution(src: &'static str) -> Self {
         Error::ExecutionError(String::from(src))
     }
-}
-
-// generic "which" selector for selections etc.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Which<P> {
-    Next,
-    Previous,
-    At(P), // at index, position or any absolute selector
 }
 
 pub fn add_max(u: usize, i: i32, m: usize) -> Option<usize> {

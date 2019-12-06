@@ -1,18 +1,30 @@
-use crate::common::{cwd_path, Error, SymbolStyle, SymbolStyles, TexelV1, Texels, Which};
-use crate::components::{Bounds, Dimension, Position2D};
-use crate::resources::{ColorMode, ColorPalette};
+use crate::texel_types::{Position2D, Dimension, SymbolStyle, SymbolStyles, TexelV1, ColorMode, Bounds};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
+// default texel colors for sprites
+pub const DEFAULT_BG_U8: u8 = 16;
+pub const DEFAULT_FG_U8: u8 = 0xE8 + 16;
+
 /// 256 * 256 ascii chars maximum
 pub const SPRITE_MAX_BYTES: usize = u16::max_value() as usize;
 
+type Texels = Vec<TexelV1>;
+
+// generic "which" selector for selections etc.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Which<P> {
+    Next,
+    Previous,
+    At(P), // at index, position or any absolute selector
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SpriteV1 {
-    frames: Vec<Texels>,
-    index: usize,
+    pub frames: Vec<Texels>,
+    pub index: usize,
 }
 
 impl Default for SpriteV1 {
@@ -72,9 +84,9 @@ impl SpriteV1 {
         }
     }
 
-    fn set_frame(&mut self, index: usize) -> Result<usize, Error> {
+    fn set_frame(&mut self, index: usize) -> Result<usize, ()> {
         self.index = if index >= self.frames.len() {
-            return Err(Error::execution("Invalid frame index"));
+            return Err(());
         } else {
             index
         };
@@ -107,9 +119,7 @@ impl SpriteV1 {
         self.frames[self.index].iter_mut()
     }
 
-    pub fn from_file(path: &Path) -> Result<Self, std::io::Error> {
-        let abs_path = cwd_path(path)?;
-
+    pub fn from_txt_file(abs_path: &Path) -> Result<Self, std::io::Error> {
         let mut f = File::open(abs_path)?;
         let mut buf: String = String::with_capacity(SPRITE_MAX_BYTES);
         let byte_size = f.read_to_string(&mut buf)?;
@@ -135,8 +145,8 @@ impl SpriteV1 {
                         y,
                         symbol: c,
                         styles: SymbolStyles::new(),
-                        fg: ColorPalette::default_fg_u8(),
-                        bg: ColorPalette::default_bg_u8(),
+                        fg: DEFAULT_FG_U8,
+                        bg: DEFAULT_BG_U8,
                     });
                     x += 1;
                 }
@@ -190,7 +200,7 @@ impl SpriteV1 {
         changed
     }
 
-    pub fn apply_symbol(&mut self, symbol: char, bg: u8, fg: u8, area: Bounds) -> Result<Bounds, Error> {
+    pub fn apply_symbol(&mut self, symbol: char, bg: u8, fg: u8, area: Bounds) -> Bounds {
         // remove texels in bounds
         self.frames[self.index].retain(|t| !area.contains(t.x, t.y));
 
@@ -206,10 +216,10 @@ impl SpriteV1 {
             });
         }
 
-        Ok(self.calculate_bounds()?)
+        self.calculate_bounds()
     }
 
-    pub fn apply_texels(&mut self, texels: Texels, pos: Position2D) -> Result<Bounds, Error> {
+    pub fn apply_texels(&mut self, texels: Texels, pos: Position2D) -> Bounds {
         for texel in texels.into_iter() {
             let localized = texel.move_by(pos);
 
@@ -220,7 +230,7 @@ impl SpriteV1 {
             }
         }
 
-        Ok(self.calculate_bounds()?)
+        self.calculate_bounds()
     }
 
     // TODO: handle empty symbols with BG colors!
@@ -259,18 +269,18 @@ impl SpriteV1 {
         changed
     }
 
-    pub fn clear_symbol(&mut self, area: Bounds) -> Result<Option<Bounds>, Error> {
+    pub fn clear_symbol(&mut self, area: Bounds) -> Option<Bounds> {
         let count = self.frames[self.index].len();
         self.frames[self.index].retain(|t| !area.contains(t.x, t.y));
 
         if count != self.frames[self.index].len() {
-            return Ok(Some(self.calculate_bounds()?));
+            return Some(self.calculate_bounds());
         }
 
-        Ok(None)
+        None
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.frames.is_empty()
             || self
                 .frames
@@ -282,9 +292,9 @@ impl SpriteV1 {
 
     // goes through texels so we can calculate dimension and move position if
     // needed. TODO: optimize, we're doing 3 loops here for no good reason
-    fn calculate_bounds(&mut self) -> Result<Bounds, Error> {
+    fn calculate_bounds(&mut self) -> Bounds {
         if self.is_empty() {
-            return Ok(Bounds::empty());
+            return Bounds::empty();
         }
 
         let mut min_x = i32::max_value();
@@ -312,9 +322,9 @@ impl SpriteV1 {
             }
         }
 
-        Ok(Bounds::Free(
+        Bounds::Free(
             Position2D { x: min_x, y: min_y },
-            Dimension::for_sprite(self)?,
-        ))
+            Dimension::for_sprite(self),
+        )
     }
 }

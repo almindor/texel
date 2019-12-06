@@ -1,5 +1,4 @@
 use crate::common::{Error, SymbolStyles, Texel, Texels};
-use crate::resources::ColorPalette;
 use serde::{Deserialize, Serialize};
 
 const SYMBOLS_IN_PALETTE: usize = 16;
@@ -74,8 +73,8 @@ impl SymbolPalette {
                 x,
                 y,
                 symbol: selector,
-                bg: ColorPalette::default_bg_u8(),
-                fg: ColorPalette::default_fg_u8(),
+                bg: crate::texel_types::DEFAULT_BG_U8,
+                fg: crate::texel_types::DEFAULT_FG_U8,
                 styles: SymbolStyles::new(),
             });
             x += 1;
@@ -84,8 +83,8 @@ impl SymbolPalette {
                 x,
                 y,
                 symbol: ':',
-                bg: ColorPalette::default_bg_u8(),
-                fg: ColorPalette::default_fg_u8(),
+                bg: crate::texel_types::DEFAULT_BG_U8,
+                fg: crate::texel_types::DEFAULT_FG_U8,
                 styles: SymbolStyles::new(),
             });
             x += 1;
@@ -94,8 +93,8 @@ impl SymbolPalette {
                 x,
                 y,
                 symbol: *symbol,
-                bg: ColorPalette::default_bg_u8(),
-                fg: ColorPalette::default_fg_u8(),
+                bg: crate::texel_types::DEFAULT_BG_U8,
+                fg: crate::texel_types::DEFAULT_FG_U8,
                 styles: SymbolStyles::new(),
             });
             x += 1;

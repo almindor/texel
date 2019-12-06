@@ -1,7 +1,7 @@
-use crate::common::{SymbolStyles, Mode};
+use crate::common::{SymbolStyles, Mode, ColorMode};
 use crate::components::Position2D;
 use crate::resources::{
-    ColorMode, ColorPalette, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W,
+    ColorPalette, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W,
 };
 use specs::System;
 
@@ -48,7 +48,7 @@ fn print_palette(world_info: WorldInfo, index: usize, cm: ColorMode) {
                 y,
                 " ",
                 termion::color::AnsiValue::rgb(r, g, b).0,
-                ColorPalette::default_fg_u8(),
+                crate::texel_types::DEFAULT_FG_U8,
                 SymbolStyles::new(),
             );
         }

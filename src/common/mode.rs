@@ -1,4 +1,4 @@
-use crate::resources::ColorMode;
+use crate::common::ColorMode;
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

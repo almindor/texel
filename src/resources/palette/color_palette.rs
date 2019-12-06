@@ -1,4 +1,4 @@
-use crate::common::{Error, SymbolStyle, SymbolStyles, Texel, Texels};
+use crate::common::{Error, ColorMode, SymbolStyle, SymbolStyles, Texel, Texels};
 use crate::components::Position2D;
 use serde::{Deserialize, Serialize};
 
@@ -35,12 +35,6 @@ const DEFAULT_PALETTE_COLORS: [u8; COLORS_IN_PALETTE] = [
 const COLOR_SELECTOR: [char; COLORS_IN_PALETTE] = [
     '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'a', 'b', 'c', 'd', 'e', 'f',
 ];
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
-pub enum ColorMode {
-    Bg,
-    Fg,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColorPalette {
@@ -94,14 +88,6 @@ impl ColorPalette {
         self.colors[index] = color;
 
         Ok(())
-    }
-
-    pub fn default_fg_u8() -> u8 {
-        termion::color::AnsiValue::grayscale(16).0
-    }
-
-    pub fn default_bg_u8() -> u8 {
-        termion::color::AnsiValue::rgb(0, 0, 0).0
     }
 
     pub fn subselection_bg_u8() -> u8 {

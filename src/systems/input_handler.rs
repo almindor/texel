@@ -1,6 +1,6 @@
-use crate::common::{Action, Event, Mode, InputEvent};
+use crate::common::{Action, Event, Mode, InputEvent, ColorMode};
 use crate::components::{Direction, Translation};
-use crate::resources::{CmdLine, ColorMode, ColorPalette, State, SymbolPalette};
+use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette};
 use specs::{System, Write};
 
 pub struct InputHandler;

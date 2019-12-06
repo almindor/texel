@@ -1,6 +1,6 @@
-use crate::common::{fio, Action, Mode, Error, Scene, SceneV1, SymbolStyle, Which, Clipboard, ClipboardOp, Texels};
+use crate::common::{fio, Action, Mode, ColorMode, Error, Scene, SceneV1, SymbolStyle, Which, Clipboard, ClipboardOp, Texels};
 use crate::components::*;
-use crate::resources::{ColorMode, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
+use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 
 pub struct ActionHandler;
@@ -30,7 +30,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Undo => undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => redo(&mut state, &e, &s, &sp, &u),
                 Action::Clipboard(op) => clipboard(op, &mut state, &e, &mut sp, &s, &ss, &mut p, &pss, &mut d, &u),
-                Action::NewObject => new_sprite(&mut state, &e, &s, &u, None),
+                Action::NewObject => new_sprite(&e, &s, &u, None),
                 Action::NewFrame => new_frame_on_selected(&mut state, &mut sp, &s),
                 Action::DeleteFrame => delete_frame_on_selected(&mut state, &mut sp, &s),
                 Action::Cancel => {
@@ -170,7 +170,7 @@ fn set_mode(
             0 => {
                 state.clear_error();
                 state.cursor = (&NEW_POSITION).into();
-                new_sprite(state, e, s, u, None)
+                new_sprite(e, s, u, None)
             }
             _ => state.set_error(Error::execution("Multiple objects selected")),
         },
@@ -424,21 +424,17 @@ fn clear_symbol_on_selected(
         let rel_bounds = sel_bounds - pos2d;
 
         match sprite.clear_symbol(rel_bounds) {
-            Ok(None) => {
+            None => {
                 changed = true;
                 clear_subselection(e, ss, u);
             } // no change, symbol was applied in bounds
-            Ok(Some(bounds)) => {
+            Some(bounds) => {
                 // changed pos or dim => apply new bounds
                 *pos += *bounds.position();
                 *dim = *bounds.dimension();
 
                 changed = true;
                 clear_subselection(e, ss, u);
-            }
-            Err(err) => {
-                // if dim is funky?
-                return state.set_error(err);
             }
         }
     }
@@ -573,22 +569,14 @@ fn apply_symbol_to_selected(
     for (sprite, pos, dim, _) in (sp, p, d, s).join() {
         let pos2d: Position2D = pos.into();
         let rel_bounds = sel_bounds - pos2d;
-        let changes = sprite.apply_symbol(symbol, bg, fg, rel_bounds);
+        let bounds = sprite.apply_symbol(symbol, bg, fg, rel_bounds);
 
-        match changes {
-            Ok(bounds) => {
-                clear_subselection(e, ss, u);
-                // changed pos or dim => apply new bounds
-                *pos += *bounds.position();
-                *dim = *bounds.dimension();
+        clear_subselection(e, ss, u);
+        // changed pos or dim => apply new bounds
+        *pos += *bounds.position();
+        *dim = *bounds.dimension();
 
-                changed = true;
-            }
-            Err(err) => {
-                // if dim is funky?
-                return state.set_error(err);
-            }
-        }
+        changed = true;
     }
 
     changed
@@ -692,11 +680,11 @@ fn copy_or_cut_subselection(
 
         if op == ClipboardOp::Cut {
             changed = match sprite.clear_symbol(rel_bounds) {
-                Ok(None) => {
+                None => {
                     clear_subselection(e, ss, u);
                     false
                 } // no change, symbol was applied in bounds
-                Ok(Some(bounds)) => {
+                Some(bounds) => {
                     // changed pos or dim => apply new bounds
                     *pos += *bounds.position();
                     *dim = *bounds.dimension();
@@ -704,7 +692,6 @@ fn copy_or_cut_subselection(
                     clear_subselection(e, ss, u);
                     true
                 }
-                Err(err) => state.set_error(err)
             }
         } else {
             clear_subselection(e, ss, u);
@@ -732,16 +719,9 @@ fn paste_subselection(
         let pos2d: Position2D = pos.into();
         let rel_pos = state.cursor - pos2d;
 
-        match sprite.apply_texels(texels, rel_pos) {
-            Ok(bounds) => {
-                // changed pos or dim => apply new bounds
-                *pos += *bounds.position();
-                *dim = *bounds.dimension();
-            }
-            Err(err) => {
-                state.set_error(err);
-            },
-        }
+        let bounds = sprite.apply_texels(texels, rel_pos);
+        *pos += *bounds.position();
+        *dim = *bounds.dimension();
 
         changed = true
     }
@@ -750,7 +730,6 @@ fn paste_subselection(
 }
 
 fn new_sprite(
-    state: &mut State,
     e: &Entities,
     s: &ReadStorage<Selection>,
     u: &LazyUpdate,
@@ -760,10 +739,7 @@ fn new_sprite(
     let entity = e.create();
     let sprite = Sprite::default();
 
-    let dim = match Dimension::for_sprite(&sprite) {
-        Ok(d) => d,
-        Err(err) => return state.set_error(err.into()),
-    };
+    let dim = Dimension::for_sprite(&sprite);
 
     u.insert(entity, dim);
     u.insert(entity, pos.unwrap_or(NEW_POSITION));
@@ -786,7 +762,7 @@ fn import_sprite(
     deselect_obj(e, s, u);
     let entity = e.create();
 
-    u.insert(entity, Dimension::for_sprite(&sprite)?);
+    u.insert(entity, Dimension::for_sprite(&sprite));
     u.insert(entity, pos.unwrap_or(NEW_POSITION));
     if pre_select {
         u.insert(entity, Selection);

@@ -30,7 +30,7 @@ impl<'a> System<'a> for SubselectionRenderer {
                     y: pos.y,
                     symbol: ' ',
                     bg: select_color,
-                    fg: ColorPalette::default_fg_u8(),
+                    fg: crate::texel_types::DEFAULT_FG_U8,
                     styles: SymbolStyles::new(),
                 });
             }

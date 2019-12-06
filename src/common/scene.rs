@@ -1,7 +1,9 @@
 use crate::components::{Position, Selection};
-use crate::common::SpriteV1;
+use crate::texel_types::SpriteV1;
 use serde::{Deserialize, Serialize};
 use specs::{Entities, Join, ReadStorage, WriteStorage};
+
+pub use crate::texel_types::SceneV1;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Scene {
@@ -21,12 +23,6 @@ impl Scene {
             // TODO: once we have V2+ we'll need to return that and convert previous
         }
     }
-}
-
-// TODO: figure out a 0-copy way to keep scene serializable/deserializable
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
-pub struct SceneV1 {
-    pub objects: Vec<(SpriteV1, Position, bool)>,
 }
 
 impl<'a>
