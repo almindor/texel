@@ -1,5 +1,5 @@
 
-### All Modes
+## All Modes
 * `ESC`          - cancel/return
 * `ENTER/RETURN` - confirm/select
 * `ARROW KEYS`   - movement
@@ -7,7 +7,7 @@
 * `:`            - command mode
 * `u, U`         - undo/redo
 
-### Object Mode
+## Object Mode
 * `DELETE`       - delete selected
 * `TAB`          - select next
 * `SHIT + TAB`   - add next to selection
@@ -18,7 +18,7 @@
 * `z, x`         - apply fg/bg color to all texels in selected
 * `Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
 
-### Edit Mode
+## Edit Mode
 
 * `i`            - write to edited directly (switch to `Write` mode)
 * `0..9, a..f`   - apply symbol from palette (think hex index)
@@ -27,7 +27,7 @@
 * `Z, X`         - set fg/bg color from palette (switch to `ColorPalette` mode)
 * `q, Q, w`      - apply/clear symbol style (bold, italic, underline)
 
-### ColorPalette | SymbolPalette Mode
+## ColorPalette | SymbolPalette Mode
 
 * `0..9, a..f`   - apply color/symbol from palette (think hex index)
 * `!..), A..F`   - set color/symbol on palette (think hex index)
