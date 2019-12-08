@@ -26,4 +26,4 @@ Configuration files are saved in user config directory undex `texel/config.ron` 
 
 On Linux for example the location would be `$HOME/.config/texel/config.ron`
 
-### [File Format](../texel_types)
+### [File Format](https://github.com/almindor/texel_types)
