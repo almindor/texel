@@ -1,6 +1,7 @@
-use crate::common::{Action, Error, ColorMode, InputEvent, Scene, Clipboard, Mode};
+use crate::common::{Action, Clipboard, Error, InputEvent, Mode, Scene};
 use crate::components::Position2D;
 use std::collections::VecDeque;
+use texel_types::ColorMode;
 
 const HISTORY_CAPACITY: usize = 20usize;
 
@@ -28,7 +29,7 @@ impl Default for State {
             modes: VecDeque::with_capacity(5),
             history: VecDeque::with_capacity(HISTORY_CAPACITY),
             history_index: 0usize,
-            selected_color: (crate::texel_types::DEFAULT_BG_U8, crate::texel_types::DEFAULT_FG_U8),
+            selected_color: (texel_types::DEFAULT_BG_U8, texel_types::DEFAULT_FG_U8),
             save_state: (None, 0),
             dirty: false,
             clipboard: Clipboard::Empty,

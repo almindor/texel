@@ -1,4 +1,4 @@
-use crate::common::{SymbolStyles, Texel, Mode};
+use crate::common::{Mode, SymbolStyles, Texel};
 use crate::components::{Dimension, Position2D, Subselection};
 use crate::resources::{ColorPalette, State, SyncTerm};
 use specs::{Join, Read, ReadStorage, System, Write};
@@ -26,11 +26,10 @@ impl<'a> System<'a> for SubselectionRenderer {
 
             for pos in texels {
                 out.override_texel_bg(Texel {
-                    x: pos.x,
-                    y: pos.y,
+                    pos,
                     symbol: ' ',
                     bg: select_color,
-                    fg: crate::texel_types::DEFAULT_FG_U8,
+                    fg: texel_types::DEFAULT_FG_U8,
                     styles: SymbolStyles::new(),
                 });
             }

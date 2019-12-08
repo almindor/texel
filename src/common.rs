@@ -1,30 +1,25 @@
-use crate::components::{Dimension, Position2D};
 use std::env::current_dir;
 use std::path::{Path, PathBuf};
 
 mod action;
+mod clipboard;
 mod config;
-mod mode;
 mod input;
+mod mode;
 mod program;
 mod scene;
 mod texel;
-mod clipboard;
 
 pub mod fio; // file io
 
 pub use action::Action;
-pub use config::{Config, ConfigV1};
-pub use mode::Mode;
-pub use input::{CharMap, Event, InputEvent, InputMap};
-pub use program::run;
-pub use scene::{Scene, SceneV1};
-pub use texel::{SymbolStyle, SymbolStyles, TexelV1, Texel, Texels, texel_to_string};
 pub use clipboard::{Clipboard, ClipboardOp};
-
-// TODO re-do
-pub use crate::texel_types::ColorMode;
-pub use crate::texel_types::Which;
+pub use config::{Config, ConfigV1};
+pub use input::{CharMap, Event, InputEvent, InputMap};
+pub use mode::Mode;
+pub use program::run;
+pub use scene::{Scene, scene_from_objects};
+pub use texel::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
@@ -106,17 +101,5 @@ pub fn index_from_one(index: usize) -> i32 {
         0
     } else {
         index as i32
-    }
-}
-
-pub fn coords_from_index(index: usize, dim: Dimension) -> Option<Position2D> {
-    let i = index as i32;
-    let w = i32::from(dim.w);
-    let h = i32::from(dim.h);
-
-    if i < w * h {
-        Some(Position2D { x: i % w, y: i / w })
-    } else {
-        None
     }
 }

@@ -1,4 +1,4 @@
-use crate::common::{Scene, SceneV1};
+use crate::common::scene_from_objects;
 use crate::components::{Position, Selection, Sprite};
 use crate::resources::State;
 use specs::{Entities, ReadStorage, System, Write, WriteStorage};
@@ -15,6 +15,6 @@ impl<'a> System<'a> for HistoryHandler {
     );
 
     fn run(&mut self, (e, mut state, p, s, sp): Self::SystemData) {
-        state.push_history(Scene::V1(SceneV1::from((&e, &sp, &p, &s))));
+        state.push_history(scene_from_objects(&e, &sp, &p, &s));
     }
 }

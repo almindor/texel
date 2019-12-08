@@ -1,6 +1,7 @@
-use crate::common::{Error, SymbolStyle, Mode, SymbolStyles, ColorMode};
+use crate::common::{Error, Mode, SymbolStyle, SymbolStyles};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
 use specs::System;
+use texel_types::ColorMode;
 
 pub struct CmdLineRenderer;
 
@@ -73,7 +74,7 @@ fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
     let text = format!("--{}--", state.mode().to_str());
     // TODO: add support for font styles to texels/buxels!
 
-    out.write_line(1, h, text, crate::texel_types::DEFAULT_BG_U8, white, bold);
+    out.write_line(1, h, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
 
@@ -82,7 +83,7 @@ fn print_mode(out: &mut SyncTerm, mode: Mode, w: i32, h: i32) {
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", mode.to_str());
 
-    out.write_line(1, h, text, crate::texel_types::DEFAULT_BG_U8, white, bold);
+    out.write_line(1, h, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.set_cursor_pos(w, h);
 }
 
@@ -90,7 +91,7 @@ fn print_edit(out: &mut SyncTerm, state: &State, palette: &SymbolPalette, h: i32
     let white = termion::color::AnsiValue::grayscale(23).0;
     let bold = SymbolStyles::only(SymbolStyle::Bold);
 
-    out.write_line(1, h, "--EDIT--", crate::texel_types::DEFAULT_BG_U8, white, bold);
+    out.write_line(1, h, "--EDIT--", texel_types::DEFAULT_BG_U8, white, bold);
     out.write_texels(palette.line_texels(PALETTE_OFFSET, h));
     out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
@@ -106,12 +107,12 @@ fn print_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32, h: i32
     let text = format!("--{}--", state.mode().to_str());
     let i_txt = format!("{}", crate::common::index_from_one(index));
 
-    out.write_line(1, h, text, crate::texel_types::DEFAULT_BG_U8, white, bold);
+    out.write_line(1, h, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.write_line(
         PALETTE_OFFSET + index as i32,
         h,
         i_txt,
-        crate::texel_types::DEFAULT_BG_U8,
+        texel_types::DEFAULT_BG_U8,
         white,
         bold,
     );

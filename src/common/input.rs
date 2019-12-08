@@ -1,8 +1,8 @@
-use crate::common::{SymbolStyle, ColorMode, Mode, Which, ClipboardOp};
-use crate::components::Position2D;
+use crate::common::{ClipboardOp, Mode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use termion::event::{Event as TEvent, Key};
+use texel_types::{ColorMode, Position2D, SymbolStyle, Which};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Event {

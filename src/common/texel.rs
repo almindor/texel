@@ -1,15 +1,12 @@
 use crate::resources::ColorPalette;
 use big_enum_set::BigEnumSet;
 
-pub use crate::texel_types::{TexelV1, SymbolStyle, SymbolStyles};
-
-pub type Texel = TexelV1; // alias so we can switch to another version easily
-pub type Texels = Vec<TexelV1>;
+pub use texel_types::{SymbolStyle, SymbolStyles, Texel, Texels};
 
 pub fn texel_to_string(texel: &Texel) -> String {
     format!(
         "{}{}{}{}{}{}",
-        crate::common::goto(texel.x, texel.y),
+        crate::common::goto(texel.pos.x, texel.pos.y),
         ColorPalette::u8_to_bg(texel.bg),
         ColorPalette::u8_to_fg(texel.fg),
         styles_to_str(texel.styles),

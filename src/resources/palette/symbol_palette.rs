@@ -1,5 +1,6 @@
-use crate::common::{Error, SymbolStyles, Texel, Texels};
+use crate::common::Error;
 use serde::{Deserialize, Serialize};
+use texel_types::{SymbolStyles, Texel, Texels, Position2D};
 
 const SYMBOLS_IN_PALETTE: usize = 16;
 const DEFAULT_SYMBOLS: [char; SYMBOLS_IN_PALETTE] = [
@@ -70,31 +71,28 @@ impl SymbolPalette {
         for (i, symbol) in DEFAULT_SYMBOLS.iter().enumerate() {
             let selector = SYMBOL_SELECTOR[i];
             result.push(Texel {
-                x,
-                y,
+                pos: Position2D { x, y },
                 symbol: selector,
-                bg: crate::texel_types::DEFAULT_BG_U8,
-                fg: crate::texel_types::DEFAULT_FG_U8,
+                bg: texel_types::DEFAULT_BG_U8,
+                fg: texel_types::DEFAULT_FG_U8,
                 styles: SymbolStyles::new(),
             });
             x += 1;
 
             result.push(Texel {
-                x,
-                y,
+                pos: Position2D { x, y },
                 symbol: ':',
-                bg: crate::texel_types::DEFAULT_BG_U8,
-                fg: crate::texel_types::DEFAULT_FG_U8,
+                bg: texel_types::DEFAULT_BG_U8,
+                fg: texel_types::DEFAULT_FG_U8,
                 styles: SymbolStyles::new(),
             });
             x += 1;
 
             result.push(Texel {
-                x,
-                y,
+                pos: Position2D { x, y },
                 symbol: *symbol,
-                bg: crate::texel_types::DEFAULT_BG_U8,
-                fg: crate::texel_types::DEFAULT_FG_U8,
+                bg: texel_types::DEFAULT_BG_U8,
+                fg: texel_types::DEFAULT_FG_U8,
                 styles: SymbolStyles::new(),
             });
             x += 1;

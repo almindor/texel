@@ -1,4 +1,3 @@
-mod texel_types;
 mod common;
 mod components;
 mod resources;

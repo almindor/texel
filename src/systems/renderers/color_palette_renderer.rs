@@ -1,9 +1,8 @@
-use crate::common::{SymbolStyles, Mode, ColorMode};
+use crate::common::{Mode, SymbolStyles};
 use crate::components::Position2D;
-use crate::resources::{
-    ColorPalette, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W,
-};
+use crate::resources::{ColorPalette, State, SyncTerm, MAX_COLOR_INDEX, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::System;
+use texel_types::ColorMode;
 
 pub struct ColorPaletteRenderer;
 
@@ -48,12 +47,13 @@ fn print_palette(world_info: WorldInfo, index: usize, cm: ColorMode) {
                 y,
                 " ",
                 termion::color::AnsiValue::rgb(r, g, b).0,
-                crate::texel_types::DEFAULT_FG_U8,
+                texel_types::DEFAULT_FG_U8,
                 SymbolStyles::new(),
             );
         }
     }
 
     let x = PALETTE_OFFSET + (index as i32);
-    out.write_texel(palette.selector_texel(index, x, h, cm));
+    let pos = Position2D { x, y: h };
+    out.write_texel(palette.selector_texel(index, pos, cm));
 }

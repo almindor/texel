@@ -46,8 +46,7 @@ impl<'a> System<'a> for SpriteRenderer {
 
 fn print_texel(out: &mut SyncTerm, p: &Position, t: &Texel) {
     let abs_texel = Texel {
-        x: p.x + t.x,
-        y: p.y + t.y,
+        pos: (*p + t.pos).into(),
         symbol: t.symbol,
         bg: t.bg,
         fg: t.fg,
@@ -67,8 +66,8 @@ fn is_visible(x: i32, y: i32, ts: (u16, u16)) -> bool {
 fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
     let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
 
-    for t in s.frame_iter().filter(|t| p.x + t.x > 0 && p.y + t.y > 0) {
-        if is_visible(p.x + t.x, p.y + t.y, ts) {
+    for t in s.frame_iter().filter(|t| p.x + t.pos.x > 0 && p.y + t.pos.y > 0) {
+        if is_visible(p.x + t.pos.x, p.y + t.pos.y, ts) {
             print_texel(out, p, t);
         }
     }

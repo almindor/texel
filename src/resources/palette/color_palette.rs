@@ -1,6 +1,7 @@
-use crate::common::{Error, ColorMode, SymbolStyle, SymbolStyles, Texel, Texels};
+use crate::common::Error;
 use crate::components::Position2D;
 use serde::{Deserialize, Serialize};
+use texel_types::{ColorMode, SymbolStyle, SymbolStyles, Texel, Texels};
 
 const fn cc(r: u8, g: u8, b: u8) -> u8 {
     16 + 36 * r + 6 * g + b
@@ -125,7 +126,7 @@ impl ColorPalette {
         (pos.y * PALETTE_W) as u8 + pos.x as u8
     }
 
-    pub fn selector_texel(&self, index: usize, x: i32, y: i32, cm: ColorMode) -> Texel {
+    pub fn selector_texel(&self, index: usize, pos: Position2D, cm: ColorMode) -> Texel {
         let (bg, fg) = match cm {
             ColorMode::Bg => (self.colors[index], invert_luminance(self.colors[index])),
             ColorMode::Fg => (invert_luminance(self.colors[index]), self.colors[index]),
@@ -133,8 +134,7 @@ impl ColorPalette {
         let s_u8 = crate::common::index_from_one(index) as u8;
 
         Texel {
-            x,
-            y,
+            pos,
             fg,
             bg,
             symbol: char::from(s_u8),
@@ -151,10 +151,10 @@ impl ColorPalette {
                 ColorMode::Bg => (self.colors[i], invert_luminance(self.colors[i])),
                 ColorMode::Fg => (invert_luminance(self.colors[i]), self.colors[i]),
             };
+            let pos = Position2D { x, y };
 
             result.push(Texel {
-                x,
-                y,
+                pos,
                 fg,
                 bg,
                 symbol: *symbol,

@@ -1,7 +1,8 @@
-use crate::common::{Action, Event, Mode, InputEvent, ColorMode};
+use crate::common::{Action, Event, InputEvent, Mode};
 use crate::components::{Direction, Translation};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette};
 use specs::{System, Write};
+use texel_types::ColorMode;
 
 pub struct InputHandler;
 

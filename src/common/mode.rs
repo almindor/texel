@@ -1,5 +1,5 @@
-use crate::common::ColorMode;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use texel_types::ColorMode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Mode {

@@ -1,53 +1,21 @@
-use crate::components::{Position, Selection};
-use crate::texel_types::SpriteV1;
-use serde::{Deserialize, Serialize};
+use crate::components::{Selection, Sprite};
 use specs::{Entities, Join, ReadStorage, WriteStorage};
+use texel_types::Position;
 
-pub use crate::texel_types::SceneV1;
+pub use texel_types::{Scene, SceneV1};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Scene {
-    V1(SceneV1),
-}
+pub fn scene_from_objects(
+    e: &Entities,
+    sp: &WriteStorage<Sprite>,
+    p: &WriteStorage<Position>,
+    s: &ReadStorage<Selection>,
+) -> Scene {
+    let mut objects = Vec::new();
 
-impl Default for Scene {
-    fn default() -> Self {
-        Scene::V1(SceneV1::default())
+    for (entity, sprite, pos) in (e, sp, p).join() {
+        objects.push((sprite.clone(), *pos, s.contains(entity)));
     }
+
+    Scene::V1(SceneV1 { objects })
 }
 
-impl Scene {
-    pub fn current(self) -> SceneV1 {
-        match self {
-            Self::V1(scene) => scene,
-            // TODO: once we have V2+ we'll need to return that and convert previous
-        }
-    }
-}
-
-impl<'a>
-    From<(
-        &Entities<'a>,
-        &WriteStorage<'a, SpriteV1>,
-        &WriteStorage<'a, Position>,
-        &ReadStorage<'a, Selection>,
-    )> for SceneV1
-{
-    fn from(
-        storage: (
-            &Entities,
-            &WriteStorage<'a, SpriteV1>,
-            &WriteStorage<'a, Position>,
-            &ReadStorage<'a, Selection>,
-        ),
-    ) -> Self {
-        let mut objects = Vec::new();
-        let (e, sp, p, s) = storage;
-
-        for (entity, sprite, pos) in (e, sp, p).join() {
-            objects.push((sprite.clone(), *pos, s.contains(entity)));
-        }
-
-        SceneV1 { objects }
-    }
-}

@@ -1,5 +1,5 @@
-use crate::common::{SymbolStyle, ColorMode, Which, Mode, ClipboardOp};
-use crate::components::{Position2D, Translation};
+use crate::common::{ClipboardOp, Mode};
+use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 
 #[derive(Debug)]
 pub enum Action {

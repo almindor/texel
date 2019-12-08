@@ -1,7 +1,8 @@
-use crate::common::{fio, Action, Mode, ColorMode, Error, Scene, SceneV1, SymbolStyle, Which, Clipboard, ClipboardOp, Texels};
+use crate::common::{fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, Scene, SymbolStyle, Texels};
 use crate::components::*;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
+use texel_types::{ColorMode, Which};
 
 pub struct ActionHandler;
 
@@ -53,20 +54,20 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Deselect => match state.mode() {
                     Mode::Edit => clear_subselection(&e, &ss, &u),
                     _ => deselect_obj(&e, &s, &u),
-                }
+                },
                 Action::Translate(t) => match state.mode() {
                     Mode::Edit => {
                         let sprite_bounds = selected_bounds(&s, &p, &d);
                         translate_subselection(t, &mut state, &ss, &mut pss, &mut d, sprite_bounds)
                     }
                     _ => translate_selected(t, &mut state, &mut p, &s, &d),
-                }
+                },
                 Action::SelectFrame(which) => change_frame_on_selected(which, &mut state, &mut sp, &s),
                 Action::SelectObject(which, sticky) => match state.mode() {
                     Mode::Object => select_obj(which, &e, &sel, &s, &u, sticky),
                     Mode::Edit => select_edit(&e, &state, &mut ss, &u),
                     _ => state.set_error(Error::execution("Unexpected mode on selection")),
-                }
+                },
                 Action::Delete => {
                     if state.mode() == Mode::Edit || state.mode() == Mode::Write {
                         clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
@@ -454,11 +455,7 @@ fn subselection(
     }
 }
 
-fn new_frame_on_selected(
-    state: &mut State,
-    sp: &mut WriteStorage<Sprite>,
-    s: &ReadStorage<Selection>,
-) -> bool {
+fn new_frame_on_selected(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> bool {
     let mut changed = false;
 
     if s.count() == 0 {
@@ -474,11 +471,7 @@ fn new_frame_on_selected(
     changed
 }
 
-fn delete_frame_on_selected(
-    state: &mut State,
-    sp: &mut WriteStorage<Sprite>,
-    s: &ReadStorage<Selection>,
-) -> bool {
+fn delete_frame_on_selected(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> bool {
     let mut changed = false;
 
     if s.count() == 0 {
@@ -515,7 +508,6 @@ fn change_frame_on_selected(
 
     changed
 }
-
 
 fn apply_style_to_selected(
     style: SymbolStyle,
@@ -603,7 +595,6 @@ fn clipboard(
         (Mode::Object, ClipboardOp::Cut) => copy_or_cut_selection(op, state, e, sp, s),
         (Mode::Object, ClipboardOp::Paste) => paste_selection(state, e, s, u),
         _ => false,
-        
     }
 }
 
@@ -636,12 +627,7 @@ fn copy_or_cut_selection(
     }
 }
 
-fn paste_selection(
-    state: &mut State,
-    e: &Entities,
-    s: &ReadStorage<Selection>,
-    u: &LazyUpdate,
-) -> bool {
+fn paste_selection(state: &mut State, e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) -> bool {
     let mut changed = false;
     let sprites: Vec<Sprite> = state.clipboard.clone().into();
 
@@ -688,7 +674,7 @@ fn copy_or_cut_subselection(
                     // changed pos or dim => apply new bounds
                     *pos += *bounds.position();
                     *dim = *bounds.dimension();
-    
+
                     clear_subselection(e, ss, u);
                     true
                 }
@@ -729,12 +715,7 @@ fn paste_subselection(
     changed
 }
 
-fn new_sprite(
-    e: &Entities,
-    s: &ReadStorage<Selection>,
-    u: &LazyUpdate,
-    pos: Option<Position>,
-) -> bool {
+fn new_sprite(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate, pos: Option<Position>) -> bool {
     deselect_obj(e, s, u);
     let entity = e.create();
     let sprite = Sprite::default();
@@ -783,7 +764,7 @@ fn save_scene(
     new_path: &Option<String>,
 ) -> Result<(), Error> {
     let path = state.save_file(new_path)?;
-    let scene = Scene::V1(SceneV1::from((e, sp, p, s)));
+    let scene = scene_from_objects(e, sp, p, s);
 
     fio::to_file(&scene, &path)
 }

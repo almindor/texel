@@ -1,6 +1,6 @@
-use crate::common::{SymbolStyles, Texel, Texels};
 use std::io::Write;
 use std::vec::Vec;
+use texel_types::{SymbolStyles, Texel, Texels, Position2D};
 
 #[derive(Debug, Default)]
 struct TexelBuf {
@@ -24,13 +24,12 @@ impl TexelBuf {
     pub fn clear(&mut self) {
         self.buf.clear();
         for i in 0..self.buf.capacity() {
-            let (x, y) = self.deindex(i);
+            let pos = self.deindex(i);
             let texel = Texel {
-                x,
-                y,
+                pos,
                 symbol: ' ',
-                bg: crate::texel_types::DEFAULT_BG_U8,
-                fg: crate::texel_types::DEFAULT_FG_U8,
+                bg: texel_types::DEFAULT_BG_U8,
+                fg: texel_types::DEFAULT_FG_U8,
                 styles: SymbolStyles::new(),
             };
 
@@ -39,7 +38,7 @@ impl TexelBuf {
     }
 
     pub fn set_texel(&mut self, texel: Texel) {
-        let index = self.index(texel.x, texel.y);
+        let index = self.index(texel.pos);
 
         if index < self.buf.len() {
             self.buf[index] = texel;
@@ -53,21 +52,21 @@ impl TexelBuf {
     }
 
     pub fn override_texel_bg(&mut self, texel: Texel) {
-        let index = self.index(texel.x, texel.y);
+        let index = self.index(texel.pos);
 
         if index >= self.buf.len() {
             return;
         }
 
         if let Some(existing) = self.buf.get_mut(index) {
-            existing.override_bg(texel.bg);
+            existing.bg = texel.bg;
         } else {
             self.set_texel(texel);
         }
     }
 
     fn texel_match(&self, texel: &Texel) -> bool {
-        self.buf[self.index(texel.x, texel.y)] == *texel
+        self.buf[self.index(texel.pos)] == *texel
     }
 
     pub fn diff(newer: &Self, older: &Self) -> Texels {
@@ -82,12 +81,15 @@ impl TexelBuf {
         vec
     }
 
-    fn index(&self, x: i32, y: i32) -> usize {
-        self.size_x * ((y - 1) as usize) + ((x - 1) as usize)
+    fn index(&self, pos: Position2D) -> usize {
+        self.size_x * ((pos.y - 1) as usize) + ((pos.x - 1) as usize)
     }
 
-    fn deindex(&self, i: usize) -> (i32, i32) {
-        ((i % self.size_x) as i32 + 1, (i / self.size_x) as i32 + 1)
+    fn deindex(&self, i: usize) -> Position2D {
+        Position2D {
+            x: (i % self.size_x) as i32 + 1,
+            y: (i / self.size_x) as i32 + 1,
+        }
     }
 }
 
@@ -147,8 +149,7 @@ impl SyncTerm {
         let mut x: i32 = start_x;
         for symbol in text.chars() {
             buf.set_texel(Texel {
-                x,
-                y,
+                pos: Position2D { x, y },
                 symbol,
                 fg,
                 bg,
@@ -164,8 +165,8 @@ impl SyncTerm {
             start_x,
             y,
             source,
-            crate::texel_types::DEFAULT_BG_U8,
-            crate::texel_types::DEFAULT_FG_U8,
+            texel_types::DEFAULT_BG_U8,
+            texel_types::DEFAULT_FG_U8,
             SymbolStyles::new(),
         );
     }
