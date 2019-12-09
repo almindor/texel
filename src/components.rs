@@ -1,14 +1,6 @@
-mod dimension;
-mod position;
-mod sprite;
-
-pub use dimension::Dimension;
-pub use position::{Bounds, Direction, Position, Position2D, Translation};
-pub use sprite::Sprite;
-
-// flags
-
 use specs::{Component, NullStorage, VecStorage};
+
+pub use texel_types::{Bounds, Direction, Position, Position2D, Translation, Dimension, Sprite};
 
 #[derive(Default)]
 pub struct Selection;
