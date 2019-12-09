@@ -37,8 +37,7 @@ impl Default for State {
         };
 
         result.modes.push_back(Mode::default()); // there is always a mode!
-        result.push_history(Scene::default()); // there is always a default scene
-        result.save_state.1 = 0; // push_history will bump this but it doesn't count
+        result.history.push_back(Scene::default()); // there is always a default scene
 
         result
     }
@@ -159,6 +158,14 @@ impl State {
 
     pub fn dirty(&mut self) {
         self.dirty = true;
+    }
+
+    // resets history to start with this scene
+    pub fn clear_history(&mut self, scene: Scene) {
+        self.history.clear();
+        self.history.push_back(scene);
+        self.history_index = 0;
+        self.dirty = false;
     }
 
     // the minimalist in me screams at this, but doing a delta with

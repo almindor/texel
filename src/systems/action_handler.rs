@@ -84,12 +84,9 @@ impl<'a> System<'a> for ActionHandler {
                         state.saved(path)
                     }
                 }
-                Action::Read(path) => {
-                    if let Err(err) = load_from_file(&e, &state, &s, &sp, &u, &path) {
-                        state.set_error(err)
-                    } else {
-                        false
-                    }
+                Action::Read(path) => match load_from_file(&e, &mut state, &s, &sp, &u, &path) {
+                    Ok(changed) => changed, // we reset history in some cases here
+                    Err(err) => state.set_error(err),
                 }
                 Action::ShowHelp(_) => false, // TODO
             };
@@ -772,12 +769,12 @@ fn save_scene(
 
 fn load_from_file(
     e: &Entities,
-    state: &State,
+    state: &mut State,
     s: &ReadStorage<Selection>,
     sp: &WriteStorage<Sprite>,
     u: &LazyUpdate,
     path: &str,
-) -> Result<(), Error> {
+) -> Result<bool, Error> {
     use fio::Loaded;
 
     match fio::scene_from_file(path)? {
@@ -785,10 +782,15 @@ fn load_from_file(
             if state.unsaved_changes() > 0 {
                 Err(Error::execution("Unsaved changes, save before opening another scene"))
             } else {
-                apply_scene(scene, e, s, sp, u)
+                apply_scene(scene.clone(), e, s, sp, u)?;
+                state.clear_history(scene); // we're going from this scene now
+                Ok(false)
             }
         }
-        Loaded::Sprite(sprite) => import_sprite(sprite, e, s, u, None, true),
+        Loaded::Sprite(sprite) => {
+            import_sprite(sprite, e, s, u, None, true)?;
+            Ok(true)
+        }
     }
 }
 
