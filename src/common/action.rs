@@ -1,4 +1,4 @@
-use crate::common::{ClipboardOp, Mode};
+use crate::common::{ClipboardOp, Help, Mode};
 use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 
 #[derive(Debug)]
@@ -24,6 +24,7 @@ pub enum Action {
     Delete,
     Undo,
     Redo,
+    ShowHelp(Help),
 }
 
 impl Default for Action {
@@ -42,6 +43,7 @@ impl From<&str> for Action {
             "deselect" => Action::Deselect,
             "quit" | "q" => Action::SetMode(Mode::Quitting(false)),
             "quit!" | "q!" => Action::SetMode(Mode::Quitting(true)),
+            "help" | "h" => Action::ShowHelp(Help::overview()),
             _ => Action::None,
         }
     }
@@ -85,7 +87,7 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 7] = ["read", "write", "translate", "delete", "deselect", "quit", "quit!"];
+        const ACTION_WORDS: [&str; 8] = ["read", "write", "translate", "delete", "deselect", "quit", "quit!", "help"];
 
         for word in &ACTION_WORDS {
             if word.starts_with(part) {

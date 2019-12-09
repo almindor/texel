@@ -1,11 +1,11 @@
-use crate::common::{path_base, Action, Error, Event, InputEvent};
+use crate::common::{path_base, Action, Error, Event, InputEvent, Help};
 use crate::components::Translation;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
 
 mod auto_complete;
 
-use auto_complete::FileComplete;
+use auto_complete::AutoComplete;
 
 const DEFAULT_CMD_CAPACITY: usize = 4096; // coz I said so!
 const MAX_HISTORY_ENTRIES: usize = 255; // coz I said so too!
@@ -16,7 +16,7 @@ pub struct CmdLine {
     cursor_pos: usize,
     history: Vec<String>,
     history_index: Option<usize>,
-    file_complete: FileComplete,
+    auto_complete: AutoComplete,
 }
 
 impl Default for CmdLine {
@@ -26,7 +26,7 @@ impl Default for CmdLine {
             cursor_pos: 0,
             history: Vec::with_capacity(MAX_HISTORY_ENTRIES),
             history_index: None,
-            file_complete: FileComplete::new(),
+            auto_complete: AutoComplete::new(),
         }
     }
 }
@@ -68,7 +68,7 @@ impl CmdLine {
         };
 
         if clear_ac {
-            self.file_complete.clear();
+            self.auto_complete.clear();
         }
 
         // flush on anything but Command::None
@@ -167,8 +167,9 @@ impl CmdLine {
             // if we have something here, and count != 1 parts.count() must be >= 1
             let completed = match *cmd {
                 "import" | "read" | "write" | "w" | "r" => {
-                    self.file_complete.with_path(parts.last().unwrap_or(&"."))?
-                } // parts.last() is safe here
+                    self.auto_complete.complete_filename(parts.last().unwrap_or_else(|| &"."))?
+                }
+                "help" => self.auto_complete.complete_help_topic(parts.last().unwrap_or_else(|| &"")),
                 _ => None,
             };
 
@@ -191,6 +192,7 @@ impl CmdLine {
             Action::Translate(_) => self.parse_translate(parts),
             Action::Write(_) => self.parse_save(parts),
             Action::Read(_) => self.parse_load(parts),
+            Action::ShowHelp(_) => self.parse_help(parts),
             _ => Err(Error::InvalidCommand),
         }
     }
@@ -223,5 +225,17 @@ impl CmdLine {
         }
 
         Err(Error::InvalidParam("No path specified"))
+    }
+
+    fn parse_help(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
+        if let Some(topic) = parts.next() {
+            if let Some(help) = Help::from_word(topic) {
+                Ok(Action::ShowHelp(help))
+            } else {
+                Err(Error::execution("Invalid topic"))
+            }
+        } else {
+            Ok(Action::ShowHelp(Help::overview()))
+        }
     }
 }

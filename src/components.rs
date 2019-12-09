@@ -1,6 +1,6 @@
 use specs::{Component, NullStorage, VecStorage};
 
-pub use texel_types::{Bounds, Direction, Position, Position2D, Translation, Dimension, Sprite};
+pub use texel_types::{Bounds, Dimension, Direction, Position, Position2D, Sprite, Translation};
 
 #[derive(Default)]
 pub struct Selection;

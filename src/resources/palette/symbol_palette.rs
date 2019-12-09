@@ -1,6 +1,6 @@
 use crate::common::Error;
 use serde::{Deserialize, Serialize};
-use texel_types::{SymbolStyles, Texel, Texels, Position2D};
+use texel_types::{Position2D, SymbolStyles, Texel, Texels};
 
 const SYMBOLS_IN_PALETTE: usize = 16;
 const DEFAULT_SYMBOLS: [char; SYMBOLS_IN_PALETTE] = [

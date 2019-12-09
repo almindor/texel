@@ -85,12 +85,13 @@ impl<'a> System<'a> for ActionHandler {
                     }
                 }
                 Action::Read(path) => {
-                    if let Err(err) = load_from_file(&e, &s, &sp, &u, &path) {
+                    if let Err(err) = load_from_file(&e, &state, &s, &sp, &u, &path) {
                         state.set_error(err)
                     } else {
-                        true
+                        false
                     }
                 }
+                Action::ShowHelp(_) => false, // TODO
             };
 
             if keep_history && changed {
@@ -162,7 +163,7 @@ fn set_mode(
                 for (entity, pos, _) in (e, p, s).join() {
                     if let Some(cp) = cur_pos.get(entity) {
                         state.cursor = *cp;
-                    } else {
+                    } else if state.mode() != Mode::Edit { // edit to write stays where it is
                         state.cursor = pos.into();
                     }
                 }
@@ -771,6 +772,7 @@ fn save_scene(
 
 fn load_from_file(
     e: &Entities,
+    state: &State,
     s: &ReadStorage<Selection>,
     sp: &WriteStorage<Sprite>,
     u: &LazyUpdate,
@@ -778,8 +780,14 @@ fn load_from_file(
 ) -> Result<(), Error> {
     use fio::Loaded;
 
-    match fio::from_file(path)? {
-        Loaded::Scene(scene) => apply_scene(scene, e, s, sp, u),
+    match fio::scene_from_file(path)? {
+        Loaded::Scene(scene) => {
+            if state.unsaved_changes() > 0 {
+                Err(Error::execution("Unsaved changes, save before opening another scene"))
+            } else {
+                apply_scene(scene, e, s, sp, u)
+            }
+        }
         Loaded::Sprite(sprite) => import_sprite(sprite, e, s, u, None, true),
     }
 }

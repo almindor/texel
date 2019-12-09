@@ -28,13 +28,13 @@ pub fn to_file(scene: &Scene, path: &str) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn from_file(path: &str) -> Result<Loaded, Error> {
+pub fn scene_from_file(path: &str) -> Result<Loaded, Error> {
     match Path::new(path).extension() {
         Some(ext) => match ext
             .to_str()
             .ok_or_else(|| Error::execution("Unable to parse extension"))?
         {
-            "rgz" => from_rgz_file(path),
+            "rgz" => scene_from_rgz_file(path),
             _ => Ok(Loaded::Sprite(from_txt_file(path)?)),
         },
         None => Ok(Loaded::Sprite(from_txt_file(path)?)),
@@ -57,11 +57,15 @@ pub fn from_txt_file(path: &str) -> Result<Sprite, Error> {
     }
 }
 
-fn from_rgz_file(path: &str) -> Result<Loaded, Error> {
+fn scene_from_rgz_file(path: &str) -> Result<Loaded, Error> {
     let abs_path = cwd_path(Path::new(path))?;
     let file = std::fs::File::open(abs_path)?;
 
-    let decoder = Decoder::new(file)?;
+    scene_from_rgz_stream(file)
+}
+
+pub fn scene_from_rgz_stream(stream: impl std::io::Read) -> Result<Loaded, Error> {
+    let decoder = Decoder::new(stream)?;
     let scene: Scene = ron::de::from_reader(decoder)?;
 
     Ok(Loaded::Scene(scene))

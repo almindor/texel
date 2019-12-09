@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 mod action;
 mod clipboard;
 mod config;
+mod help;
 mod input;
 mod mode;
 mod program;
@@ -15,10 +16,11 @@ pub mod fio; // file io
 pub use action::Action;
 pub use clipboard::{Clipboard, ClipboardOp};
 pub use config::{Config, ConfigV1};
+pub use help::*;
 pub use input::{CharMap, Event, InputEvent, InputMap};
 pub use mode::Mode;
 pub use program::run;
-pub use scene::{Scene, scene_from_objects};
+pub use scene::{scene_from_objects, Scene};
 pub use texel::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

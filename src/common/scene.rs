@@ -18,4 +18,3 @@ pub fn scene_from_objects(
 
     Scene::V1(SceneV1 { objects })
 }
-

@@ -4,7 +4,7 @@ use std::path::Path;
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::IntoRawMode;
 
-use crate::common::{fio, Action, Config, ConfigV1, Error, InputMap};
+use crate::common::{fio, Action, Config, ConfigV1, InputMap};
 use crate::resources::{ColorPalette, State, SymbolPalette, SyncTerm};
 use crate::systems::*;
 
@@ -26,7 +26,9 @@ pub fn run(args: Vec<String>) {
     let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
     write!(stdout, "{}", termion::clear::All).unwrap();
     // load files as needed
-    load_from(args, &mut world, &mut updater, &mut renderer);
+    load_from(args, &mut world, &mut updater);
+    // draw initial set
+    renderer.dispatch(&world);
     // flush buffers to terminal
     flush_terminal(&mut stdout, &world);
 
@@ -53,7 +55,7 @@ pub fn run(args: Vec<String>) {
     save_config(&config_file, &world);
 }
 
-fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher, renderer: &mut Dispatcher) {
+fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher) {
     if args.len() > 1 {
         {
             let mut state = world.fetch_mut::<State>();
@@ -66,28 +68,16 @@ fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher, ren
                 for path in &args[1..] {
                     state.push_action(Action::Read(String::from(path)));
                 }
+
+                if args.len() == 2 {
+                    let path = args.get(1).unwrap();
+                    state.saved(Some(path.into())); // consider this file our save file
+                }
             }
         }
 
         updater.dispatch(&world);
         world.maintain();
-        renderer.dispatch(&world); // due to history handler
-
-        // must set saved state after history handler is done
-        let mut state = world.fetch_mut::<State>();
-        if args.len() == 2 {
-            if let Some(path) = args.get(1) {
-                state.saved(Some(String::from(path))); // store saved state with filename
-            } else {
-                state.set_error(Error::execution("Unable to determine source file"));
-            }
-        } else {
-            // loaded multiple, store save state but with no file
-            state.saved(None);
-        }
-    } else {
-        // render first time
-        renderer.dispatch(&world);
     }
 }
 

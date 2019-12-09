@@ -79,9 +79,13 @@ impl State {
         *self.modes.back().unwrap()
     }
 
+    pub fn unsaved_changes(&self) -> usize {
+        self.save_state.1
+    }
+
     pub fn set_mode(&mut self, mode: Mode) -> bool {
         if self.mode() != mode {
-            if mode == Mode::Quitting(false) && self.save_state.1 > 0 {
+            if mode == Mode::Quitting(false) && self.unsaved_changes() > 0 {
                 self.set_error(Error::execution("Unsaved changes, use q! to quit without saving"));
                 return false;
             }
@@ -117,7 +121,12 @@ impl State {
     }
 
     pub fn saved(&mut self, path: Option<String>) -> bool {
-        self.save_state = (path, 0);
+        if path.is_some() {
+            self.save_state = (path, 0);
+        } else {
+            self.save_state.1 = 0; // keep filename
+        }
+
         true
     }
 

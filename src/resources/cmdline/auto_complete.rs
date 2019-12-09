@@ -1,14 +1,14 @@
-use crate::common::{cwd_path, Error};
+use crate::common::{cwd_path, Error, HELP_TOPICS};
 use std::fs::read_dir;
 use std::path::Path;
 
 #[derive(Debug)]
-pub struct FileComplete {
+pub struct AutoComplete {
     completions: Vec<String>,
     index: Option<usize>,
 }
 
-impl FileComplete {
+impl AutoComplete {
     pub fn new() -> Self {
         Self {
             completions: Vec::with_capacity(256usize),
@@ -17,11 +17,37 @@ impl FileComplete {
     }
 
     pub fn clear(&mut self) {
-        self.index = None
+        self.completions.clear();
+        self.index = None;
+    }
+
+    pub fn complete_help_topic(&mut self, word: &str) -> Option<&String> {
+        if let Some(index) = self.index {
+            if index < self.completions.len() - 1 {
+                self.index = Some(index + 1);
+                return self.completions.get(index + 1);
+            } else if !self.completions.is_empty() {
+                self.index = Some(0);
+                return self.completions.first();
+            }
+
+            return None;
+        }
+
+        for found in HELP_TOPICS.iter().filter(|t| t.starts_with(word)) {
+            self.completions.push(String::from(*found));
+        }
+
+        if !self.completions.is_empty() {
+            self.index = Some(0usize);
+            return self.completions.first();
+        }
+
+        None
     }
 
     // TODO: refactor this convoluted mess
-    pub fn with_path(&mut self, raw_path: &str) -> Result<Option<&String>, Error> {
+    pub fn complete_filename(&mut self, raw_path: &str) -> Result<Option<&String>, Error> {
         if let Some(index) = self.index {
             if index < self.completions.len() - 1 {
                 self.index = Some(index + 1);

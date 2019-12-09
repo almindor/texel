@@ -1,6 +1,6 @@
 use std::io::Write;
 use std::vec::Vec;
-use texel_types::{SymbolStyles, Texel, Texels, Position2D};
+use texel_types::{Position2D, SymbolStyles, Texel, Texels};
 
 #[derive(Debug, Default)]
 struct TexelBuf {

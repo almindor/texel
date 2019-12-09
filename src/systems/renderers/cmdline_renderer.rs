@@ -63,7 +63,13 @@ fn print_cmdline(out: &mut SyncTerm, cmdline: &CmdLine, h: i32) {
 fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
     // color selection
     let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
+    let saved_symbol = if state.unsaved_changes() > 0 {
+        "*"
+    } else {
+        " "
+    };
 
+    out.write_line_default(w - 18, h, saved_symbol);
     out.write_line(w - 17, h, "▞", sc.0, sc.1, SymbolStyles::new());
     out.set_cursor_pos(w, h);
 }
@@ -72,7 +78,6 @@ fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
     let white = termion::color::AnsiValue::grayscale(23).0;
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
-    // TODO: add support for font styles to texels/buxels!
 
     out.write_line(1, h, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.set_cursor_pos(state.cursor.x, state.cursor.y);
