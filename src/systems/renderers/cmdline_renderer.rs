@@ -31,7 +31,7 @@ impl<'a> System<'a> for CmdLineRenderer {
         match mode {
             Mode::Quitting(_) => {}
             Mode::Command => print_cmdline(&mut out, &cmdline, h),
-            Mode::Object => print_mode(&mut out, mode, w, h),
+            Mode::Object | Mode::Help(_) => print_mode(&mut out, mode, w, h),
             Mode::Write => print_write(&mut out, &state, h),
             Mode::Edit => print_edit(&mut out, &state, &symbol_palette, h),
             Mode::Color(cm) => print_color(&mut out, &color_palette, cm, w, h),

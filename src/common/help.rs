@@ -1,14 +1,6 @@
 use crate::common::fio::{Loaded, scene_from_rgz_stream};
 use texel_types::Scene;
 
-#[derive(Debug)]
-pub enum Help {
-    Overview(Scene),
-    Commands(Scene),
-    Modes(Scene),
-    Keys(Scene),
-}
-
 pub const HELP_TOPICS: [&'static str; 4] = [
     "overview",
     "commands",
@@ -16,33 +8,29 @@ pub const HELP_TOPICS: [&'static str; 4] = [
     "keys",
 ];
 
-macro_rules! gen_help {
-    ($name:ident, $help_enum:ident) => {
-        pub fn $name() -> Self {
-            let bytes = include_bytes!(concat!("../../help/", stringify!($name), ".rgz"));
-            let loaded = scene_from_rgz_stream(&bytes[..]).unwrap();
+pub const HELP_CONTENTS: [&[u8]; 4] = [
+    include_bytes!("../../help/overview.rgz"),
+    include_bytes!("../../help/commands.rgz"),
+    include_bytes!("../../help/modes.rgz"),
+    include_bytes!("../../help/keys.rgz"),
+];
 
-            match loaded {
-                Loaded::Scene(scene) => Help::$help_enum(scene),
-                Loaded::Sprite(_) => panic!("Invalid const situation"),
-            }
-        }
+pub fn topic_index(word: &str) -> Option<usize> {
+    match word {
+        "overview" => Some(0),
+        "commands" => Some(1),
+        "modes" => Some(2),
+        "keys" => Some(3),
+        _ => None,
     }
 }
 
-impl Help {
-    pub fn from_word(word: &str) -> Option<Self> {
-        match word {
-            "overview" => Some(Help::overview()),
-            "commands" => Some(Help::commands()),
-            "modes" => Some(Help::modes()),
-            "keys" => Some(Help::keys()),
-            _ => None,
-        }
-    }
+pub fn scene_for_help_index(index: usize) -> Scene {
+    let bytes = HELP_CONTENTS[index];
+    let loaded = scene_from_rgz_stream(&bytes[..]).unwrap();
 
-    gen_help!(overview, Overview);
-    gen_help!(commands, Commands);
-    gen_help!(modes, Modes);
-    gen_help!(keys, Keys);
+    match loaded {
+        Loaded::Scene(scene) => scene,
+        Loaded::Sprite(_) => panic!("Invalid const situation"),
+    }
 }

@@ -1,4 +1,4 @@
-use crate::common::{path_base, Action, Error, Event, InputEvent, Help};
+use crate::common::{path_base, Action, Error, Event, InputEvent, topic_index};
 use crate::components::Translation;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
@@ -229,13 +229,13 @@ impl CmdLine {
 
     fn parse_help(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
         if let Some(topic) = parts.next() {
-            if let Some(help) = Help::from_word(topic) {
-                Ok(Action::ShowHelp(help))
+            if let Some(index) = topic_index(topic) {
+                Ok(Action::ShowHelp(index))
             } else {
                 Err(Error::execution("Invalid topic"))
             }
         } else {
-            Ok(Action::ShowHelp(Help::overview()))
+            Ok(Action::ShowHelp(0))
         }
     }
 }

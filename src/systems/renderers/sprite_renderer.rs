@@ -1,7 +1,7 @@
-use crate::common::Texel;
+use crate::common::{Texel, Scene, Mode, scene_for_help_index};
 use crate::components::{Border, Dimension, Position, Selection, Sprite};
-use crate::resources::SyncTerm;
-use specs::{Entities, Join, ReadStorage, System};
+use crate::resources::{SyncTerm, State};
+use specs::{Entities, Join, ReadStorage, Read, System};
 
 pub struct SpriteRenderer;
 
@@ -9,6 +9,7 @@ impl<'a> System<'a> for SpriteRenderer {
     type SystemData = (
         specs::Write<'a, SyncTerm>,
         Entities<'a>,
+        Read<'a, State>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, Dimension>,
         ReadStorage<'a, Sprite>,
@@ -16,7 +17,12 @@ impl<'a> System<'a> for SpriteRenderer {
         ReadStorage<'a, Selection>,
     );
 
-    fn run(&mut self, (mut out, e, p, d, s, b, sel): Self::SystemData) {
+    fn run(&mut self, (mut out, e, state, p, d, s, b, sel): Self::SystemData) {
+        if let Mode::Help(index) = state.mode() {
+            render_scene(&mut out, scene_for_help_index(index));
+            return; // show help, done
+        }
+
         let mut sprite_info: Option<(&Position, usize, usize)> = None;
 
         // TODO: optimize using FlaggedStorage
@@ -44,6 +50,22 @@ impl<'a> System<'a> for SpriteRenderer {
     }
 }
 
+fn render_scene(out: &mut SyncTerm, scene: Scene) {
+    for obj in scene.current().objects {
+        render_sprite(out, &obj.1, &obj.0);
+    }
+}
+
+fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
+    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+
+    for t in s.frame_iter().filter(|t| p.x + t.pos.x > 0 && p.y + t.pos.y > 0) {
+        if is_visible(p.x + t.pos.x, p.y + t.pos.y, ts) {
+            print_texel(out, p, t);
+        }
+    }
+}
+
 fn print_texel(out: &mut SyncTerm, p: &Position, t: &Texel) {
     let abs_texel = Texel {
         pos: (*p + t.pos).into(),
@@ -61,16 +83,6 @@ fn is_visible(x: i32, y: i32, ts: (u16, u16)) -> bool {
     let h = i32::from(ts.1);
 
     x > 0 && x <= w && y > 0 && y <= h
-}
-
-fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
-    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
-
-    for t in s.frame_iter().filter(|t| p.x + t.pos.x > 0 && p.y + t.pos.y > 0) {
-        if is_visible(p.x + t.pos.x, p.y + t.pos.y, ts) {
-            print_texel(out, p, t);
-        }
-    }
 }
 
 fn render_border(out: &mut SyncTerm, p: &Position, d: Dimension) {

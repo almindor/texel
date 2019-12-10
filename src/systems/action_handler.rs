@@ -88,7 +88,7 @@ impl<'a> System<'a> for ActionHandler {
                     Ok(changed) => changed, // we reset history in some cases here
                     Err(err) => state.set_error(err),
                 }
-                Action::ShowHelp(_) => false, // TODO
+                Action::ShowHelp(index) => state.set_mode(Mode::Help(index))
             };
 
             if keep_history && changed {

@@ -24,6 +24,7 @@ impl<'a> System<'a> for InputHandler {
                 Mode::SelectColor(index, _) => color_select_event(event, &mut state, index, &mut color_palette),
                 Mode::Edit => edit_event(event, &mut state, &symbol_palette),
                 Mode::Write => write_event(event, &mut state),
+                Mode::Help(_) => help_event(event, &mut state),
                 Mode::Quitting(_) => {}
             }
         }
@@ -214,6 +215,15 @@ fn color_select_event(event: InputEvent, state: &mut State, index: usize, palett
         Event::RightEdge => Action::Translate(Translation::ToEdge(Direction::Right)),
 
         _ => Action::None,
+    };
+
+    state.push_action(action);
+}
+
+fn help_event(event: InputEvent, state: &mut State) {
+    let action = match event.0 {
+        Event::Mode(Mode::Command) => Action::SetMode(Mode::Command),
+        _ => Action::ReverseMode,
     };
 
     state.push_action(action);

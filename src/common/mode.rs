@@ -11,6 +11,7 @@ pub enum Mode {
     Write,
     Command,
     Quitting(bool), // true for force quit
+    Help(usize), // help index
 }
 
 impl Default for Mode {
@@ -32,6 +33,7 @@ impl Mode {
             Mode::Write => "WRITE",
             Mode::Command => "COMMAND",
             Mode::Quitting(_) => "QUITTING",
+            Mode::Help(_) => "HELP",
         }
     }
 }
