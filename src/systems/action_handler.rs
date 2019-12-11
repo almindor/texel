@@ -1,4 +1,4 @@
-use crate::common::{fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, Scene, SymbolStyle, Texels};
+use crate::common::{fio, scene_from_objects, OnQuit, Action, Clipboard, ClipboardOp, Error, Mode, Scene, SymbolStyle, Texels};
 use crate::components::*;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
@@ -42,7 +42,7 @@ impl<'a> System<'a> for ActionHandler {
                     }
                 }
                 Action::ClearError => state.clear_error(),
-                Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &ss, &p, &pss, &u),
+                Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &ss, &sp, &p, &pss, &u),
                 Action::ApplyColor(cm) => apply_color_to_selected(cm, &state, &e, &mut sp, &p, &s, &d, &ss, &pss, &u),
                 Action::ApplySymbol(sym) => {
                     apply_symbol_to_selected(sym, &mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
@@ -149,11 +149,27 @@ fn set_mode(
     e: &Entities,
     s: &ReadStorage<Selection>,
     ss: &WriteStorage<Subselection>,
+    sp: &WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
     cur_pos: &WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
     if match mode {
+        Mode::Quitting(OnQuit::Check) => if state.unsaved_changes() > 0 {
+            state.set_error(Error::execution("Unsaved changes, use q! to quit without saving"));
+            false
+        } else {
+            true
+        }
+        Mode::Quitting(OnQuit::Save) => if state.unsaved_changes() > 0 {
+            if let Err(err) = save_scene(e, state, sp, p, s, &None) {
+                state.set_error(err)
+            } else {
+                true
+            }
+        } else {
+            true
+        }
         Mode::Edit | Mode::Write => match s.count() {
             1 => {
                 state.clear_error();

@@ -1,4 +1,4 @@
-use crate::common::{ClipboardOp, Mode};
+use crate::common::{ClipboardOp, Mode, OnQuit};
 use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 
 #[derive(Debug)]
@@ -41,8 +41,9 @@ impl From<&str> for Action {
             "translate" => Action::Translate(Translation::default()),
             "delete" => Action::Delete,
             "deselect" => Action::Deselect,
-            "quit" | "q" => Action::SetMode(Mode::Quitting(false)),
-            "quit!" | "q!" => Action::SetMode(Mode::Quitting(true)),
+            "quit" | "q" => Action::SetMode(Mode::Quitting(OnQuit::Check)),
+            "quit!" | "q!" => Action::SetMode(Mode::Quitting(OnQuit::Force)),
+            "x" => Action::SetMode(Mode::Quitting(OnQuit::Save)),
             "help" | "h" => Action::ShowHelp(0),
             _ => Action::None,
         }

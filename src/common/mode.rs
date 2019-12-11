@@ -1,6 +1,14 @@
 use serde::{Deserialize, Serialize};
 use texel_types::ColorMode;
 
+// describes "how" to quit (normal/check, force, save & quit)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum OnQuit {
+    Check,
+    Force,
+    Save,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Mode {
     Object,
@@ -10,7 +18,7 @@ pub enum Mode {
     Edit,
     Write,
     Command,
-    Quitting(bool), // true for force quit
+    Quitting(OnQuit), // true for force quit
     Help(usize), // help index
 }
 

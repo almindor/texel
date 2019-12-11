@@ -84,11 +84,6 @@ impl State {
 
     pub fn set_mode(&mut self, mode: Mode) -> bool {
         if self.mode() != mode {
-            if mode == Mode::Quitting(false) && self.unsaved_changes() > 0 {
-                self.set_error(Error::execution("Unsaved changes, use q! to quit without saving"));
-                return false;
-            }
-
             self.push_action(Action::ClearError); // clear errors on mode changes
             self.modes.push_back(mode);
             return true;
