@@ -54,10 +54,10 @@ fn objmode_event(event: InputEvent, state: &mut State) {
 
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
 
-        Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
-        Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
-        Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
-        Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
+        Event::ArrowLeft | Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::ArrowUp | Event::Up=> Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::ArrowDown | Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::ArrowRight | Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
 
         Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left)),
         Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top)),
@@ -156,10 +156,10 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
         Event::ApplyStyle(style) => Action::ApplyStyle(style),
 
-        Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
-        Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
-        Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
-        Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
+        Event::ArrowLeft | Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::ArrowUp | Event::Up=> Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::ArrowDown | Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::ArrowRight | Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
 
         Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left)),
         Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top)),
@@ -204,10 +204,10 @@ fn color_select_event(event: InputEvent, state: &mut State, index: usize, palett
             Action::ReverseMode
         }
 
-        Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
-        Event::Up => Action::Translate(Translation::Relative(0, -1, 0)),
-        Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
-        Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
+        Event::ArrowLeft | Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::ArrowUp | Event::Up=> Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::ArrowDown | Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::ArrowRight | Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
 
         Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left)),
         Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top)),
