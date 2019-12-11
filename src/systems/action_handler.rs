@@ -38,7 +38,7 @@ impl<'a> System<'a> for ActionHandler {
                     if state.error().is_some() {
                         state.clear_error()
                     } else {
-                        reverse_mode(&e, &mut state, &s, &ss, &mut pss, &u)
+                        reverse_mode(&e, &mut state, &s, &ss, &p, &mut pss, &u)
                     }
                 }
                 Action::ClearError => state.clear_error(),
@@ -50,7 +50,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::ApplyStyle(style) => {
                     apply_style_to_selected(style, &state, &e, &mut sp, &p, &d, &s, &ss, &pss, &u)
                 }
-                Action::ReverseMode => reverse_mode(&e, &mut state, &s, &ss, &mut pss, &u),
+                Action::ReverseMode => reverse_mode(&e, &mut state, &s, &ss, &p, &mut pss, &u),
                 Action::Deselect => match state.mode() {
                     Mode::Edit => clear_subselection(&e, &ss, &u),
                     _ => deselect_obj(&e, &s, &u),
@@ -103,17 +103,19 @@ fn reverse_mode(
     state: &mut State,
     s: &ReadStorage<Selection>,
     ss: &WriteStorage<Subselection>,
+    p: &WriteStorage<Position>,
     cur_pos: &mut WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
     let mut changed = clear_subselection(e, ss, u);
 
     if state.reverse_mode() {
-        for (entity, _) in (e, s).join() {
+        for (entity, pos, _) in (e, p, s).join() {
+            let pos2d: Position2D = pos.into();
             if let Some(cp) = cur_pos.get_mut(entity) {
-                *cp = state.cursor; // update last cursor position
+                *cp = state.cursor - pos2d;
             } else {
-                u.insert(entity, state.cursor); // insert last cursor position
+                u.insert(entity, state.cursor - pos2d); // insert last cursor position
             }
         }
 
@@ -174,10 +176,11 @@ fn set_mode(
             1 => {
                 state.clear_error();
                 for (entity, pos, _) in (e, p, s).join() {
+                    let pos2d: Position2D = pos.into();
                     if let Some(cp) = cur_pos.get(entity) {
-                        state.cursor = *cp;
+                        state.cursor = *cp + pos2d;
                     } else if state.mode() != Mode::Edit { // edit to write stays where it is
-                        state.cursor = pos.into();
+                        state.cursor = pos2d;
                     }
                 }
                 true
