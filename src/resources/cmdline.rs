@@ -175,13 +175,12 @@ impl CmdLine {
                 _ => None,
             } {
                 match completion {
-                    Completion::Filename(file_name) => {
-                        self.cmd = String::from(*cmd) + " " + &file_name;
+                    Completion::Filename(word) | Completion::Parameter(word) => {
+                        self.cmd = String::from(*cmd) + " " + &word;
                     }
                     Completion::Directory(dir) => {
                         self.cmd = String::from(*cmd) + " " + &dir + "/";
                     }
-                    _ => return Err(Error::execution("Unexpected completion type")),
                 }
 
                 self.cursor_pos = self.cmd.len();

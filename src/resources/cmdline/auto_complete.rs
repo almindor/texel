@@ -98,7 +98,6 @@ impl AutoComplete {
                     return match entry.file_name().to_str() {
                         None => None,
                         Some(s) => if s.starts_with(str_name) {
-                            eprintln!("S: {:?}", s);
                             let file_type = match entry.file_type() {
                                 Ok(ft) => ft,
                                 Err(err) => {
