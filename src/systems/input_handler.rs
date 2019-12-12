@@ -1,4 +1,4 @@
-use crate::common::{Action, Event, InputEvent, Mode};
+use crate::common::{Action, Event, InputEvent, Mode, MoveMeta};
 use crate::components::{Direction, Translation};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette};
 use specs::{System, Write};
@@ -54,15 +54,15 @@ fn objmode_event(event: InputEvent, state: &mut State) {
 
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
 
-        Event::ArrowLeft | Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
-        Event::ArrowUp | Event::Up=> Action::Translate(Translation::Relative(0, -1, 0)),
-        Event::ArrowDown | Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
-        Event::ArrowRight | Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
+        Event::Left(MoveMeta::Relative) => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::Up(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::Down(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::Right(MoveMeta::Relative) => Action::Translate(Translation::Relative(1, 0, 0)),
 
-        Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left)),
-        Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top)),
-        Event::DownEdge => Action::Translate(Translation::ToEdge(Direction::Bottom)),
-        Event::RightEdge => Action::Translate(Translation::ToEdge(Direction::Right)),
+        Event::Left(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Left)),
+        Event::Up(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Top)),
+        Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
+        Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
 
         _ => Action::None,
     };
@@ -156,15 +156,15 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
         Event::ApplyStyle(style) => Action::ApplyStyle(style),
 
-        Event::ArrowLeft | Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
-        Event::ArrowUp | Event::Up=> Action::Translate(Translation::Relative(0, -1, 0)),
-        Event::ArrowDown | Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
-        Event::ArrowRight | Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
+        Event::Left(MoveMeta::Relative) => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::Up(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::Down(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::Right(MoveMeta::Relative) => Action::Translate(Translation::Relative(1, 0, 0)),
 
-        Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left)),
-        Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top)),
-        Event::DownEdge => Action::Translate(Translation::ToEdge(Direction::Bottom)),
-        Event::RightEdge => Action::Translate(Translation::ToEdge(Direction::Right)),
+        Event::Left(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Left)),
+        Event::Up(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Top)),
+        Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
+        Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
 
         _ => {
             if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
@@ -204,15 +204,15 @@ fn color_select_event(event: InputEvent, state: &mut State, index: usize, palett
             Action::ReverseMode
         }
 
-        Event::ArrowLeft | Event::Left => Action::Translate(Translation::Relative(-1, 0, 0)),
-        Event::ArrowUp | Event::Up=> Action::Translate(Translation::Relative(0, -1, 0)),
-        Event::ArrowDown | Event::Down => Action::Translate(Translation::Relative(0, 1, 0)),
-        Event::ArrowRight | Event::Right => Action::Translate(Translation::Relative(1, 0, 0)),
+        Event::Left(MoveMeta::Relative) => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::Up(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::Down(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::Right(MoveMeta::Relative) => Action::Translate(Translation::Relative(1, 0, 0)),
 
-        Event::LeftEdge => Action::Translate(Translation::ToEdge(Direction::Left)),
-        Event::UpEdge => Action::Translate(Translation::ToEdge(Direction::Top)),
-        Event::DownEdge => Action::Translate(Translation::ToEdge(Direction::Bottom)),
-        Event::RightEdge => Action::Translate(Translation::ToEdge(Direction::Right)),
+        Event::Left(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Left)),
+        Event::Up(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Top)),
+        Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
+        Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
 
         _ => Action::None,
     };

@@ -19,7 +19,7 @@ pub enum Mode {
     Write,
     Command,
     Quitting(OnQuit), // true for force quit
-    Help(usize), // help index
+    Help(usize),      // help index
 }
 
 impl Default for Mode {

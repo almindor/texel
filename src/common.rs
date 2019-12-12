@@ -17,7 +17,7 @@ pub use action::Action;
 pub use clipboard::{Clipboard, ClipboardOp};
 pub use config::{Config, ConfigV1};
 pub use help::*;
-pub use input::{CharMap, Event, InputEvent, InputMap};
+pub use input::*;
 pub use mode::{Mode, OnQuit};
 pub use program::run;
 pub use scene::{scene_from_objects, Scene};

@@ -5,22 +5,31 @@ use termion::event::{Event as TEvent, Key};
 use texel_types::{ColorMode, Position2D, SymbolStyle, Which};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MoveMeta {
+    Relative,
+    ToEdge,
+    Alternative,
+}
+
+impl Default for MoveMeta {
+    fn default() -> Self {
+        Self::Relative
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Event {
     None,
     Cancel,
     Confirm,
-    Left,
-    Up,
-    Right,
+    Left(MoveMeta),
+    Up(MoveMeta),
+    Right(MoveMeta),
+    Down(MoveMeta),
     Above,
     Below,
-    Down,
     Undo,
     Redo,
-    LeftEdge,
-    UpEdge,
-    RightEdge,
-    DownEdge,
     Mode(Mode),
     ApplyStyle(SymbolStyle),
     EditPalette(usize), // index of symbol/color, 0x0-0xF as usize <0, 16)
@@ -86,15 +95,15 @@ impl Default for CharMap {
         map.insert('Q', Event::ApplyStyle(SymbolStyle::Italic));
         map.insert('w', Event::ApplyStyle(SymbolStyle::Underline));
 
-        map.insert('h', Event::Left);
-        map.insert('j', Event::Down);
-        map.insert('k', Event::Up);
-        map.insert('l', Event::Right);
+        map.insert('h', Event::Left(MoveMeta::Relative));
+        map.insert('j', Event::Down(MoveMeta::Relative));
+        map.insert('k', Event::Up(MoveMeta::Relative));
+        map.insert('l', Event::Right(MoveMeta::Relative));
 
-        map.insert('H', Event::LeftEdge);
-        map.insert('J', Event::DownEdge);
-        map.insert('K', Event::UpEdge);
-        map.insert('L', Event::RightEdge);
+        map.insert('H', Event::Left(MoveMeta::ToEdge));
+        map.insert('J', Event::Down(MoveMeta::ToEdge));
+        map.insert('K', Event::Up(MoveMeta::ToEdge));
+        map.insert('L', Event::Right(MoveMeta::ToEdge));
 
         map.insert('-', Event::Above);
         map.insert('=', Event::Below);
@@ -146,6 +155,10 @@ impl From<CharMap> for InputMap {
         result.map.insert(TEvent::Key(Key::Down), Event::ArrowDown);
         result.map.insert(TEvent::Key(Key::Delete), Event::Delete);
         result.map.insert(TEvent::Key(Key::Backspace), Event::Backspace);
+        result.map.insert(TEvent::Key(Key::Ctrl('h')), Event::Left(MoveMeta::Alternative));
+        result.map.insert(TEvent::Key(Key::Ctrl('j')), Event::Right(MoveMeta::Alternative));
+        result.map.insert(TEvent::Key(Key::Ctrl('k')), Event::Up(MoveMeta::Alternative));
+        result.map.insert(TEvent::Key(Key::Ctrl('l')), Event::Down(MoveMeta::Alternative));
         result
             .map
             .insert(TEvent::Key(Key::BackTab), Event::SelectObject(Which::Next, true));
@@ -160,7 +173,7 @@ impl InputMap {
 
         match raw_event {
             TEvent::Key(Key::Char(c)) => (mapped, Some(c)),
-            _ => (mapped, None),
+            _ => (mapped, None)
         }
     }
 }

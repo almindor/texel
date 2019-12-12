@@ -92,7 +92,7 @@ impl ColorPalette {
     }
 
     pub fn subselection_bg_u8() -> u8 {
-        termion::color::AnsiValue::grayscale(14).0
+        termion::color::AnsiValue::grayscale(10).0
     }
 
     pub fn u8_to_fg(color: u8) -> String {

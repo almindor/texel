@@ -1,12 +1,7 @@
-use crate::common::fio::{Loaded, scene_from_rgz_stream};
+use crate::common::fio::{scene_from_rgz_stream, Loaded};
 use texel_types::Scene;
 
-pub const HELP_TOPICS: [&'static str; 4] = [
-    "overview",
-    "commands",
-    "modes",
-    "keys",
-];
+pub const HELP_TOPICS: [&'static str; 4] = ["overview", "commands", "modes", "keys"];
 
 pub const HELP_CONTENTS: [&[u8]; 4] = [
     include_bytes!("../../help/overview.rgz"),

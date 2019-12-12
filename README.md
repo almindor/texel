@@ -3,7 +3,6 @@
 ASCII Art and landscape editor. Texel aims to make editing ASCII art easy especially
 for use in games.
 
-
 ## Building
 
 ### Dependencies
@@ -13,6 +12,10 @@ Rust v1.38+ is required.
 ### Compiling
 
 `cargo build --release`
+
+### Changelog
+
+`1.0.0 -> 1.1.0` - added `Sprite::translate_area()`
 
 ## Usage
 

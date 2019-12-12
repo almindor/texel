@@ -58,7 +58,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Translate(t) => match state.mode() {
                     Mode::Edit => {
                         let sprite_bounds = selected_bounds(&s, &p, &d);
-                        translate_subselection(t, &mut state, &ss, &mut pss, &mut d, sprite_bounds)
+                        translate_subselection(t, &mut state, &mut ss, &mut pss, &mut d, sprite_bounds)
                     }
                     _ => translate_selected(t, &mut state, &mut p, &s, &d),
                 },
@@ -320,32 +320,25 @@ fn selected_bounds(
 fn translate_subselection(
     t: Translation,
     state: &mut State,
-    ss: &WriteStorage<Subselection>,
-    p: &mut WriteStorage<Position2D>,
+    ss: &mut WriteStorage<Subselection>,
+    p_ss: &mut WriteStorage<Position2D>,
     d: &mut WriteStorage<Dimension>,
     sprite_bounds: Option<Bounds>,
 ) -> bool {
     if let Some(bounds) = sprite_bounds {
         if state.cursor.apply(t, bounds) {
-            // if we have subselection, resize it
-            if let Some((pos, dim, sel)) = (p, d, ss).join().next() {
-                if !sel.active {
-                    return false; // nothing to do
+            // if we have a subselection
+            if let Some((ss_pos, sub_sel, dim)) = (p_ss, ss, d).join().next() {
+                if sub_sel.active { // adjusting subselection
+                    let edit_box = sub_sel.initial_pos.area(state.cursor);
+                    *ss_pos = *edit_box.position();
+                    *dim = *edit_box.dimension();
                 }
-
-                let edit_box = sel.initial_pos.area(state.cursor);
-
-                *pos = *edit_box.position();
-                *dim = *edit_box.dimension();
             }
-
-            false
-        } else {
-            false
         }
-    } else {
-        false
     }
+
+    false
 }
 
 fn translate_selected(

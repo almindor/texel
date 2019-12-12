@@ -63,11 +63,7 @@ fn print_cmdline(out: &mut SyncTerm, cmdline: &CmdLine, h: i32) {
 fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
     // color selection
     let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
-    let saved_symbol = if state.unsaved_changes() > 0 {
-        "*"
-    } else {
-        " "
-    };
+    let saved_symbol = if state.unsaved_changes() > 0 { "*" } else { " " };
 
     out.write_line_default(w - 18, h, saved_symbol);
     out.write_line(w - 17, h, "▞", sc.0, sc.1, SymbolStyles::new());
