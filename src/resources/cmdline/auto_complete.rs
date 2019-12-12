@@ -71,59 +71,65 @@ impl AutoComplete {
         let loc_path = Path::new(raw_path);
         let abs_path = cwd_path(loc_path)?;
         let mut loc_parent = loc_path.parent().unwrap_or_else(|| Path::new(""));
-        let abs_parent = if abs_path.is_dir() {
+        let abs_parent: &Path;
+        let str_name;
+
+        if abs_path.is_dir() {
             loc_parent = loc_path;
-            &abs_path
+            abs_parent = &abs_path;
+            str_name = "";
         } else {
-            abs_path.parent().unwrap_or_else(|| Path::new("/"))
+            abs_parent = abs_path.parent().unwrap_or_else(|| Path::new("/"));
+            str_name = match loc_path.file_name() {
+                Some(name) => name.to_str().unwrap_or_else(|| ""),
+                None => "",
+            };
         };
 
-        if let Some(name) = loc_path.file_name() {
-            let str_name = name.to_str().unwrap_or_else(|| "");
-            let mut fs_error: Option<std::io::Error> = None;
+        let mut fs_error: Option<std::io::Error> = None;
 
-            self.completions = read_dir(abs_parent)?
-                .filter_map(|e| {
-                    if let Ok(entry) = e {
-                        if fs_error.is_some() {
-                            return None; // exit on 1st error
-                        }
-
-                        return match entry.file_name().to_str() {
-                            None => None,
-                            Some(s) => if s.starts_with(str_name) {
-                                let file_type = match entry.file_type() {
-                                    Ok(ft) => ft,
-                                    Err(err) => {
-                                        fs_error = Some(err);
-                                        return None;
-                                    },
-                                };
-
-                                let found = String::from(loc_parent.join(s).to_str().unwrap_or_else(|| "???"));
-
-                                match file_type.is_dir() {
-                                    true => Some(Completion::Directory(found)),
-                                    false => Some(Completion::Filename(found)),
-                                }
-                            } else {
-                                None
-                            }
-                        };
+        self.completions = read_dir(abs_parent)?
+            .filter_map(|e| {
+                if let Ok(entry) = e {
+                    if fs_error.is_some() {
+                        return None; // exit on 1st error
                     }
 
-                    None
-                })
-                .collect();
-            
-            if let Some(err) = fs_error {
-                return Err(Error::from(err));
-            }
+                    return match entry.file_name().to_str() {
+                        None => None,
+                        Some(s) => if s.starts_with(str_name) {
+                            eprintln!("S: {:?}", s);
+                            let file_type = match entry.file_type() {
+                                Ok(ft) => ft,
+                                Err(err) => {
+                                    fs_error = Some(err);
+                                    return None;
+                                },
+                            };
 
-            if !self.completions.is_empty() {
-                self.index = Some(0usize);
-                return Ok(self.completions.first());
-            }
+                            let found = String::from(loc_parent.join(s).to_str().unwrap_or_else(|| "???"));
+
+                            match file_type.is_dir() {
+                                true => Some(Completion::Directory(found)),
+                                false => Some(Completion::Filename(found)),
+                            }
+                        } else {
+                            None
+                        }
+                    };
+                }
+
+                None
+            })
+            .collect();
+        
+        if let Some(err) = fs_error {
+            return Err(Error::from(err));
+        }
+
+        if !self.completions.is_empty() {
+            self.index = Some(0usize);
+            return Ok(self.completions.first());
         }
 
         Ok(None)
