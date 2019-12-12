@@ -13,10 +13,6 @@ Rust v1.38+ is required.
 
 `cargo build --release`
 
-### Changelog
-
-`1.0.0 -> 1.1.0` - added `Sprite::translate_area()`
-
 ## Usage
 
 `texel [files]`
