@@ -3,8 +3,15 @@ use std::fs::read_dir;
 use std::path::Path;
 
 #[derive(Debug)]
+pub enum Completion {
+    Filename(String),
+    Directory(String),
+    Parameter(String),
+}
+
+#[derive(Debug)]
 pub struct AutoComplete {
-    completions: Vec<String>,
+    completions: Vec<Completion>, // bool for is_dir
     index: Option<usize>,
 }
 
@@ -21,7 +28,7 @@ impl AutoComplete {
         self.index = None;
     }
 
-    pub fn complete_help_topic(&mut self, word: &str) -> Option<&String> {
+    pub fn complete_help_topic(&mut self, word: &str) -> Option<&Completion> {
         if let Some(index) = self.index {
             if index < self.completions.len() - 1 {
                 self.index = Some(index + 1);
@@ -35,7 +42,8 @@ impl AutoComplete {
         }
 
         for found in HELP_TOPICS.iter().filter(|t| t.starts_with(word)) {
-            self.completions.push(String::from(*found));
+            let as_string = String::from(*found);
+            self.completions.push(Completion::Parameter(as_string));
         }
 
         if !self.completions.is_empty() {
@@ -47,7 +55,7 @@ impl AutoComplete {
     }
 
     // TODO: refactor this convoluted mess
-    pub fn complete_filename(&mut self, raw_path: &str) -> Result<Option<&String>, Error> {
+    pub fn complete_filename(&mut self, raw_path: &str) -> Result<Option<&Completion>, Error> {
         if let Some(index) = self.index {
             if index < self.completions.len() - 1 {
                 self.index = Some(index + 1);
@@ -72,18 +80,34 @@ impl AutoComplete {
 
         if let Some(name) = loc_path.file_name() {
             let str_name = name.to_str().unwrap_or_else(|| "");
+            let mut fs_error: Option<std::io::Error> = None;
 
             self.completions = read_dir(abs_parent)?
                 .filter_map(|e| {
                     if let Ok(entry) = e {
+                        if fs_error.is_some() {
+                            return None; // exit on 1st error
+                        }
+
                         return match entry.file_name().to_str() {
                             None => None,
-                            Some(s) => {
-                                if abs_path.is_dir() || s.starts_with(str_name) {
-                                    Some(String::from(loc_parent.join(s).to_str().unwrap_or_else(|| "???")))
-                                } else {
-                                    None
+                            Some(s) => if s.starts_with(str_name) {
+                                let file_type = match entry.file_type() {
+                                    Ok(ft) => ft,
+                                    Err(err) => {
+                                        fs_error = Some(err);
+                                        return None;
+                                    },
+                                };
+
+                                let found = String::from(loc_parent.join(s).to_str().unwrap_or_else(|| "???"));
+
+                                match file_type.is_dir() {
+                                    true => Some(Completion::Directory(found)),
+                                    false => Some(Completion::Filename(found)),
                                 }
+                            } else {
+                                None
                             }
                         };
                     }
@@ -91,6 +115,10 @@ impl AutoComplete {
                     None
                 })
                 .collect();
+            
+            if let Some(err) = fs_error {
+                return Err(Error::from(err));
+            }
 
             if !self.completions.is_empty() {
                 self.index = Some(0usize);

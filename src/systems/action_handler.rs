@@ -804,6 +804,7 @@ fn load_from_file(
             } else {
                 apply_scene(scene.clone(), e, s, sp, u)?;
                 state.clear_history(scene); // we're going from this scene now
+                state.saved(Some(String::from(path)));
                 Ok(false)
             }
         }

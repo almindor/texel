@@ -5,7 +5,7 @@ use std::str::SplitAsciiWhitespace;
 
 mod auto_complete;
 
-use auto_complete::AutoComplete;
+use auto_complete::{AutoComplete, Completion};
 
 const DEFAULT_CMD_CAPACITY: usize = 4096; // coz I said so!
 const MAX_HISTORY_ENTRIES: usize = 255; // coz I said so too!
@@ -165,7 +165,7 @@ impl CmdLine {
             }
         } else if let Some(cmd) = parts.first() {
             // if we have something here, and count != 1 parts.count() must be >= 1
-            let completed = match *cmd {
+            if let Some(completion) = match *cmd {
                 "import" | "read" | "write" | "w" | "r" => self
                     .auto_complete
                     .complete_filename(parts.last().unwrap_or_else(|| &"."))?,
@@ -173,10 +173,17 @@ impl CmdLine {
                     .auto_complete
                     .complete_help_topic(parts.last().unwrap_or_else(|| &"")),
                 _ => None,
-            };
+            } {
+                match completion {
+                    Completion::Filename(file_name) => {
+                        self.cmd = String::from(*cmd) + " " + &file_name;
+                    }
+                    Completion::Directory(dir) => {
+                        self.cmd = String::from(*cmd) + " " + &dir + "/";
+                    }
+                    _ => return Err(Error::execution("Unexpected completion type")),
+                }
 
-            if let Some(path) = completed {
-                self.cmd = String::from(*cmd) + " " + &path;
                 self.cursor_pos = self.cmd.len();
             }
         }
