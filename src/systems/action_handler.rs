@@ -90,7 +90,10 @@ impl<'a> System<'a> for ActionHandler {
                     Ok(changed) => changed, // we reset history in some cases here
                     Err(err) => state.set_error(err),
                 },
-                Action::ShowHelp(index) => state.set_mode(Mode::Help(index)),
+                Action::ShowHelp(index) => {
+                    state.set_mode(Mode::Help(index));
+                    false
+                },
             };
 
             if keep_history && changed {
