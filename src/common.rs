@@ -1,6 +1,3 @@
-use std::env::current_dir;
-use std::path::{Path, PathBuf};
-
 mod action;
 mod clipboard;
 mod config;
@@ -77,23 +74,6 @@ pub const fn goto(x: i32, y: i32) -> termion::cursor::Goto {
     let u_y = y as u16;
 
     termion::cursor::Goto(u_x, u_y)
-}
-
-pub fn cwd_path(path: &Path) -> Result<PathBuf, std::io::Error> {
-    if path.is_absolute() {
-        Ok(path.to_path_buf())
-    } else {
-        let cwd = current_dir()?;
-        Ok(cwd.join(path))
-    }
-}
-
-pub fn path_base(path: &str) -> String {
-    if let Some(base) = Path::new(path).parent() {
-        return String::from(base.to_str().unwrap_or(""));
-    }
-
-    String::default()
 }
 
 pub fn index_from_one(index: usize) -> i32 {

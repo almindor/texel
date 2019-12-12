@@ -1,6 +1,7 @@
 use crate::common::{
     fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SymbolStyle, Texels,
 };
+use fio::ExportFormat;
 use crate::components::*;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
@@ -70,25 +71,26 @@ impl<'a> System<'a> for ActionHandler {
                     Mode::Edit => select_edit(&e, &state, &mut ss, &u),
                     _ => state.set_error(Error::execution("Unexpected mode on selection")),
                 },
-                Action::Delete => {
-                    if state.mode() == Mode::Edit || state.mode() == Mode::Write {
-                        clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
-                    } else if let Err(err) = delete_selected(&e, &s) {
-                        state.set_error(err)
-                    } else {
-                        true
-                    }
+                Action::Delete => if state.mode() == Mode::Edit || state.mode() == Mode::Write {
+                    clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
+                } else if let Err(err) = delete_selected(&e, &s) {
+                    state.set_error(err)
+                } else {
+                    true
                 }
-                Action::Write(path) => {
-                    if let Err(err) = save_scene(&e, &mut state, &sp, &p, &s, &path) {
-                        state.set_error(err)
-                    } else {
-                        state.saved(path)
-                    }
+                Action::Write(path) => if let Err(err) = save_scene(&e, &mut state, &sp, &p, &s, &path) {
+                    state.set_error(err)
+                } else {
+                    state.saved(path)
                 }
                 Action::Read(path) => match load_from_file(&e, &mut state, &s, &sp, &u, &path) {
                     Ok(changed) => changed, // we reset history in some cases here
                     Err(err) => state.set_error(err),
+                },
+                Action::Export(format, path) => if let Err(err) = export_to_file(format, &path, &e, &sp, &p, &s) {
+                    state.set_error(err)
+                } else {
+                    false
                 },
                 Action::ShowHelp(index) => {
                     state.set_mode(Mode::Help(index));
@@ -787,8 +789,22 @@ fn save_scene(
     let path = state.save_file(new_path)?;
     let scene = scene_from_objects(e, sp, p, s);
 
-    fio::to_file(&scene, &path)
+    fio::scene_to_file(&scene, &path)
 }
+
+fn export_to_file(
+    format: ExportFormat,
+    path: &str,
+    e: &Entities,
+    sp: &WriteStorage<Sprite>,
+    p: &WriteStorage<Position>,
+    s: &ReadStorage<Selection>,
+) -> Result<(), Error> {
+    let scene = scene_from_objects(e, sp, p, s);
+
+    fio::export_to_file(scene, format, path)
+}
+
 
 fn load_from_file(
     e: &Entities,

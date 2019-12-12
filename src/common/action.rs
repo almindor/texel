@@ -1,4 +1,5 @@
 use crate::common::{ClipboardOp, Mode, OnQuit};
+use crate::common::fio::ExportFormat;
 use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 
 #[derive(Debug)]
@@ -20,6 +21,7 @@ pub enum Action {
     SelectObject(Which<Position2D>, bool), // select next keeping old if true
     Read(String),
     Write(Option<String>),
+    Export(ExportFormat, String),
     Translate(Translation),
     Delete,
     Undo,
@@ -45,6 +47,7 @@ impl From<&str> for Action {
             "quit!" | "q!" => Action::SetMode(Mode::Quitting(OnQuit::Force)),
             "x" => Action::SetMode(Mode::Quitting(OnQuit::Save)),
             "help" | "h" => Action::ShowHelp(0),
+            "export" => Action::Export(ExportFormat::default(), String::default()),
             _ => Action::None,
         }
     }
@@ -88,7 +91,7 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 8] = [
+        const ACTION_WORDS: [&str; 9] = [
             "read",
             "write",
             "translate",
@@ -97,6 +100,7 @@ impl Action {
             "quit",
             "quit!",
             "help",
+            "export",
         ];
 
         for word in &ACTION_WORDS {

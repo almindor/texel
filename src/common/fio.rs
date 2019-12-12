@@ -1,7 +1,9 @@
-use crate::common::{cwd_path, Config, Error, Scene};
+use crate::common::{Config, Error, Scene};
+use crate::exporters::{Exporter, Plaintext};
 use crate::components::Sprite;
 use libflate::gzip::{Decoder, Encoder};
 use std::path::{Path, PathBuf};
+use std::fs::File;
 
 #[derive(Debug)]
 pub enum Loaded {
@@ -10,16 +12,37 @@ pub enum Loaded {
     // config is not needed to be loaded "generically"
 }
 
-pub fn to_file(scene: &Scene, path: &str) -> Result<(), Error> {
-    let ronified = ron::ser::to_string(&scene)?;
-    let raw_path = if Path::new(&path).extension() != Some(std::ffi::OsStr::new("rgz")) {
-        Path::new(&path).with_extension("rgz")
-    } else {
-        PathBuf::from(path)
-    };
-    let abs_path = cwd_path(&raw_path)?;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExportFormat {
+    Txt,
+}
+
+impl Default for ExportFormat {
+    fn default() -> Self {
+        Self::Txt
+    }
+}
+
+// pub const EXPORT_FORMAT_LIST: [&str; 1] = [
+//     "txt",
+// ];
+
+pub fn export_to_file(scene: Scene, format: ExportFormat, path: &str) -> Result<(), Error> {
+    let abs_path = to_abs_path_with_ext(path, "txt")?;
+    let mut file = File::create(abs_path)?;
+
+    match format {
+        ExportFormat::Txt => Plaintext::export(scene, &mut file)?,
+    }
+
+    Ok(())
+}
+
+pub fn scene_to_file(scene: &Scene, path: &str) -> Result<(), Error> {
+    let abs_path = to_abs_path_with_ext(path, "txt")?;
     let file = std::fs::File::create(abs_path)?;
     let mut encoder = Encoder::new(file)?;
+    let ronified = ron::ser::to_string(&scene)?;
 
     use std::io::Write;
     encoder.write_all(ronified.as_ref())?;
@@ -69,4 +92,31 @@ pub fn scene_from_rgz_stream(stream: impl std::io::Read) -> Result<Loaded, Error
     let scene: Scene = ron::de::from_reader(decoder)?;
 
     Ok(Loaded::Scene(scene))
+}
+
+pub fn cwd_path(path: &Path) -> Result<PathBuf, std::io::Error> {
+    if path.is_absolute() {
+        Ok(path.to_path_buf())
+    } else {
+        let cwd = std::env::current_dir()?;
+        Ok(cwd.join(path))
+    }
+}
+
+pub fn path_base(path: &str) -> String {
+    if let Some(base) = Path::new(path).parent() {
+        return String::from(base.to_str().unwrap_or(""));
+    }
+
+    String::default()
+}
+
+fn to_abs_path_with_ext(path: &str, ext: &str) -> Result<PathBuf, std::io::Error> {
+    let raw_path = if Path::new(&path).extension() != Some(std::ffi::OsStr::new("txt")) {
+        Path::new(&path).with_extension(ext)
+    } else {
+        PathBuf::from(path)
+    };
+    
+    cwd_path(&raw_path)
 }

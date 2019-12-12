@@ -1,4 +1,4 @@
-use crate::common::{cwd_path, Error, HELP_TOPICS};
+use crate::common::{fio, Error, HELP_TOPICS};
 use std::fs::read_dir;
 use std::path::Path;
 
@@ -27,6 +27,32 @@ impl AutoComplete {
         self.completions.clear();
         self.index = None;
     }
+
+    // pub fn complete_export_format(&mut self, word: &str) -> Option<&Completion> {
+    //     if let Some(index) = self.index {
+    //         if index < self.completions.len() - 1 {
+    //             self.index = Some(index + 1);
+    //             return self.completions.get(index + 1);
+    //         } else if !self.completions.is_empty() {
+    //             self.index = Some(0);
+    //             return self.completions.first();
+    //         }
+
+    //         return None;
+    //     }
+
+    //     for found in fio::EXPORT_FORMAT_LIST.iter().filter(|f| f.starts_with(word)) {
+    //         let as_string = String::from(*found);
+    //         self.completions.push(Completion::Parameter(as_string));
+    //     }
+
+    //     if !self.completions.is_empty() {
+    //         self.index = Some(0usize);
+    //         return self.completions.first();
+    //     }
+
+    //     None
+    // }
 
     pub fn complete_help_topic(&mut self, word: &str) -> Option<&Completion> {
         if let Some(index) = self.index {
@@ -69,7 +95,7 @@ impl AutoComplete {
         }
 
         let loc_path = Path::new(raw_path);
-        let abs_path = cwd_path(loc_path)?;
+        let abs_path = fio::cwd_path(loc_path)?;
         let mut loc_parent = loc_path.parent().unwrap_or_else(|| Path::new(""));
         let abs_parent: &Path;
         let str_name;

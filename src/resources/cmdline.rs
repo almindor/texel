@@ -1,4 +1,4 @@
-use crate::common::{path_base, topic_index, Action, Error, Event, InputEvent};
+use crate::common::{fio, topic_index, Action, Error, Event, InputEvent};
 use crate::components::Translation;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
@@ -159,14 +159,14 @@ impl CmdLine {
         if parts.len() == 1 {
             if let Some(word) = parts.first() {
                 if let Some(cmd) = Action::complete_word(word) {
-                    self.cmd = path_base(&self.cmd) + cmd;
+                    self.cmd = fio::path_base(&self.cmd) + cmd;
                     self.cursor_pos = self.cmd.len();
                 }
             }
         } else if let Some(cmd) = parts.first() {
             // if we have something here, and count != 1 parts.count() must be >= 1
             if let Some(completion) = match *cmd {
-                "import" | "read" | "write" | "w" | "r" => self
+                "export" | "read" | "write" | "w" | "r" => self
                     .auto_complete
                     .complete_filename(parts.last().unwrap_or_else(|| &"."))?,
                 "help" => self
@@ -201,6 +201,7 @@ impl CmdLine {
             Action::Write(_) => self.parse_save(parts),
             Action::Read(_) => self.parse_load(parts),
             Action::ShowHelp(_) => self.parse_help(parts),
+            Action::Export(_, _) => self.parse_export(parts),
             _ => Err(Error::InvalidCommand),
         }
     }
@@ -245,5 +246,13 @@ impl CmdLine {
         } else {
             Ok(Action::ShowHelp(0))
         }
+    }
+
+    fn parse_export(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
+        if let Some(path) = parts.next() {
+            return Ok(Action::Export(fio::ExportFormat::default(), String::from(path)));
+        }
+
+        Err(Error::InvalidParam("No path specified"))
     }
 }
