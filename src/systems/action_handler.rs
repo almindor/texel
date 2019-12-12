@@ -1,4 +1,6 @@
-use crate::common::{fio, scene_from_objects, OnQuit, Action, Clipboard, ClipboardOp, Error, Mode, Scene, SymbolStyle, Texels};
+use crate::common::{
+    fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SymbolStyle, Texels,
+};
 use crate::components::*;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
@@ -87,8 +89,8 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Read(path) => match load_from_file(&e, &mut state, &s, &sp, &u, &path) {
                     Ok(changed) => changed, // we reset history in some cases here
                     Err(err) => state.set_error(err),
-                }
-                Action::ShowHelp(index) => state.set_mode(Mode::Help(index))
+                },
+                Action::ShowHelp(index) => state.set_mode(Mode::Help(index)),
             };
 
             if keep_history && changed {
@@ -157,20 +159,24 @@ fn set_mode(
     u: &LazyUpdate,
 ) -> bool {
     if match mode {
-        Mode::Quitting(OnQuit::Check) => if state.unsaved_changes() > 0 {
-            state.set_error(Error::execution("Unsaved changes, use q! to quit without saving"));
-            false
-        } else {
-            true
-        }
-        Mode::Quitting(OnQuit::Save) => if state.unsaved_changes() > 0 {
-            if let Err(err) = save_scene(e, state, sp, p, s, &None) {
-                state.set_error(err)
+        Mode::Quitting(OnQuit::Check) => {
+            if state.unsaved_changes() {
+                state.set_error(Error::execution("Unsaved changes, use q! to quit without saving"));
+                false
             } else {
                 true
             }
-        } else {
-            true
+        }
+        Mode::Quitting(OnQuit::Save) => {
+            if state.unsaved_changes() {
+                if let Err(err) = save_scene(e, state, sp, p, s, &None) {
+                    state.set_error(err)
+                } else {
+                    true
+                }
+            } else {
+                true
+            }
         }
         Mode::Edit | Mode::Write => match s.count() {
             1 => {
@@ -179,7 +185,8 @@ fn set_mode(
                     let pos2d: Position2D = pos.into();
                     if let Some(cp) = cur_pos.get(entity) {
                         state.cursor = *cp + pos2d;
-                    } else if state.mode() != Mode::Edit { // edit to write stays where it is
+                    } else if state.mode() != Mode::Edit {
+                        // edit to write stays where it is
                         state.cursor = pos2d;
                     }
                 }
@@ -329,7 +336,8 @@ fn translate_subselection(
         if state.cursor.apply(t, bounds) {
             // if we have a subselection
             if let Some((ss_pos, sub_sel, dim)) = (p_ss, ss, d).join().next() {
-                if sub_sel.active { // adjusting subselection
+                if sub_sel.active {
+                    // adjusting subselection
                     let edit_box = sub_sel.initial_pos.area(state.cursor);
                     *ss_pos = *edit_box.position();
                     *dim = *edit_box.dimension();
@@ -791,7 +799,7 @@ fn load_from_file(
 
     match fio::scene_from_file(path)? {
         Loaded::Scene(scene) => {
-            if state.unsaved_changes() > 0 {
+            if state.unsaved_changes() {
                 Err(Error::execution("Unsaved changes, save before opening another scene"))
             } else {
                 apply_scene(scene.clone(), e, s, sp, u)?;

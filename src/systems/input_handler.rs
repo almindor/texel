@@ -53,6 +53,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
+        Event::ApplyStyle(style) => Action::ApplyStyle(style),
 
         Event::Left(MoveMeta::Relative) => Action::Translate(Translation::Relative(-1, 0, 0)),
         Event::Up(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, -1, 0)),

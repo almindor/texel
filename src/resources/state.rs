@@ -78,8 +78,8 @@ impl State {
         *self.modes.back().unwrap()
     }
 
-    pub fn unsaved_changes(&self) -> usize {
-        self.save_state.1
+    pub fn unsaved_changes(&self) -> bool {
+        self.save_state.1 > 0 && self.history_index > 0
     }
 
     pub fn set_mode(&mut self, mode: Mode) -> bool {

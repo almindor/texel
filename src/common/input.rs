@@ -155,10 +155,18 @@ impl From<CharMap> for InputMap {
         result.map.insert(TEvent::Key(Key::Down), Event::ArrowDown);
         result.map.insert(TEvent::Key(Key::Delete), Event::Delete);
         result.map.insert(TEvent::Key(Key::Backspace), Event::Backspace);
-        result.map.insert(TEvent::Key(Key::Ctrl('h')), Event::Left(MoveMeta::Alternative));
-        result.map.insert(TEvent::Key(Key::Ctrl('j')), Event::Right(MoveMeta::Alternative));
-        result.map.insert(TEvent::Key(Key::Ctrl('k')), Event::Up(MoveMeta::Alternative));
-        result.map.insert(TEvent::Key(Key::Ctrl('l')), Event::Down(MoveMeta::Alternative));
+        result
+            .map
+            .insert(TEvent::Key(Key::Ctrl('h')), Event::Left(MoveMeta::Alternative));
+        result
+            .map
+            .insert(TEvent::Key(Key::Ctrl('j')), Event::Right(MoveMeta::Alternative));
+        result
+            .map
+            .insert(TEvent::Key(Key::Ctrl('k')), Event::Up(MoveMeta::Alternative));
+        result
+            .map
+            .insert(TEvent::Key(Key::Ctrl('l')), Event::Down(MoveMeta::Alternative));
         result
             .map
             .insert(TEvent::Key(Key::BackTab), Event::SelectObject(Which::Next, true));
@@ -173,7 +181,7 @@ impl InputMap {
 
         match raw_event {
             TEvent::Key(Key::Char(c)) => (mapped, Some(c)),
-            _ => (mapped, None)
+            _ => (mapped, None),
         }
     }
 }
