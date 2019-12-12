@@ -55,10 +55,10 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
         Event::ApplyStyle(style) => Action::ApplyStyle(style),
 
-        Event::Left(MoveMeta::Relative) => Action::Translate(Translation::Relative(-1, 0, 0)),
-        Event::Up(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, -1, 0)),
-        Event::Down(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, 1, 0)),
-        Event::Right(MoveMeta::Relative) => Action::Translate(Translation::Relative(1, 0, 0)),
+        Event::Left(MoveMeta::Relative) | Event::ArrowLeft => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::Up(MoveMeta::Relative) | Event::ArrowUp => Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::Down(MoveMeta::Relative) | Event::ArrowDown => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::Right(MoveMeta::Relative) | Event::ArrowRight => Action::Translate(Translation::Relative(1, 0, 0)),
 
         Event::Left(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Left)),
         Event::Up(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Top)),
@@ -157,16 +157,17 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
         Event::ApplyStyle(style) => Action::ApplyStyle(style),
 
-        Event::Left(MoveMeta::Relative) => Action::Translate(Translation::Relative(-1, 0, 0)),
-        Event::Up(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, -1, 0)),
-        Event::Down(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, 1, 0)),
-        Event::Right(MoveMeta::Relative) => Action::Translate(Translation::Relative(1, 0, 0)),
+        Event::Left(MoveMeta::Relative) | Event::ArrowLeft => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::Up(MoveMeta::Relative) | Event::ArrowUp => Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::Down(MoveMeta::Relative) | Event::ArrowDown => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::Right(MoveMeta::Relative) | Event::ArrowRight => Action::Translate(Translation::Relative(1, 0, 0)),
 
         Event::Left(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Left)),
         Event::Up(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Top)),
         Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
         Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
 
+        
         _ => {
             if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
                 Action::ApplySymbol(palette.symbol(index as usize))
@@ -205,10 +206,10 @@ fn color_select_event(event: InputEvent, state: &mut State, index: usize, palett
             Action::ReverseMode
         }
 
-        Event::Left(MoveMeta::Relative) => Action::Translate(Translation::Relative(-1, 0, 0)),
-        Event::Up(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, -1, 0)),
-        Event::Down(MoveMeta::Relative) => Action::Translate(Translation::Relative(0, 1, 0)),
-        Event::Right(MoveMeta::Relative) => Action::Translate(Translation::Relative(1, 0, 0)),
+        Event::Left(MoveMeta::Relative) | Event::ArrowLeft => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::Up(MoveMeta::Relative) | Event::ArrowUp => Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::Down(MoveMeta::Relative) | Event::ArrowDown => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::Right(MoveMeta::Relative) | Event::ArrowRight => Action::Translate(Translation::Relative(1, 0, 0)),
 
         Event::Left(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Left)),
         Event::Up(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Top)),
