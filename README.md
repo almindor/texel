@@ -1,7 +1,6 @@
 # Texel
 
-ASCII Art and landscape editor. Texel aims to make editing ASCII art easy especially
-for use in games.
+ASCII Art and landscape editor. Texel aims to make editing ASCII art easy especially for use in games.
 
 ## Building
 
@@ -26,3 +25,5 @@ Configuration files are saved in user config directory undex `texel/config.ron` 
 On Linux for example the location would be `$HOME/.config/texel/config.ron`
 
 ### [File Format](https://github.com/almindor/texel_types)
+
+Types are defined in the [texel_types](https://github.com/almindor/texel_types) crate. When saving a scene a gzipped RON file is produced. The contents are the Scene object with all the Sprites.
