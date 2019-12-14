@@ -51,16 +51,18 @@ pub fn scene_to_file(scene: &Scene, path: &str) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn scene_from_file(path: &str) -> Result<Loaded, Error> {
-    match Path::new(path).extension() {
+pub fn load_from_file(path: &str) -> Result<Loaded, Error> {
+    let abs_path = to_abs_path_with_ext(path, "rgz")?;
+
+    match abs_path.extension() {
         Some(ext) => match ext
             .to_str()
             .ok_or_else(|| Error::execution("Unable to parse extension"))?
         {
-            "rgz" => scene_from_rgz_file(path),
-            _ => Ok(Loaded::Sprite(from_txt_file(path)?)),
+            "rgz" => scene_from_rgz_file(&abs_path),
+            _ => Ok(Loaded::Sprite(sprite_from_txt_file(&abs_path)?)),
         },
-        None => Ok(Loaded::Sprite(from_txt_file(path)?)),
+        None => Ok(Loaded::Sprite(sprite_from_txt_file(&abs_path)?)),
     }
 }
 
@@ -71,17 +73,15 @@ pub fn from_config_file(path: &Path) -> Result<Config, Error> {
     Ok(ron::de::from_reader(file)?)
 }
 
-pub fn from_txt_file(path: &str) -> Result<Sprite, Error> {
-    if path.ends_with("txt") {
-        let abs_path = cwd_path(Path::new(path))?;
-        Ok(Sprite::from_txt_file(&abs_path)?)
+fn sprite_from_txt_file(abs_path: &Path) -> Result<Sprite, Error> {
+    if abs_path.ends_with("txt") {
+        Ok(Sprite::from_txt_file(abs_path)?)
     } else {
         Err(Error::execution("Unknown file type"))
     }
 }
 
-fn scene_from_rgz_file(path: &str) -> Result<Loaded, Error> {
-    let abs_path = cwd_path(Path::new(path))?;
+fn scene_from_rgz_file(abs_path: &Path) -> Result<Loaded, Error> {
     let file = std::fs::File::open(abs_path)?;
 
     scene_from_rgz_stream(file)
@@ -112,7 +112,7 @@ pub fn path_base(path: &str) -> String {
 }
 
 fn to_abs_path_with_ext(path: &str, ext: &str) -> Result<PathBuf, std::io::Error> {
-    let raw_path = if Path::new(&path).extension() != Some(std::ffi::OsStr::new("txt")) {
+    let raw_path = if Path::new(&path).extension() != Some(std::ffi::OsStr::new(ext)) {
         Path::new(&path).with_extension(ext)
     } else {
         PathBuf::from(path)

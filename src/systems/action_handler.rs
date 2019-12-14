@@ -816,7 +816,7 @@ fn load_from_file(
 ) -> Result<bool, Error> {
     use fio::Loaded;
 
-    match fio::scene_from_file(path)? {
+    match fio::load_from_file(path)? {
         Loaded::Scene(scene) => {
             if state.unsaved_changes() {
                 Err(Error::execution("Unsaved changes, save before opening another scene"))
