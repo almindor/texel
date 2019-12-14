@@ -38,10 +38,10 @@ impl TexelBuf {
     }
 
     pub fn set_texel(&mut self, texel: Texel) {
-        let index = self.index(texel.pos);
-
-        if index < self.buf.len() {
-            self.buf[index] = texel;
+        if let Some(index) = self.index(texel.pos) {
+            if index < self.buf.len() {
+                self.buf[index] = texel;
+            }
         }
     }
 
@@ -52,21 +52,26 @@ impl TexelBuf {
     }
 
     pub fn override_texel_bg(&mut self, texel: Texel) {
-        let index = self.index(texel.pos);
+        if let Some(index) = self.index(texel.pos) {
 
-        if index >= self.buf.len() {
-            return;
-        }
+            if index >= self.buf.len() {
+                return;
+            }
 
-        if let Some(existing) = self.buf.get_mut(index) {
-            existing.bg = texel.bg;
-        } else {
-            self.set_texel(texel);
+            if let Some(existing) = self.buf.get_mut(index) {
+                existing.bg = texel.bg;
+            } else {
+                self.set_texel(texel);
+            }
         }
     }
 
     fn texel_match(&self, texel: &Texel) -> bool {
-        self.buf[self.index(texel.pos)] == *texel
+        if let Some(index) = self.index(texel.pos) {
+            self.buf[index] == *texel
+        } else {
+            false
+        }
     }
 
     pub fn diff(newer: &Self, older: &Self) -> Texels {
@@ -81,8 +86,12 @@ impl TexelBuf {
         vec
     }
 
-    fn index(&self, pos: Position2D) -> usize {
-        self.size_x * ((pos.y - 1) as usize) + ((pos.x - 1) as usize)
+    fn index(&self, pos: Position2D) -> Option<usize> {
+        if pos.y - 1 < 0 || pos.x - 1 < 0 {
+            None
+        } else {
+            Some(self.size_x * ((pos.y - 1) as usize) + ((pos.x - 1) as usize))
+        }
     }
 
     fn deindex(&self, i: usize) -> Position2D {
@@ -112,8 +121,10 @@ impl SyncTerm {
     }
 
     pub fn set_cursor_pos(&mut self, cursor_x: i32, cursor_y: i32) {
-        self.cursor_x = cursor_x;
-        self.cursor_y = cursor_y;
+        let (size_x, size_y) = (self.buf().size_x, self.buf().size_y);
+
+        self.cursor_x = within(cursor_x, size_x);
+        self.cursor_y = within(cursor_y, size_y);
     }
 
     pub fn write_texel(&mut self, texel: Texel) {
@@ -198,5 +209,15 @@ impl SyncTerm {
 
     fn previous_buf(&self) -> &TexelBuf {
         &self.buffers[1 - self.index]
+    }
+}
+
+fn within(val: i32, max: usize) -> i32 {
+    if val < 0 {
+        1
+    } else if val as usize > max {
+        max as i32
+    } else {
+        val
     }
 }
