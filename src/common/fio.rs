@@ -52,17 +52,17 @@ pub fn scene_to_file(scene: &Scene, path: &str) -> Result<(), Error> {
 }
 
 pub fn load_from_file(path: &str) -> Result<Loaded, Error> {
-    let abs_path = to_abs_path_with_ext(path, "rgz")?;
+    let path = Path::new(path);
 
-    match abs_path.extension() {
+    match path.extension() {
         Some(ext) => match ext
             .to_str()
             .ok_or_else(|| Error::execution("Unable to parse extension"))?
         {
-            "rgz" => scene_from_rgz_file(&abs_path),
-            _ => Ok(Loaded::Sprite(sprite_from_txt_file(&abs_path)?)),
+            "rgz" => scene_from_rgz_file(path),
+            _ => Ok(Loaded::Sprite(sprite_from_txt_file(path)?)),
         },
-        None => Ok(Loaded::Sprite(sprite_from_txt_file(&abs_path)?)),
+        None => Ok(Loaded::Sprite(sprite_from_txt_file(path)?)),
     }
 }
 
@@ -73,9 +73,13 @@ pub fn from_config_file(path: &Path) -> Result<Config, Error> {
     Ok(ron::de::from_reader(file)?)
 }
 
-fn sprite_from_txt_file(abs_path: &Path) -> Result<Sprite, Error> {
-    if abs_path.ends_with("txt") {
-        Ok(Sprite::from_txt_file(abs_path)?)
+fn sprite_from_txt_file(path: &Path) -> Result<Sprite, Error> {
+    let abs_path = cwd_path(path)?;
+
+    let ext = abs_path.extension().unwrap_or_default();
+
+    if ext == "txt" {
+        Ok(Sprite::from_txt_file(&abs_path)?)
     } else {
         Err(Error::execution("Unknown file type"))
     }

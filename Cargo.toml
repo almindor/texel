@@ -19,4 +19,4 @@ serde = "1.0.103"
 serde_derive = "1.0.103"
 specs = "0.15.1"
 termion = "1.5.4"
-texel_types = { version = "1.0.0", features = ["ecs_specs", "serde_support"] }
+texel_types = { version = "1.0.1", features = ["ecs_specs", "serde_support"] }
