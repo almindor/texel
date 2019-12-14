@@ -136,11 +136,10 @@ fn build_dispatchers<'a, 'b>() -> (Dispatcher<'a, 'b>, Dispatcher<'a, 'b>) {
         .with(ClearScreen, "clear_screen", &[])
         .with(SpriteRenderer, "sprite_renderer", &["clear_screen"])
         .with(SubselectionRenderer, "subselection_renderer", &["sprite_renderer"])
-        .with(ColorPaletteRenderer, "color_palette_renderer", &["sprite_renderer"])
         .with(
             CmdLineRenderer,
             "cmdline_renderer",
-            &["clear_screen", "color_palette_renderer", "sprite_renderer"],
+            &["clear_screen", "sprite_renderer"],
         )
         .build();
 

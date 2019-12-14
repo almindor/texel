@@ -1,7 +1,7 @@
 use crate::common::{Error, Mode, SymbolStyle, SymbolStyles};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
 use specs::System;
-use texel_types::ColorMode;
+use texel_types::{Position2D, ColorMode};
 
 pub struct CmdLineRenderer;
 
@@ -34,15 +34,11 @@ impl<'a> System<'a> for CmdLineRenderer {
             Mode::Object | Mode::Help(_) => print_mode(&mut out, mode, w, h),
             Mode::Write => print_write(&mut out, &state, h),
             Mode::Edit => print_edit(&mut out, &state, &symbol_palette, h),
-            Mode::Color(cm) => print_color(&mut out, &color_palette, cm, w, h),
-            Mode::SelectSymbol(i) => print_palette(&mut out, &state, i, w, h),
-            Mode::SelectColor(_, _) => print_cursor(&mut out, &state), // has its own renderer, we just put cursor to the right spot
+            Mode::Color(cm) => print_color_select(&mut out, &state, &color_palette, cm, w, h),
+            Mode::SelectSymbol(i) => print_symbol_palette(&mut out, &state, i, w, h),
+            Mode::SelectColor(i, cm) => print_color_palette(&mut out, &state, &color_palette, i, cm, h),
         }
     }
-}
-
-fn print_cursor(out: &mut SyncTerm, state: &State) {
-    out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
 
 fn print_error(out: &mut SyncTerm, error: &Error, h: i32) {
@@ -97,12 +93,17 @@ fn print_edit(out: &mut SyncTerm, state: &State, palette: &SymbolPalette, h: i32
     out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
 
-fn print_color(out: &mut SyncTerm, palette: &ColorPalette, cm: ColorMode, w: i32, h: i32) {
+fn print_color_select(out: &mut SyncTerm, state: &State, palette: &ColorPalette, cm: ColorMode, w: i32, h: i32) {
+    let white = termion::color::AnsiValue::grayscale(23).0;
+    let bold = SymbolStyles::only(SymbolStyle::Bold);
+    let text = format!("--{}--", state.mode().to_str());
+
+    out.write_line(1, h, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.write_texels(palette.line_texels(PALETTE_OFFSET, h, cm));
     out.set_cursor_pos(w, h);
 }
 
-fn print_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32, h: i32) {
+fn print_symbol_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32, h: i32) {
     let white = termion::color::AnsiValue::grayscale(23).0;
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
@@ -118,4 +119,43 @@ fn print_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32, h: i32
         bold,
     );
     out.set_cursor_pos(w, h);
+}
+
+fn print_color_palette(out: &mut SyncTerm, state: &State, palette: &ColorPalette, index: usize, cm: ColorMode, h: i32) {
+    use crate::resources::{PALETTE_H, PALETTE_W, MAX_COLOR_INDEX};
+
+    let mut count = 0;
+    let white = termion::color::AnsiValue::grayscale(23).0;
+    let bold = SymbolStyles::only(SymbolStyle::Bold);
+    let text = format!("--{}--", state.mode().to_str());
+    let min = Position2D {
+        x: PALETTE_OFFSET,
+        y: h - PALETTE_H,
+    };
+
+    for y in min.y..min.y + PALETTE_H {
+        for x in min.x..min.x + PALETTE_W {
+            if count >= MAX_COLOR_INDEX {
+                break;
+            }
+
+            let (r, g, b) = ColorPalette::base_to_rgb(count);
+            count += 1;
+
+            out.write_line(
+                x,
+                y,
+                " ",
+                termion::color::AnsiValue::rgb(r, g, b).0,
+                texel_types::DEFAULT_FG_U8,
+                SymbolStyles::new(),
+            );
+        }
+    }
+
+    let x = PALETTE_OFFSET + (index as i32);
+    let pos = Position2D { x, y: h };
+    out.write_line(1, h, text, texel_types::DEFAULT_BG_U8, white, bold);
+    out.write_texel(palette.selector_texel(index, pos, cm));
+    out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
