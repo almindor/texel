@@ -39,7 +39,7 @@ pub fn export_to_file(scene: Scene, format: ExportFormat, path: &str) -> Result<
 }
 
 pub fn scene_to_file(scene: &Scene, path: &str) -> Result<(), Error> {
-    let abs_path = to_abs_path_with_ext(path, "txt")?;
+    let abs_path = to_abs_path_with_ext(path, "rgz")?;
     let file = std::fs::File::create(abs_path)?;
     let mut encoder = Encoder::new(file)?;
     let ronified = ron::ser::to_string(&scene)?;
