@@ -517,13 +517,11 @@ fn change_frame_on_selected(
     sp: &mut WriteStorage<Sprite>,
     s: &ReadStorage<Selection>,
 ) -> bool {
-    let mut changed = false;
-
     if s.count() == 0 {
-        state.set_error(Error::execution("No objects selected"));
-        return false;
+        return state.set_error(Error::execution("No objects selected"));
     }
 
+    let mut changed = false;
     for (sprite, _) in (sp, s).join() {
         sprite.apply_frame_change(which);
         changed = true;
