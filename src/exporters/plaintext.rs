@@ -23,6 +23,10 @@ impl Exporter for Plaintext {
 
             for texel in sprite.frame_iter() {
                 let abs_pos = pos + texel.pos;
+                if abs_pos.x < 0 || abs_pos.y < 0 {
+                    continue
+                }
+                
                 let col = abs_pos.x as usize;
                 let row = abs_pos.y as usize;
 
