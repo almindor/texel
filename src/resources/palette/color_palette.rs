@@ -15,8 +15,8 @@ pub const MAX_COLOR_INDEX: u8 = 6 * 6 * 6;
 const COLORS_IN_PALETTE: usize = 16;
 
 const DEFAULT_PALETTE_COLORS: [u8; COLORS_IN_PALETTE] = [
-    cc(5, 5, 5),
-    cc(0, 0, 0), // b & w
+    cc(3, 3, 3), // "default" gray
+    cc(0, 0, 0), // black
     cc(5, 0, 0),
     cc(0, 5, 0),
     cc(0, 0, 5), // r, g, b
@@ -179,7 +179,7 @@ fn luminance(color: u8) -> u8 {
 }
 
 fn invert_luminance(color: u8) -> u8 {
-    if luminance(color) > 2 {
+    if luminance(color) >= 2 {
         termion::color::AnsiValue::grayscale(5).0
     } else {
         termion::color::AnsiValue::grayscale(17).0
