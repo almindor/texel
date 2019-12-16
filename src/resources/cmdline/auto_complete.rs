@@ -123,23 +123,25 @@ impl AutoComplete {
 
                     return match entry.file_name().to_str() {
                         None => None,
-                        Some(s) => if s.starts_with(str_name) {
-                            let file_type = match entry.file_type() {
-                                Ok(ft) => ft,
-                                Err(err) => {
-                                    fs_error = Some(err);
-                                    return None;
-                                },
-                            };
+                        Some(s) => {
+                            if s.starts_with(str_name) {
+                                let file_type = match entry.file_type() {
+                                    Ok(ft) => ft,
+                                    Err(err) => {
+                                        fs_error = Some(err);
+                                        return None;
+                                    }
+                                };
 
-                            let found = String::from(loc_parent.join(s).to_str().unwrap_or_else(|| "???"));
+                                let found = String::from(loc_parent.join(s).to_str().unwrap_or_else(|| "???"));
 
-                            match file_type.is_dir() {
-                                true => Some(Completion::Directory(found)),
-                                false => Some(Completion::Filename(found)),
+                                match file_type.is_dir() {
+                                    true => Some(Completion::Directory(found)),
+                                    false => Some(Completion::Filename(found)),
+                                }
+                            } else {
+                                None
                             }
-                        } else {
-                            None
                         }
                     };
                 }
@@ -147,7 +149,7 @@ impl AutoComplete {
                 None
             })
             .collect();
-        
+
         if let Some(err) = fs_error {
             return Err(Error::from(err));
         }

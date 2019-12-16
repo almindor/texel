@@ -167,7 +167,6 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
         Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
 
-        
         _ => {
             if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
                 Action::ApplySymbol(palette.symbol(index as usize))

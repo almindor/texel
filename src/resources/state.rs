@@ -114,12 +114,20 @@ impl State {
         }
     }
 
-    pub fn saved(&mut self, path: Option<String>) -> bool {
-        if path.is_some() {
-            self.save_state = (path, 0);
-        } else {
-            self.save_state.1 = 0; // keep filename
-        }
+    pub fn saved(&mut self, path: String) -> bool {
+        self.save_state = (Some(path), 0);
+
+        true
+    }
+
+    pub fn clear_changes(&mut self) -> bool {
+        self.save_state.1 = 0; // keep filename
+
+        true
+    }
+
+    pub fn reset_save_file(&mut self) -> bool {
+        self.save_state = (None, 0);
 
         true
     }

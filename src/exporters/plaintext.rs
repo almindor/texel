@@ -1,6 +1,6 @@
 use crate::exporters::Exporter;
+use std::io::{Error, Write};
 use texel_types::Scene;
-use std::io::{Write, Error};
 
 pub struct Plaintext;
 
@@ -24,9 +24,9 @@ impl Exporter for Plaintext {
             for texel in sprite.frame_iter() {
                 let abs_pos = pos + texel.pos;
                 if abs_pos.x < 0 || abs_pos.y < 0 {
-                    continue
+                    continue;
                 }
-                
+
                 let col = abs_pos.x as usize;
                 let row = abs_pos.y as usize;
 

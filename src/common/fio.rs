@@ -1,9 +1,9 @@
 use crate::common::{Config, Error, Scene};
-use crate::exporters::{Exporter, Plaintext};
 use crate::components::Sprite;
+use crate::exporters::{Exporter, Plaintext};
 use libflate::gzip::{Decoder, Encoder};
-use std::path::{Path, PathBuf};
 use std::fs::File;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub enum Loaded {
@@ -121,6 +121,6 @@ fn to_abs_path_with_ext(path: &str, ext: &str) -> Result<PathBuf, std::io::Error
     } else {
         PathBuf::from(path)
     };
-    
+
     cwd_path(&raw_path)
 }

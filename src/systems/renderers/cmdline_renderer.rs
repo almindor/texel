@@ -1,7 +1,7 @@
 use crate::common::{Error, Mode, SymbolStyle, SymbolStyles};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
 use specs::System;
-use texel_types::{Position2D, ColorMode};
+use texel_types::{ColorMode, Position2D};
 
 pub struct CmdLineRenderer;
 
@@ -122,7 +122,7 @@ fn print_symbol_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32,
 }
 
 fn print_color_palette(out: &mut SyncTerm, state: &State, palette: &ColorPalette, index: usize, cm: ColorMode, h: i32) {
-    use crate::resources::{PALETTE_H, PALETTE_W, MAX_COLOR_INDEX};
+    use crate::resources::{MAX_COLOR_INDEX, PALETTE_H, PALETTE_W};
 
     let mut count = 0;
     let white = termion::color::AnsiValue::grayscale(23).0;

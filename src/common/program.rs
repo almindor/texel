@@ -63,7 +63,7 @@ fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher) {
             // single non-existing file -> make it
             if (&args[1..]).len() == 1 && !std::path::Path::new(&args[1]).exists() {
                 let path = args.get(1).unwrap();
-                state.saved(Some(path.into())); // consider this file our save file
+                state.saved(path.into()); // consider this file our save file
             } else {
                 for path in &args[1..] {
                     state.push_action(Action::Read(String::from(path)));
@@ -71,7 +71,7 @@ fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher) {
 
                 if args.len() == 2 {
                     let path = args.get(1).unwrap();
-                    state.saved(Some(path.into())); // consider this file our save file
+                    state.saved(path.into()); // consider this file our save file
                 }
             }
         }

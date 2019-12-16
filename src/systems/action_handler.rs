@@ -1,9 +1,9 @@
 use crate::common::{
     fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SymbolStyle, Texels,
 };
-use fio::ExportFormat;
 use crate::components::*;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
+use fio::ExportFormat;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use texel_types::{ColorMode, Which};
 
@@ -71,31 +71,43 @@ impl<'a> System<'a> for ActionHandler {
                     Mode::Edit => select_edit(&e, &state, &mut ss, &u),
                     _ => state.set_error(Error::execution("Unexpected mode on selection")),
                 },
-                Action::Delete => if state.mode() == Mode::Edit || state.mode() == Mode::Write {
-                    clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
-                } else if let Err(err) = delete_selected(&e, &s) {
-                    state.set_error(err)
-                } else {
-                    true
+                Action::Delete => {
+                    if state.mode() == Mode::Edit || state.mode() == Mode::Write {
+                        clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
+                    } else if let Err(err) = delete_selected(&e, &s) {
+                        state.set_error(err)
+                    } else {
+                        true
+                    }
                 }
-                Action::Write(path) => if let Err(err) = save_scene(&e, &mut state, &sp, &p, &s, &path) {
-                    state.set_error(err)
-                } else {
-                    state.saved(path)
+                Action::Write(path) => {
+                    if let Err(err) = save_scene(&e, &mut state, &sp, &p, &s, &path) {
+                        state.set_error(err)
+                    } else if let Some(path) = path {
+                        state.saved(path)
+                    } else {
+                        state.clear_changes()
+                    }
                 }
                 Action::Read(path) => match load_from_file(&e, &mut state, &s, &sp, &u, &path) {
                     Ok(changed) => changed, // we reset history in some cases here
                     Err(err) => state.set_error(err),
                 },
-                Action::Export(format, path) => if let Err(err) = export_to_file(format, &path, &e, &sp, &p, &s) {
-                    state.set_error(err)
-                } else {
-                    false
+                Action::Tutorial => match tutorial(&e, &mut state, &s, &sp, &u) {
+                    Ok(changed) => changed,
+                    Err(err) => state.set_error(err),
                 },
+                Action::Export(format, path) => {
+                    if let Err(err) = export_to_file(format, &path, &e, &sp, &p, &s) {
+                        state.set_error(err)
+                    } else {
+                        false
+                    }
+                }
                 Action::ShowHelp(index) => {
                     state.set_mode(Mode::Help(index));
                     false
-                },
+                }
             };
 
             if keep_history && changed {
@@ -188,7 +200,7 @@ fn set_mode(
                 state.clear_error();
                 if let Some((entity, pos, _)) = (e, p, s).join().next() {
                     let pos2d: Position2D = pos.into();
-                    
+
                     // if we're going from a non-cursory mode
                     if state.mode() != Mode::Edit && state.mode() != Mode::Write {
                         if let Some(cp) = cur_pos.get(entity) {
@@ -806,6 +818,29 @@ fn export_to_file(
     fio::export_to_file(scene, format, path)
 }
 
+fn tutorial(
+    e: &Entities,
+    state: &mut State,
+    s: &ReadStorage<Selection>,
+    sp: &WriteStorage<Sprite>,
+    u: &LazyUpdate,
+) -> Result<bool, Error> {
+    if state.unsaved_changes() {
+        Err(Error::execution("Unsaved changes, save before opening tutorial"))
+    } else {
+        use fio::Loaded;
+        let bytes = include_bytes!("../../help/tutorial.rgz");
+        let scene = match fio::scene_from_rgz_stream(&bytes[..])? {
+            Loaded::Scene(scene) => scene,
+            Loaded::Sprite(_) => return Err(Error::execution("Invalid const situation")),
+        };
+
+        apply_scene(scene.clone(), e, s, sp, u)?;
+        state.clear_history(scene); // we're going from this scene now
+        state.reset_save_file(); // ensure we don't save the tutorial into previous file
+        Ok(false)
+    }
+}
 
 fn load_from_file(
     e: &Entities,
@@ -824,7 +859,7 @@ fn load_from_file(
             } else {
                 apply_scene(scene.clone(), e, s, sp, u)?;
                 state.clear_history(scene); // we're going from this scene now
-                state.saved(Some(String::from(path)));
+                state.saved(String::from(path));
                 Ok(false)
             }
         }

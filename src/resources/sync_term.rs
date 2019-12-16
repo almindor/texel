@@ -53,7 +53,6 @@ impl TexelBuf {
 
     pub fn override_texel_bg(&mut self, texel: Texel) {
         if let Some(index) = self.index(texel.pos) {
-
             if index >= self.buf.len() {
                 return;
             }

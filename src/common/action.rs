@@ -1,5 +1,5 @@
-use crate::common::{ClipboardOp, Mode, OnQuit};
 use crate::common::fio::ExportFormat;
+use crate::common::{ClipboardOp, Mode, OnQuit};
 use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 
 #[derive(Debug)]
@@ -27,6 +27,7 @@ pub enum Action {
     Undo,
     Redo,
     ShowHelp(usize),
+    Tutorial,
 }
 
 impl Default for Action {
@@ -48,6 +49,7 @@ impl From<&str> for Action {
             "x" => Action::SetMode(Mode::Quitting(OnQuit::Save)),
             "help" | "h" => Action::ShowHelp(0),
             "export" => Action::Export(ExportFormat::default(), String::default()),
+            "tutorial" => Action::Tutorial,
             _ => Action::None,
         }
     }
@@ -84,6 +86,7 @@ impl Action {
             | Action::Redo
             | Action::ClearError
             | Action::ReverseMode
+            | Action::ShowHelp(_)
             | Action::SetMode(_)
             | Action::Write(_) => false,
             _ => true,
@@ -91,7 +94,7 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 9] = [
+        const ACTION_WORDS: [&str; 10] = [
             "read",
             "write",
             "translate",
@@ -101,6 +104,7 @@ impl Action {
             "quit!",
             "help",
             "export",
+            "tutorial",
         ];
 
         for word in &ACTION_WORDS {

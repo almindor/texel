@@ -196,7 +196,7 @@ impl CmdLine {
 
         let action = Action::from(parts.next());
         match action {
-            Action::Delete | Action::Deselect | Action::SetMode(_) => Ok(action),
+            Action::Tutorial | Action::Delete | Action::Deselect | Action::SetMode(_) => Ok(action),
             Action::Translate(_) => self.parse_translate(parts),
             Action::Write(_) => self.parse_save(parts),
             Action::Read(_) => self.parse_load(parts),
