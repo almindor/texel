@@ -120,7 +120,7 @@ fn reverse_mode(
         for (entity, pos, _) in (e, p, s).join() {
             let pos2d: Position2D = pos.into();
             if let Some(cp) = cur_pos.get_mut(entity) {
-                *cp = state.cursor - pos2d;
+                *cp = state.cursor - pos2d; // update to last cursor position
             } else {
                 u.insert(entity, state.cursor - pos2d); // insert last cursor position
             }
@@ -186,13 +186,16 @@ fn set_mode(
         Mode::Edit | Mode::Write => match s.count() {
             1 => {
                 state.clear_error();
-                for (entity, pos, _) in (e, p, s).join() {
+                if let Some((entity, pos, _)) = (e, p, s).join().next() {
                     let pos2d: Position2D = pos.into();
-                    if let Some(cp) = cur_pos.get(entity) {
-                        state.cursor = *cp + pos2d;
-                    } else if state.mode() != Mode::Edit {
-                        // edit to write stays where it is
-                        state.cursor = pos2d;
+                    
+                    // if we're going from a non-cursory mode
+                    if state.mode() != Mode::Edit && state.mode() != Mode::Write {
+                        if let Some(cp) = cur_pos.get(entity) {
+                            state.cursor = *cp + pos2d;
+                        } else {
+                            state.cursor = pos2d;
+                        }
                     }
                 }
                 true
