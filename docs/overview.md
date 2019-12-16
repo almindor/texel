@@ -7,6 +7,8 @@ Texel also has a "commandline" accessed with the `:` key.
 
 Use `:help` to get started or `:tutorial` for a quick intro tutorial in texel itself.
 
+## [Commands](commands.md)
+
 ## [Modes](modes.md)
 
 ## [Keymap](keymap.md)

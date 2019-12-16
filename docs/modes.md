@@ -11,13 +11,3 @@ Texel uses modes similar to `vim` but more complex.
 
 The default mode is `Object`. Each mode can be reversed to previous one via `ESC`.
 The `Command` mode can be entered from any mode except `Write` (so you can type `:` directly).
-
-### Commands in Command mode
-* `q, quit`               - quit
-* `q!, quit!`             - force quit (don't save)
-* `r, read [filename]`    - read a file
-* `w, write [filename]`   - save a file
-* `import <filename>`     - import object/sprite from text file
-* `export <filename>`     - export selected object/sprite to text file
-* `delete`                - delete selected
-* `deselect`              - deselect all
