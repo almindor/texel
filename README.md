@@ -2,6 +2,11 @@
 
 ASCII Art and landscape editor. Texel aims to make editing ASCII art easy especially for use in games.
 
+### Example Scene
+
+![alt text](https://raw.githubusercontent.com/almindor/texel/master/docs/texel_scene.png)
+
+
 ## Building
 
 ### Dependencies
