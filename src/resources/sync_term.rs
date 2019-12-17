@@ -209,6 +209,27 @@ impl SyncTerm {
     fn previous_buf(&self) -> &TexelBuf {
         &self.buffers[1 - self.index]
     }
+
+    pub fn blank_to_black(out: &mut impl Write) {
+        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+        let empty_line = " ".repeat(usize::from(ts.0));
+
+        write!(
+            out,
+            "{}",
+            termion::clear::All,
+        ).unwrap();
+
+        for y in 1..=ts.1 {
+            write!(
+                out,
+                "{}{}{}",
+                crate::common::goto(1, i32::from(y)),
+                termion::color::Bg(termion::color::AnsiValue(16)),
+                empty_line,
+            ).unwrap();
+        }
+    }
 }
 
 fn within(val: i32, max: usize) -> i32 {

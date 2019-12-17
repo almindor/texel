@@ -24,7 +24,8 @@ pub fn run(args: Vec<String>) {
 
     // initial clear screen
     let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
-    write!(stdout, "{}", termion::clear::All).unwrap();
+    SyncTerm::blank_to_black(&mut stdout);
+
     // load files as needed
     load_from(args, &mut world, &mut updater);
     // draw initial set
