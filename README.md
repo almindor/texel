@@ -12,6 +12,8 @@ Rust v1.38+ is required.
 
 `cargo build --release`
 
+### [Changelog](CHANGELOG.md)
+
 ## Usage
 
 `texel [files]`
