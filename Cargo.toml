@@ -1,6 +1,6 @@
 [package]
 name = "texel"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Ales Katona <ales@katona.me>"]
 edition = "2018"
 description = "ASCII art text editor"
