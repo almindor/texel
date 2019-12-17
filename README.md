@@ -8,6 +8,8 @@ ASCII Art and landscape editor. Texel aims to make editing ASCII art easy especi
 
 Rust v1.38+ is required.
 
+Platforms supported are Redox, Mac OS X, and Linux due to [Termion](https://docs.rs/termion/1.5.4/termion/). Crossterm support is planned to add Windows support later.
+
 ### Compiling
 
 `cargo build --release`
