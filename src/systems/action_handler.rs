@@ -1,6 +1,6 @@
 use crate::common::{fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene};
 use crate::components::*;
-use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
+use crate::resources::{SyncTerm, State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use fio::ExportFormat;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use texel_types::{ColorMode, SymbolStyle, Texels, Which};
@@ -219,7 +219,7 @@ fn set_mode(
             _ => state.set_error(Error::execution("Multiple objects selected")),
         },
         Mode::SelectColor(_, _) => {
-            let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+            let ts = SyncTerm::terminal_size();
             state.cursor = Position2D {
                 x: PALETTE_OFFSET,
                 y: i32::from(ts.1) - 14,
@@ -375,7 +375,7 @@ fn translate_selected(
     s: &ReadStorage<Selection>,
     d: &WriteStorage<Dimension>,
 ) -> bool {
-    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+    let ts = SyncTerm::terminal_size();
     let screen_dim = Dimension::from_wh(ts.0, ts.1);
     let palette_pos = Position2D {
         x: PALETTE_OFFSET,

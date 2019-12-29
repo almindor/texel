@@ -1,5 +1,6 @@
 use crate::common::Error;
 use crate::components::Position2D;
+use crate::resources::SyncTerm;
 use serde::{Deserialize, Serialize};
 use texel_types::{ColorMode, SymbolStyle, SymbolStyles, Texel, Texels};
 
@@ -104,7 +105,7 @@ impl ColorPalette {
     }
 
     pub fn pos_to_color(pos: Position2D) -> u8 {
-        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+        let ts = SyncTerm::terminal_size();
         let min = Position2D {
             x: PALETTE_OFFSET,
             y: i32::from(ts.1) - PALETTE_H,

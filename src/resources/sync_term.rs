@@ -110,6 +110,10 @@ pub struct SyncTerm {
 }
 
 impl SyncTerm {
+    pub fn terminal_size() -> (u16, u16) {
+        termion::terminal_size().unwrap() // this needs to panic since we lose output otherwise
+    }
+
     pub fn new(size_x: usize, size_y: usize) -> Self {
         SyncTerm {
             buffers: [TexelBuf::new(size_x, size_y), TexelBuf::new(size_x, size_y)],
@@ -212,7 +216,7 @@ impl SyncTerm {
     }
 
     pub fn blank_to_black(out: &mut impl Write) {
-        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+        let ts = SyncTerm::terminal_size();
         let empty_line = " ".repeat(usize::from(ts.0));
 
         write!(out, "{}", termion::clear::All,).unwrap();

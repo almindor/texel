@@ -88,7 +88,7 @@ fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
         Err(_) => Config::default().current(),
     };
 
-    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+    let ts = SyncTerm::terminal_size();
 
     // prep resources
     world.insert(SyncTerm::new(usize::from(ts.0), usize::from(ts.1)));
@@ -100,7 +100,7 @@ fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
 }
 
 fn check_terminal_size() {
-    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+    let ts = SyncTerm::terminal_size();
     if ts.0 < 60 || ts.1 < 16 {
         eprintln!("Terminal size too small, minimum 60x16 is required");
         std::process::exit(1);

@@ -41,7 +41,7 @@ impl<'a> System<'a> for SpriteRenderer {
 
         // location info status line
         if let Some(si) = sprite_info {
-            let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+            let ts = SyncTerm::terminal_size();
             let w = i32::from(ts.0);
             let h = i32::from(ts.1);
             let text = format!("[{}]::[{}/{}]", si.0, si.1, si.2);
@@ -58,7 +58,7 @@ fn render_scene(out: &mut SyncTerm, scene: Scene) {
 }
 
 fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
-    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+    let ts = SyncTerm::terminal_size();
 
     for t in s.frame_iter().filter(|t| p.x + t.pos.x > 0 && p.y + t.pos.y > 0) {
         if is_visible(p.x + t.pos.x, p.y + t.pos.y, ts) {
@@ -87,7 +87,7 @@ fn is_visible(x: i32, y: i32, ts: (u16, u16)) -> bool {
 }
 
 fn render_border(out: &mut SyncTerm, p: &Position, d: Dimension) {
-    let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+    let ts = SyncTerm::terminal_size();
     let min_x = p.x - 1;
     let min_y = p.y - 1;
     let b_w = i32::from(d.w + 1);

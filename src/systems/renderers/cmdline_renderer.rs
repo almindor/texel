@@ -15,7 +15,7 @@ impl<'a> System<'a> for CmdLineRenderer {
     );
 
     fn run(&mut self, (mut out, state, cmdline, color_palette, symbol_palette): Self::SystemData) {
-        let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
+        let ts = SyncTerm::terminal_size();
         let w = i32::from(ts.0);
         let h = i32::from(ts.1);
 
