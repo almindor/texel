@@ -5,10 +5,8 @@ use termion::input::{MouseTerminal, TermRead};
 use termion::raw::IntoRawMode;
 
 use crate::common::{fio, Action, Config, ConfigV1, InputMap};
-use crate::resources::{ColorPalette, State, SymbolPalette, SyncTerm};
+use crate::resources::{ColorPalette, State, SymbolPalette, SyncTerm, Terminal};
 use crate::systems::*;
-
-type Terminal = termion::input::MouseTerminal<termion::raw::RawTerminal<std::io::Stdout>>;
 
 pub fn run(args: Vec<String>) {
     check_terminal_size();
@@ -50,7 +48,7 @@ pub fn run(args: Vec<String>) {
         flush_terminal(&mut stdout, &world);
     }
     // reset tty back with clear screen
-    restore_terminal(&mut stdout);
+    SyncTerm::restore_terminal(&mut stdout);
 
     // save config
     save_config(&config_file, &world);
@@ -109,20 +107,6 @@ fn check_terminal_size() {
 
 fn flush_terminal(stdout: &mut Terminal, world: &World) {
     world.fetch_mut::<SyncTerm>().flush_into(stdout).unwrap();
-    stdout.flush().unwrap();
-}
-
-fn restore_terminal(stdout: &mut Terminal) {
-    let color_reset = termion::color::Reset;
-    write!(
-        stdout,
-        "{}{}{}{}",
-        termion::clear::All,
-        color_reset.fg_str(),
-        color_reset.bg_str(),
-        termion::cursor::Goto(1, 1)
-    )
-    .unwrap();
     stdout.flush().unwrap();
 }
 

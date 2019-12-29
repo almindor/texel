@@ -2,6 +2,10 @@ use std::io::Write;
 use std::vec::Vec;
 use texel_types::{Position2D, SymbolStyles, Texel, Texels};
 
+mod tty_termion;
+
+pub use tty_termion::Terminal;
+
 #[derive(Debug, Default)]
 struct TexelBuf {
     size_x: usize,
@@ -110,21 +114,6 @@ pub struct SyncTerm {
 }
 
 impl SyncTerm {
-    pub fn terminal_size() -> (u16, u16) {
-        termion::terminal_size().unwrap() // this needs to panic since we lose output otherwise
-    }
-
-    pub fn goto(x: i32, y: i32) -> impl std::fmt::Display {
-        // ensure we don't try to go to < 1 on any axis
-        let o_x = std::cmp::max(1, x);
-        let o_y = std::cmp::max(1, y);
-        // TODO: figure out better way to handle this
-        let u_x = o_x as u16;
-        let u_y = o_y as u16;
-
-        termion::cursor::Goto(u_x, u_y)
-    }
-
     pub fn new(size_x: usize, size_y: usize) -> Self {
         SyncTerm {
             buffers: [TexelBuf::new(size_x, size_y), TexelBuf::new(size_x, size_y)],
