@@ -114,6 +114,14 @@ impl SyncTerm {
         termion::terminal_size().unwrap() // this needs to panic since we lose output otherwise
     }
 
+    pub fn goto(x: i32, y: i32) -> impl std::fmt::Display {
+        // TODO: figure out best way to handle this
+        let u_x = x as u16;
+        let u_y = y as u16;
+
+        termion::cursor::Goto(u_x, u_y)
+    }
+
     pub fn new(size_x: usize, size_y: usize) -> Self {
         SyncTerm {
             buffers: [TexelBuf::new(size_x, size_y), TexelBuf::new(size_x, size_y)],
@@ -200,7 +208,7 @@ impl SyncTerm {
         }
 
         out.flush()?;
-        write!(out, "{}", crate::common::goto(self.cursor_x, self.cursor_y))
+        write!(out, "{}", Self::goto(self.cursor_x, self.cursor_y))
     }
 
     fn buf_mut(&mut self) -> &mut TexelBuf {
@@ -225,7 +233,7 @@ impl SyncTerm {
             write!(
                 out,
                 "{}{}{}",
-                crate::common::goto(1, i32::from(y)),
+                Self::goto(1, i32::from(y)),
                 termion::color::Bg(termion::color::AnsiValue(16)),
                 empty_line,
             )

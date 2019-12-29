@@ -70,14 +70,6 @@ pub fn add_max(u: usize, i: i32, m: usize) -> Option<usize> {
     result
 }
 
-pub const fn goto(x: i32, y: i32) -> termion::cursor::Goto {
-    // TODO: figure out best way to handle this
-    let u_x = x as u16;
-    let u_y = y as u16;
-
-    termion::cursor::Goto(u_x, u_y)
-}
-
 pub fn index_from_one(index: usize) -> i32 {
     if index < 9 {
         (index + 1) as i32
