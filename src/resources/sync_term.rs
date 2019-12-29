@@ -199,8 +199,9 @@ impl SyncTerm {
             write!(out, "{}", texel.to_string())?;
         }
 
-        out.flush()?;
-        write!(out, "{}", Terminal::goto(self.cursor_x, self.cursor_y))
+        write!(out, "{}", Terminal::goto(self.cursor_x, self.cursor_y))?;
+
+        out.flush()
     }
 
     fn buf_mut(&mut self) -> &mut TexelBuf {
