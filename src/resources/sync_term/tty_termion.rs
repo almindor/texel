@@ -1,6 +1,7 @@
 use std::io::{Stdout, Write};
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
+use texel_types::SymbolStyle;
 
 type TermionTTY = termion::input::MouseTerminal<termion::raw::RawTerminal<std::io::Stdout>>;
 
@@ -43,6 +44,34 @@ impl Terminal {
         let u_y = o_y as u16;
 
         termion::cursor::Goto(u_x, u_y)
+    }
+
+    pub fn reset_sequence() -> impl std::fmt::Display {
+        termion::style::Reset
+    }
+
+    pub fn style_sequence<'a>(style: SymbolStyle) -> &'a dyn std::fmt::Display {
+        match style {
+            SymbolStyle::Bold => &termion::style::Bold,
+            SymbolStyle::Italic => &termion::style::Italic,
+            SymbolStyle::Underline => &termion::style::Underline,
+        }
+    }
+
+    pub fn rgb_u8(r: u8, g: u8, b: u8) -> u8 {
+        termion::color::AnsiValue::rgb(r, g, b).0
+    }
+
+    pub fn grayscale_u8(shade: u8) -> u8 {
+        termion::color::AnsiValue::grayscale(shade).0
+    }
+
+    pub fn bg_color_sequence(color: u8) -> impl std::fmt::Display {
+        termion::color::AnsiValue(color).bg_string()
+    }
+
+    pub fn fg_color_sequence(color: u8) -> impl std::fmt::Display {
+        termion::color::AnsiValue(color).fg_string()
     }
 
     pub fn blank_to_black(&mut self) {

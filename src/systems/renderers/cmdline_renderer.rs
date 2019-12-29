@@ -42,8 +42,8 @@ impl<'a> System<'a> for CmdLineRenderer {
 }
 
 fn print_error(out: &mut SyncTerm, error: &Error, h: i32) {
-    let red = termion::color::AnsiValue::rgb(5, 0, 0).0;
-    let white = termion::color::AnsiValue::rgb(5, 5, 5).0;
+    let red = Terminal::rgb_u8(5, 0, 0);
+    let white = Terminal::rgb_u8(5, 5, 5);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
 
     out.write_line(1, h, error, red, white, bold);
@@ -67,7 +67,7 @@ fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
 }
 
 fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
-    let white = termion::color::AnsiValue::grayscale(23).0;
+    let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
 
@@ -76,7 +76,7 @@ fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
 }
 
 fn print_mode(out: &mut SyncTerm, mode: Mode, w: i32, h: i32) {
-    let white = termion::color::AnsiValue::grayscale(23).0;
+    let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", mode.to_str());
 
@@ -85,7 +85,7 @@ fn print_mode(out: &mut SyncTerm, mode: Mode, w: i32, h: i32) {
 }
 
 fn print_edit(out: &mut SyncTerm, state: &State, palette: &SymbolPalette, h: i32) {
-    let white = termion::color::AnsiValue::grayscale(23).0;
+    let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
 
     out.write_line(1, h, "--EDIT--", texel_types::DEFAULT_BG_U8, white, bold);
@@ -94,7 +94,7 @@ fn print_edit(out: &mut SyncTerm, state: &State, palette: &SymbolPalette, h: i32
 }
 
 fn print_color_select(out: &mut SyncTerm, state: &State, palette: &ColorPalette, cm: ColorMode, w: i32, h: i32) {
-    let white = termion::color::AnsiValue::grayscale(23).0;
+    let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
 
@@ -104,7 +104,7 @@ fn print_color_select(out: &mut SyncTerm, state: &State, palette: &ColorPalette,
 }
 
 fn print_symbol_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32, h: i32) {
-    let white = termion::color::AnsiValue::grayscale(23).0;
+    let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
     let i_txt = format!("{}", crate::common::index_from_one(index));
@@ -125,7 +125,7 @@ fn print_color_palette(out: &mut SyncTerm, state: &State, palette: &ColorPalette
     use crate::resources::{MAX_COLOR_INDEX, PALETTE_H, PALETTE_W};
 
     let mut count = 0;
-    let white = termion::color::AnsiValue::grayscale(23).0;
+    let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
     let min = Position2D {
@@ -146,7 +146,7 @@ fn print_color_palette(out: &mut SyncTerm, state: &State, palette: &ColorPalette
                 x,
                 y,
                 " ",
-                termion::color::AnsiValue::rgb(r, g, b).0,
+                Terminal::rgb_u8(r, g, b),
                 texel_types::DEFAULT_FG_U8,
                 SymbolStyles::new(),
             );

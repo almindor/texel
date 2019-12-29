@@ -93,15 +93,7 @@ impl ColorPalette {
     }
 
     pub fn subselection_bg_u8() -> u8 {
-        termion::color::AnsiValue::grayscale(10).0
-    }
-
-    pub fn u8_to_fg(color: u8) -> String {
-        termion::color::AnsiValue(color).fg_string()
-    }
-
-    pub fn u8_to_bg(color: u8) -> String {
-        termion::color::AnsiValue(color).bg_string()
+        Terminal::grayscale_u8(10)
     }
 
     pub fn pos_to_color(pos: Position2D) -> u8 {
@@ -181,8 +173,8 @@ fn luminance(color: u8) -> u8 {
 
 fn invert_luminance(color: u8) -> u8 {
     if luminance(color) >= 2 {
-        termion::color::AnsiValue::grayscale(5).0
+        Terminal::grayscale_u8(5)
     } else {
-        termion::color::AnsiValue::grayscale(17).0
+        Terminal::grayscale_u8(17)
     }
 }
