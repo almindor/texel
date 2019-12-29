@@ -115,9 +115,12 @@ impl SyncTerm {
     }
 
     pub fn goto(x: i32, y: i32) -> impl std::fmt::Display {
-        // TODO: figure out best way to handle this
-        let u_x = x as u16;
-        let u_y = y as u16;
+        // ensure we don't try to go to < 1 on any axis
+        let o_x = std::cmp::max(1, x);
+        let o_y = std::cmp::max(1, y);
+        // TODO: figure out better way to handle this
+        let u_x = o_x as u16;
+        let u_y = o_y as u16;
 
         termion::cursor::Goto(u_x, u_y)
     }
