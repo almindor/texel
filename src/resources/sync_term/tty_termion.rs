@@ -50,7 +50,7 @@ impl Terminal {
         termion::style::Reset
     }
 
-    pub fn style_sequence<'a>(style: SymbolStyle) -> &'a dyn std::fmt::Display {
+    pub fn style_sequence(style: SymbolStyle) -> &'static dyn std::fmt::Display {
         match style {
             SymbolStyle::Bold => &termion::style::Bold,
             SymbolStyle::Italic => &termion::style::Italic,
