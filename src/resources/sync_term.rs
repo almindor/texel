@@ -200,7 +200,7 @@ impl SyncTerm {
         }
 
         out.flush()?;
-        write!(out, "{}", Self::goto(self.cursor_x, self.cursor_y))
+        write!(out, "{}", Terminal::goto(self.cursor_x, self.cursor_y))
     }
 
     fn buf_mut(&mut self) -> &mut TexelBuf {
@@ -213,24 +213,6 @@ impl SyncTerm {
 
     fn previous_buf(&self) -> &TexelBuf {
         &self.buffers[1 - self.index]
-    }
-
-    pub fn blank_to_black(out: &mut impl Write) {
-        let ts = SyncTerm::terminal_size();
-        let empty_line = " ".repeat(usize::from(ts.0));
-
-        write!(out, "{}", termion::clear::All,).unwrap();
-
-        for y in 1..=ts.1 {
-            write!(
-                out,
-                "{}{}{}",
-                Self::goto(1, i32::from(y)),
-                termion::color::Bg(termion::color::AnsiValue(16)),
-                empty_line,
-            )
-            .unwrap();
-        }
     }
 }
 

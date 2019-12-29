@@ -1,8 +1,7 @@
 use specs::prelude::*;
-use std::io::{stdin, stdout, Write};
+use std::io::{stdin, stdout};
 use std::path::Path;
-use termion::input::{MouseTerminal, TermRead};
-use termion::raw::IntoRawMode;
+use termion::input::TermRead;
 
 use crate::common::{fio, Action, Config, ConfigV1, InputMap};
 use crate::resources::{ColorPalette, State, SymbolPalette, SyncTerm, Terminal};
@@ -21,15 +20,15 @@ pub fn run(args: Vec<String>) {
     renderer.setup(&mut world);
 
     // initial clear screen
-    let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
-    SyncTerm::blank_to_black(&mut stdout);
+    let mut terminal = Terminal::new(stdout());
+    terminal.blank_to_black();
 
     // load files as needed
     load_from(args, &mut world, &mut updater);
     // draw initial set
     renderer.dispatch(&world);
     // flush buffers to terminal
-    flush_terminal(&mut stdout, &world);
+    world.fetch_mut::<SyncTerm>().flush_into(terminal.endpoint()).unwrap();
 
     for c in stdin().events() {
         // handle input
@@ -45,10 +44,10 @@ pub fn run(args: Vec<String>) {
         // render only after world is up to date
         renderer.dispatch(&world);
         // flush buffers to terminal
-        flush_terminal(&mut stdout, &world);
+        world.fetch_mut::<SyncTerm>().flush_into(terminal.endpoint()).unwrap();
     }
     // reset tty back with clear screen
-    SyncTerm::restore_terminal(&mut stdout);
+    terminal.restore();
 
     // save config
     save_config(&config_file, &world);
@@ -86,7 +85,7 @@ fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
         Err(_) => Config::default().current(),
     };
 
-    let ts = SyncTerm::terminal_size();
+    let ts = Terminal::terminal_size();
 
     // prep resources
     world.insert(SyncTerm::new(usize::from(ts.0), usize::from(ts.1)));
@@ -98,16 +97,11 @@ fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
 }
 
 fn check_terminal_size() {
-    let ts = SyncTerm::terminal_size();
+    let ts = Terminal::terminal_size();
     if ts.0 < 60 || ts.1 < 16 {
         eprintln!("Terminal size too small, minimum 60x16 is required");
         std::process::exit(1);
     }
-}
-
-fn flush_terminal(stdout: &mut Terminal, world: &World) {
-    world.fetch_mut::<SyncTerm>().flush_into(stdout).unwrap();
-    stdout.flush().unwrap();
 }
 
 fn build_dispatchers<'a, 'b>() -> (Dispatcher<'a, 'b>, Dispatcher<'a, 'b>) {

@@ -1,5 +1,5 @@
 use crate::common::{Error, Mode};
-use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
+use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette, SyncTerm, Terminal, PALETTE_OFFSET};
 use specs::System;
 use texel_types::{ColorMode, Position2D, SymbolStyle, SymbolStyles};
 
@@ -15,7 +15,7 @@ impl<'a> System<'a> for CmdLineRenderer {
     );
 
     fn run(&mut self, (mut out, state, cmdline, color_palette, symbol_palette): Self::SystemData) {
-        let ts = SyncTerm::terminal_size();
+        let ts = Terminal::terminal_size();
         let w = i32::from(ts.0);
         let h = i32::from(ts.1);
 

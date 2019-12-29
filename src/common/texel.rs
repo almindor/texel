@@ -1,4 +1,4 @@
-use crate::resources::{SyncTerm, ColorPalette};
+use crate::resources::{ColorPalette, Terminal};
 use big_enum_set::BigEnumSet;
 
 pub use texel_types::{SymbolStyle, SymbolStyles, Texel, Texels};
@@ -12,7 +12,7 @@ impl TexelExt for Texel {
     fn to_string(&self) -> String {
         format!(
             "{}{}{}{}{}{}",
-            SyncTerm::goto(self.pos.x, self.pos.y),
+            Terminal::goto(self.pos.x, self.pos.y),
             ColorPalette::u8_to_bg(self.bg),
             ColorPalette::u8_to_fg(self.fg),
             styles_to_str(self.styles),

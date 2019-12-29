@@ -14,7 +14,7 @@ impl Exporter for Plaintext {
         let mut new_line = [0u8; 4];
         let new_line_len = '\n'.encode_utf8(&mut new_line).bytes().len();
 
-        let mut sorted = scene.current().objects.clone();
+        let mut sorted = scene.current().objects;
         sorted.sort_by(|o1, o2| o1.1.z.cmp(&o2.1.z));
 
         for obj in sorted {
