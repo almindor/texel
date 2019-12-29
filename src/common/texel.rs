@@ -3,16 +3,23 @@ use big_enum_set::BigEnumSet;
 
 pub use texel_types::{SymbolStyle, SymbolStyles, Texel, Texels};
 
-pub fn texel_to_string(texel: &Texel) -> String {
-    format!(
-        "{}{}{}{}{}{}",
-        crate::common::goto(texel.pos.x, texel.pos.y),
-        ColorPalette::u8_to_bg(texel.bg),
-        ColorPalette::u8_to_fg(texel.fg),
-        styles_to_str(texel.styles),
-        texel.symbol,
-        termion::style::Reset,
-    )
+// extra stuff useful only in texel itself
+pub trait TexelExt {
+    fn to_string(&self) -> String;
+}
+
+impl TexelExt for Texel {
+    fn to_string(&self) -> String {
+        format!(
+            "{}{}{}{}{}{}",
+            crate::common::goto(self.pos.x, self.pos.y),
+            ColorPalette::u8_to_bg(self.bg),
+            ColorPalette::u8_to_fg(self.fg),
+            styles_to_str(self.styles),
+            self.symbol,
+            termion::style::Reset,
+        )
+    }
 }
 
 fn styles_to_str(styles: BigEnumSet<SymbolStyle>) -> String {

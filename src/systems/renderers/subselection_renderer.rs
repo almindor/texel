@@ -1,7 +1,8 @@
-use crate::common::{Mode, SymbolStyles, Texel};
+use crate::common::Mode;
 use crate::components::{Dimension, Position2D, Subselection};
 use crate::resources::{ColorPalette, State, SyncTerm};
 use specs::{Join, Read, ReadStorage, System, Write};
+use texel_types::{SymbolStyles, Texel};
 
 pub struct SubselectionRenderer;
 

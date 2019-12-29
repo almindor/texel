@@ -1,7 +1,7 @@
-use crate::common::{Error, Mode, SymbolStyle, SymbolStyles};
+use crate::common::{Error, Mode};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette, SyncTerm, PALETTE_OFFSET};
 use specs::System;
-use texel_types::{ColorMode, Position2D};
+use texel_types::{ColorMode, Position2D, SymbolStyle, SymbolStyles};
 
 pub struct CmdLineRenderer;
 

@@ -1,11 +1,9 @@
-use crate::common::{
-    fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SymbolStyle, Texels,
-};
+use crate::common::{fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene};
 use crate::components::*;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use fio::ExportFormat;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
-use texel_types::{ColorMode, Which};
+use texel_types::{ColorMode, SymbolStyle, Texels, Which};
 
 pub struct ActionHandler;
 
@@ -108,6 +106,7 @@ impl<'a> System<'a> for ActionHandler {
                     state.set_mode(Mode::Help(index));
                     false
                 }
+                Action::ClearBlank => clear_blank_texels(&mut state, &mut sp, &s),
             };
 
             if keep_history && changed {
@@ -526,6 +525,22 @@ fn delete_frame_on_selected(state: &mut State, sp: &mut WriteStorage<Sprite>, s:
     changed
 }
 
+fn clear_blank_texels(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> bool {
+    if s.count() == 0 {
+        return state.set_error(Error::execution("No objects selected"));
+    }
+
+    use crate::common::SpriteExt;
+
+    let mut changed = false;
+    for (sprite, _) in (sp, s).join() {
+        sprite.clear_blank_texels(None);
+        changed = true;
+    }
+
+    changed
+}
+
 fn change_frame_on_selected(
     which: Which<usize>,
     state: &mut State,
@@ -781,12 +796,13 @@ fn import_sprite(
 
     u.insert(entity, Dimension::for_sprite(&sprite));
     u.insert(entity, pos.unwrap_or(NEW_POSITION));
-    if pre_select {
-        u.insert(entity, Selection);
-    }
     u.insert(entity, Selectable);
     u.insert(entity, Border);
     u.insert(entity, sprite);
+
+    if pre_select {
+        u.insert(entity, Selection);
+    }
 
     Ok(())
 }

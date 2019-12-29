@@ -187,11 +187,12 @@ impl SyncTerm {
     }
 
     pub fn flush_into(&self, out: &mut dyn Write) -> Result<(), std::io::Error> {
-        use crate::common::texel_to_string;
+        use crate::common::TexelExt;
+
         let vec = TexelBuf::diff(self.buf(), self.previous_buf());
 
         for texel in vec {
-            write!(out, "{}", texel_to_string(&texel))?;
+            write!(out, "{}", texel.to_string())?;
         }
 
         out.flush()?;
@@ -214,11 +215,7 @@ impl SyncTerm {
         let ts = termion::terminal_size().unwrap(); // this needs to panic since we lose output otherwise
         let empty_line = " ".repeat(usize::from(ts.0));
 
-        write!(
-            out,
-            "{}",
-            termion::clear::All,
-        ).unwrap();
+        write!(out, "{}", termion::clear::All,).unwrap();
 
         for y in 1..=ts.1 {
             write!(
@@ -227,7 +224,8 @@ impl SyncTerm {
                 crate::common::goto(1, i32::from(y)),
                 termion::color::Bg(termion::color::AnsiValue(16)),
                 empty_line,
-            ).unwrap();
+            )
+            .unwrap();
         }
     }
 }

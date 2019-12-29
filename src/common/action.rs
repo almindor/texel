@@ -28,6 +28,7 @@ pub enum Action {
     Redo,
     ShowHelp(usize),
     Tutorial,
+    ClearBlank, // clears "blank" texels from sprite/selection
 }
 
 impl Default for Action {
@@ -50,6 +51,7 @@ impl From<&str> for Action {
             "help" | "h" => Action::ShowHelp(0),
             "export" => Action::Export(ExportFormat::default(), String::default()),
             "tutorial" => Action::Tutorial,
+            "clear_blank" => Action::ClearBlank,
             _ => Action::None,
         }
     }
@@ -94,7 +96,7 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 10] = [
+        const ACTION_WORDS: [&str; 11] = [
             "read",
             "write",
             "translate",
@@ -105,6 +107,7 @@ impl Action {
             "help",
             "export",
             "tutorial",
+            "clear_blank",
         ];
 
         for word in &ACTION_WORDS {

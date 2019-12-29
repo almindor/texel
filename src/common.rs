@@ -6,6 +6,7 @@ mod input;
 mod mode;
 mod program;
 mod scene;
+mod sprite;
 mod texel;
 
 pub mod fio; // file io
@@ -18,7 +19,8 @@ pub use input::*;
 pub use mode::{Mode, OnQuit};
 pub use program::run;
 pub use scene::{scene_from_objects, Scene};
-pub use texel::*;
+pub use sprite::SpriteExt;
+pub use texel::TexelExt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {

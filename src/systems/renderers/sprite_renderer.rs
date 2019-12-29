@@ -1,7 +1,8 @@
-use crate::common::{scene_for_help_index, Mode, Scene, Texel};
+use crate::common::{scene_for_help_index, Mode, Scene};
 use crate::components::{Border, Dimension, Position, Selection, Sprite};
 use crate::resources::{State, SyncTerm};
 use specs::{Entities, Join, Read, ReadStorage, System};
+use texel_types::Texel;
 
 pub struct SpriteRenderer;
 
