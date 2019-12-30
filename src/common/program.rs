@@ -1,10 +1,9 @@
 use specs::prelude::*;
-use std::io::{stdin, stdout};
+use std::io::stdout;
 use std::path::Path;
-use termion::input::TermRead;
 
-use crate::common::{fio, Action, Config, ConfigV1, InputMap};
-use crate::os::Terminal;
+use crate::common::{fio, Action, Config, ConfigV1};
+use crate::os::{InputSource, Terminal};
 use crate::resources::{ColorPalette, FrameBuffer, State, SymbolPalette};
 use crate::systems::*;
 
@@ -13,7 +12,7 @@ pub fn run(args: Vec<String>) {
 
     let mut world = World::new();
     let config_file = dirs::config_dir().unwrap().join("texel/config.ron");
-    let input_map = load_input_map(&config_file, &mut world);
+    let input_source = build_resources(&config_file, &mut world);
 
     let (mut updater, mut renderer) = build_dispatchers();
     // setup dispatchers with world
@@ -34,9 +33,8 @@ pub fn run(args: Vec<String>) {
         .flush_into(terminal.endpoint())
         .unwrap();
 
-    for c in stdin().events() {
+    for mapped in input_source.events() {
         // handle input
-        let mapped = input_map.map_input(c.unwrap());
         world.fetch_mut::<State>().push_event(mapped);
         updater.dispatch(&world);
         // quit if needed
@@ -86,7 +84,7 @@ fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher) {
     }
 }
 
-fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
+fn build_resources(config_file: &Path, world: &mut World) -> InputSource {
     let config = match fio::from_config_file(config_file) {
         Ok(val) => val.current(), // ensures we upgrade if there's a version change
         Err(_) => Config::default().current(),
@@ -100,7 +98,7 @@ fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
     world.insert(config.color_palette);
     world.insert(config.symbol_palette);
 
-    InputMap::from(config.char_map)
+    InputSource::from(config.char_map)
 }
 
 fn check_terminal_size() {
