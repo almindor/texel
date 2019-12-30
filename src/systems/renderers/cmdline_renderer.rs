@@ -1,5 +1,6 @@
 use crate::common::{Error, Mode};
-use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette, SyncTerm, Terminal, PALETTE_OFFSET};
+use crate::os::Terminal;
+use crate::resources::{CmdLine, ColorPalette, FrameBuffer, State, SymbolPalette, PALETTE_OFFSET};
 use specs::System;
 use texel_types::{ColorMode, Position2D, SymbolStyle, SymbolStyles};
 
@@ -7,7 +8,7 @@ pub struct CmdLineRenderer;
 
 impl<'a> System<'a> for CmdLineRenderer {
     type SystemData = (
-        specs::Write<'a, SyncTerm>,
+        specs::Write<'a, FrameBuffer>,
         specs::Read<'a, State>,
         specs::Read<'a, CmdLine>,
         specs::Read<'a, ColorPalette>,
@@ -41,7 +42,7 @@ impl<'a> System<'a> for CmdLineRenderer {
     }
 }
 
-fn print_error(out: &mut SyncTerm, error: &Error, h: i32) {
+fn print_error(out: &mut FrameBuffer, error: &Error, h: i32) {
     let red = Terminal::rgb_u8(5, 0, 0);
     let white = Terminal::rgb_u8(5, 5, 5);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
@@ -49,14 +50,14 @@ fn print_error(out: &mut SyncTerm, error: &Error, h: i32) {
     out.write_line(1, h, error, red, white, bold);
 }
 
-fn print_cmdline(out: &mut SyncTerm, cmdline: &CmdLine, h: i32) {
+fn print_cmdline(out: &mut FrameBuffer, cmdline: &CmdLine, h: i32) {
     let cmd_text = format!(":{}", cmdline.cmd());
 
     out.write_line_default(1, h, cmd_text);
     out.set_cursor_pos(2 + cmdline.cursor_pos() as i32, h); // account for :
 }
 
-fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
+fn print_status_line(out: &mut FrameBuffer, state: &State, w: i32, h: i32) {
     // color selection
     let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
     let saved_symbol = if state.unsaved_changes() { "*" } else { " " };
@@ -66,7 +67,7 @@ fn print_status_line(out: &mut SyncTerm, state: &State, w: i32, h: i32) {
     out.set_cursor_pos(w, h);
 }
 
-fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
+fn print_write(out: &mut FrameBuffer, state: &State, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
@@ -75,7 +76,7 @@ fn print_write(out: &mut SyncTerm, state: &State, h: i32) {
     out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
 
-fn print_mode(out: &mut SyncTerm, mode: Mode, w: i32, h: i32) {
+fn print_mode(out: &mut FrameBuffer, mode: Mode, w: i32, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", mode.to_str());
@@ -84,7 +85,7 @@ fn print_mode(out: &mut SyncTerm, mode: Mode, w: i32, h: i32) {
     out.set_cursor_pos(w, h);
 }
 
-fn print_edit(out: &mut SyncTerm, state: &State, palette: &SymbolPalette, h: i32) {
+fn print_edit(out: &mut FrameBuffer, state: &State, palette: &SymbolPalette, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
 
@@ -93,7 +94,7 @@ fn print_edit(out: &mut SyncTerm, state: &State, palette: &SymbolPalette, h: i32
     out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
 
-fn print_color_select(out: &mut SyncTerm, state: &State, palette: &ColorPalette, cm: ColorMode, w: i32, h: i32) {
+fn print_color_select(out: &mut FrameBuffer, state: &State, palette: &ColorPalette, cm: ColorMode, w: i32, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
@@ -103,7 +104,7 @@ fn print_color_select(out: &mut SyncTerm, state: &State, palette: &ColorPalette,
     out.set_cursor_pos(w, h);
 }
 
-fn print_symbol_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32, h: i32) {
+fn print_symbol_palette(out: &mut FrameBuffer, state: &State, index: usize, w: i32, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
@@ -121,7 +122,14 @@ fn print_symbol_palette(out: &mut SyncTerm, state: &State, index: usize, w: i32,
     out.set_cursor_pos(w, h);
 }
 
-fn print_color_palette(out: &mut SyncTerm, state: &State, palette: &ColorPalette, index: usize, cm: ColorMode, h: i32) {
+fn print_color_palette(
+    out: &mut FrameBuffer,
+    state: &State,
+    palette: &ColorPalette,
+    index: usize,
+    cm: ColorMode,
+    h: i32,
+) {
     use crate::resources::{MAX_COLOR_INDEX, PALETTE_H, PALETTE_W};
 
     let mut count = 0;

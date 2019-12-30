@@ -1,4 +1,4 @@
-use crate::resources::SyncTerm;
+use crate::resources::FrameBuffer;
 use specs::System;
 
 mod cmdline_renderer;
@@ -12,7 +12,7 @@ pub use subselection_renderer::SubselectionRenderer;
 pub struct ClearScreen;
 
 impl<'a> System<'a> for ClearScreen {
-    type SystemData = specs::Write<'a, SyncTerm>;
+    type SystemData = specs::Write<'a, FrameBuffer>;
 
     fn run(&mut self, mut out: Self::SystemData) {
         out.flip_buffers();

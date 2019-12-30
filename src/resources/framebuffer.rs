@@ -1,10 +1,7 @@
+use crate::os::Terminal;
 use std::io::Write;
 use std::vec::Vec;
 use texel_types::{Position2D, SymbolStyles, Texel, Texels};
-
-mod tty_termion;
-
-pub use tty_termion::Terminal;
 
 #[derive(Debug, Default)]
 struct TexelBuf {
@@ -106,16 +103,16 @@ impl TexelBuf {
 }
 
 #[derive(Default)]
-pub struct SyncTerm {
+pub struct FrameBuffer {
     buffers: [TexelBuf; 2],
     index: usize,
     cursor_x: i32,
     cursor_y: i32,
 }
 
-impl SyncTerm {
+impl FrameBuffer {
     pub fn new(size_x: usize, size_y: usize) -> Self {
-        SyncTerm {
+        FrameBuffer {
             buffers: [TexelBuf::new(size_x, size_y), TexelBuf::new(size_x, size_y)],
             index: 0,
             cursor_x: 1,

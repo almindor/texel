@@ -135,9 +135,10 @@ impl AutoComplete {
 
                                 let found = String::from(loc_parent.join(s).to_str().unwrap_or_else(|| "???"));
 
-                                match file_type.is_dir() {
-                                    true => Some(Completion::Directory(found)),
-                                    false => Some(Completion::Filename(found)),
+                                if file_type.is_dir() {
+                                    Some(Completion::Directory(found))
+                                } else {
+                                    Some(Completion::Filename(found))
                                 }
                             } else {
                                 None

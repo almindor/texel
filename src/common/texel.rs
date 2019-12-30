@@ -1,4 +1,4 @@
-use crate::resources::Terminal;
+use crate::os::Terminal;
 use big_enum_set::BigEnumSet;
 
 pub use texel_types::{SymbolStyle, SymbolStyles, Texel, Texels};

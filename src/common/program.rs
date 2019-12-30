@@ -4,7 +4,8 @@ use std::path::Path;
 use termion::input::TermRead;
 
 use crate::common::{fio, Action, Config, ConfigV1, InputMap};
-use crate::resources::{ColorPalette, State, SymbolPalette, SyncTerm, Terminal};
+use crate::os::Terminal;
+use crate::resources::{ColorPalette, FrameBuffer, State, SymbolPalette};
 use crate::systems::*;
 
 pub fn run(args: Vec<String>) {
@@ -28,7 +29,10 @@ pub fn run(args: Vec<String>) {
     // draw initial set
     renderer.dispatch(&world);
     // flush buffers to terminal
-    world.fetch_mut::<SyncTerm>().flush_into(terminal.endpoint()).unwrap();
+    world
+        .fetch_mut::<FrameBuffer>()
+        .flush_into(terminal.endpoint())
+        .unwrap();
 
     for c in stdin().events() {
         // handle input
@@ -44,7 +48,10 @@ pub fn run(args: Vec<String>) {
         // render only after world is up to date
         renderer.dispatch(&world);
         // flush buffers to terminal
-        world.fetch_mut::<SyncTerm>().flush_into(terminal.endpoint()).unwrap();
+        world
+            .fetch_mut::<FrameBuffer>()
+            .flush_into(terminal.endpoint())
+            .unwrap();
     }
     // reset tty back with clear screen
     terminal.restore();
@@ -88,7 +95,7 @@ fn load_input_map(config_file: &Path, world: &mut World) -> InputMap {
     let ts = Terminal::terminal_size();
 
     // prep resources
-    world.insert(SyncTerm::new(usize::from(ts.0), usize::from(ts.1)));
+    world.insert(FrameBuffer::new(usize::from(ts.0), usize::from(ts.1)));
     world.insert(State::default());
     world.insert(config.color_palette);
     world.insert(config.symbol_palette);

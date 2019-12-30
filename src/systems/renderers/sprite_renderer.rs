@@ -1,6 +1,7 @@
 use crate::common::{scene_for_help_index, Mode, Scene};
 use crate::components::{Border, Dimension, Position, Selection, Sprite};
-use crate::resources::{State, SyncTerm, Terminal};
+use crate::os::Terminal;
+use crate::resources::{FrameBuffer, State};
 use specs::{Entities, Join, Read, ReadStorage, System};
 use texel_types::Texel;
 
@@ -8,7 +9,7 @@ pub struct SpriteRenderer;
 
 impl<'a> System<'a> for SpriteRenderer {
     type SystemData = (
-        specs::Write<'a, SyncTerm>,
+        specs::Write<'a, FrameBuffer>,
         Entities<'a>,
         Read<'a, State>,
         ReadStorage<'a, Position>,
@@ -51,13 +52,13 @@ impl<'a> System<'a> for SpriteRenderer {
     }
 }
 
-fn render_scene(out: &mut SyncTerm, scene: Scene) {
+fn render_scene(out: &mut FrameBuffer, scene: Scene) {
     for obj in scene.current().objects {
         render_sprite(out, &obj.1, &obj.0);
     }
 }
 
-fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
+fn render_sprite(out: &mut FrameBuffer, p: &Position, s: &Sprite) {
     let ts = Terminal::terminal_size();
 
     for t in s.frame_iter().filter(|t| p.x + t.pos.x > 0 && p.y + t.pos.y > 0) {
@@ -67,7 +68,7 @@ fn render_sprite(out: &mut SyncTerm, p: &Position, s: &Sprite) {
     }
 }
 
-fn print_texel(out: &mut SyncTerm, p: &Position, t: &Texel) {
+fn print_texel(out: &mut FrameBuffer, p: &Position, t: &Texel) {
     let abs_texel = Texel {
         pos: (*p + t.pos).into(),
         symbol: t.symbol,
@@ -86,7 +87,7 @@ fn is_visible(x: i32, y: i32, ts: (u16, u16)) -> bool {
     x > 0 && x <= w && y > 0 && y <= h
 }
 
-fn render_border(out: &mut SyncTerm, p: &Position, d: Dimension) {
+fn render_border(out: &mut FrameBuffer, p: &Position, d: Dimension) {
     let ts = Terminal::terminal_size();
     let min_x = p.x - 1;
     let min_y = p.y - 1;

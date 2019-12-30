@@ -1,6 +1,7 @@
 use crate::common::{fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene};
 use crate::components::*;
-use crate::resources::{State, Terminal, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
+use crate::os::Terminal;
+use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use fio::ExportFormat;
 use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
 use texel_types::{ColorMode, SymbolStyle, Texels, Which};
@@ -125,8 +126,6 @@ fn reverse_mode(
     cur_pos: &mut WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
-    let mut changed = clear_subselection(e, ss, u);
-
     if state.reverse_mode() {
         for (entity, pos, _) in (e, p, s).join() {
             let pos2d: Position2D = pos.into();
@@ -137,10 +136,10 @@ fn reverse_mode(
             }
         }
 
-        changed = true;
+        true
+    } else {
+        clear_subselection(e, ss, u)
     }
-
-    changed
 }
 
 fn deselect_obj(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) -> bool {

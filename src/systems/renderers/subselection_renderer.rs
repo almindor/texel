@@ -1,6 +1,6 @@
 use crate::common::Mode;
 use crate::components::{Dimension, Position2D, Subselection};
-use crate::resources::{ColorPalette, State, SyncTerm};
+use crate::resources::{ColorPalette, FrameBuffer, State};
 use specs::{Join, Read, ReadStorage, System, Write};
 use texel_types::{SymbolStyles, Texel};
 
@@ -8,7 +8,7 @@ pub struct SubselectionRenderer;
 
 impl<'a> System<'a> for SubselectionRenderer {
     type SystemData = (
-        Write<'a, SyncTerm>,
+        Write<'a, FrameBuffer>,
         Read<'a, State>,
         ReadStorage<'a, Position2D>,
         ReadStorage<'a, Dimension>,

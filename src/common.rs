@@ -71,11 +71,9 @@ pub fn add_max(u: usize, i: i32, m: usize) -> Option<usize> {
 }
 
 pub fn index_from_one(index: usize) -> i32 {
-    if index < 9 {
-        (index + 1) as i32
-    } else if index == 9 {
-        0
-    } else {
-        index as i32
+    match index {
+        0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 => (index + 1) as i32,
+        9 => 0,
+        _ => index as i32,
     }
 }

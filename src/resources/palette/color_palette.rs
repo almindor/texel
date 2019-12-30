@@ -1,6 +1,6 @@
 use crate::common::Error;
 use crate::components::Position2D;
-use crate::resources::Terminal;
+use crate::os::Terminal;
 use serde::{Deserialize, Serialize};
 use texel_types::{ColorMode, SymbolStyle, SymbolStyles, Texel, Texels};
 
