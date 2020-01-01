@@ -1,7 +1,7 @@
 use crate::os::Terminal;
 use std::io::Write;
 use std::vec::Vec;
-use texel_types::{Position2D, SymbolStyles, Texel, Texels};
+use texel_types::{Position2D, SymbolStyles, Texel, Texels, Bounds, Dimension};
 
 #[derive(Debug, Default)]
 struct TexelBuf {
@@ -190,9 +190,11 @@ impl FrameBuffer {
     pub fn flush_into(&self, out: &mut dyn Write) -> Result<(), std::io::Error> {
         use crate::common::TexelExt;
 
+        let terminal_size = Terminal::terminal_size();
+        let bounds = Bounds::Free(Position2D::default(), Dimension::from(terminal_size));
         let vec = TexelBuf::diff(self.buf(), self.previous_buf());
 
-        for texel in vec {
+        for texel in vec.iter().filter(|t| bounds.contains(t.pos)) {
             write!(out, "{}", texel.to_string())?;
         }
 
