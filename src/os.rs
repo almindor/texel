@@ -8,12 +8,12 @@ pub use input_termion::InputSource;
 #[cfg(feature = "ion")]
 pub use tty_termion::Terminal;
 
-#[cfg(feature = "crossplatform")]
+#[cfg(not(feature = "ion"))]
 mod input_crossterm;
-#[cfg(feature = "crossplatform")]
+#[cfg(not(feature = "ion"))]
 mod tty_crossterm;
 
-#[cfg(feature = "crossplatform")]
+#[cfg(not(feature = "ion"))]
 pub use input_crossterm::InputSource;
-#[cfg(feature = "crossplatform")]
+#[cfg(not(feature = "ion"))]
 pub use tty_crossterm::Terminal;

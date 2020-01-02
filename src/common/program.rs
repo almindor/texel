@@ -2,7 +2,7 @@ use specs::prelude::*;
 use std::io::stdout;
 use std::path::Path;
 
-use crate::common::{fio, Action, Config, ConfigV1};
+use crate::common::{fio, Action, Config, ConfigV1, InputEvent, Event};
 use crate::os::{InputSource, Terminal};
 use crate::resources::{ColorPalette, FrameBuffer, State, SymbolPalette};
 use crate::systems::*;
@@ -35,7 +35,7 @@ pub fn run(args: Vec<String>) {
 
     for mapped in input_source.events() {
         // handle input
-        world.fetch_mut::<State>().push_event(mapped);
+        dispatch_input_event(&world, mapped, &mut terminal);
         updater.dispatch(&world);
         // quit if needed
         if world.fetch_mut::<State>().quitting() {
@@ -99,6 +99,16 @@ fn build_resources(config_file: &Path, world: &mut World) -> InputSource {
     world.insert(config.symbol_palette);
 
     InputSource::from(config.char_map)
+}
+
+fn dispatch_input_event(world: &World, event: InputEvent, terminal: &mut Terminal) {
+    // ensure we re-blank on resizes
+    if event.0 == Event::Resize {
+        terminal.blank_to_black();
+        world.fetch_mut::<FrameBuffer>().resize();
+    } else { // otherwise just push event into input handler's pipeline
+        world.fetch_mut::<State>().push_event(event);
+    }
 }
 
 fn check_terminal_size() {

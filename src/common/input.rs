@@ -46,6 +46,8 @@ pub enum Event {
     ArrowDown,
     ArrowLeft,
     ArrowRight,
+    // terminal events
+    Resize,
 }
 
 impl Default for Event {

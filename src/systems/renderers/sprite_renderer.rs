@@ -47,7 +47,7 @@ impl<'a> System<'a> for SpriteRenderer {
             let h = i32::from(ts.1);
             let text = format!("[{}]::[{}/{}]", si.0, si.1, si.2);
 
-            out.write_line_default(w - 15, h, text);
+            out.write_line_default(w - 16, h - 1, text);
         }
     }
 }
@@ -59,12 +59,8 @@ fn render_scene(out: &mut FrameBuffer, scene: Scene) {
 }
 
 fn render_sprite(out: &mut FrameBuffer, p: &Position, s: &Sprite) {
-    let ts = Terminal::terminal_size();
-
-    for t in s.frame_iter().filter(|t| p.x + t.pos.x > 0 && p.y + t.pos.y > 0) {
-        if is_visible(p.x + t.pos.x, p.y + t.pos.y, ts) {
-            print_texel(out, p, t);
-        }
+    for t in s.frame_iter() {
+        print_texel(out, p, t);
     }
 }
 
@@ -80,13 +76,6 @@ fn print_texel(out: &mut FrameBuffer, p: &Position, t: &Texel) {
     out.write_texel(abs_texel);
 }
 
-fn is_visible(x: i32, y: i32, ts: (u16, u16)) -> bool {
-    let w = i32::from(ts.0);
-    let h = i32::from(ts.1);
-
-    x > 0 && x <= w && y > 0 && y <= h
-}
-
 fn render_border(out: &mut FrameBuffer, p: &Position, d: Dimension) {
     let ts = Terminal::terminal_size();
     let min_x = p.x - 1;
@@ -95,16 +84,14 @@ fn render_border(out: &mut FrameBuffer, p: &Position, d: Dimension) {
     let b_h = i32::from(d.h + 1);
 
     for y in min_y..=min_y + b_h {
-        if y <= 0 {
+        if y < 0 {
             continue;
         }
 
         if y == min_y || y == min_y + b_h {
             let a = if y == min_y { '-' } else { '_' };
             for x in min_x..=min_x + b_w {
-                if is_visible(x, y, ts) {
-                    out.write_line_default(x, y, a);
-                }
+                out.write_line_default(x, y, a);
             }
         }
 
@@ -112,7 +99,7 @@ fn render_border(out: &mut FrameBuffer, p: &Position, d: Dimension) {
             out.write_line_default(min_x + b_w, y, "|");
         }
 
-        if min_x > 0 {
+        if min_x >= 0 {
             out.write_line_default(min_x, y, "|");
         }
     }

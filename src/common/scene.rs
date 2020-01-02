@@ -1,20 +1,18 @@
-use crate::components::{Selection, Sprite};
-use specs::{Entities, Join, ReadStorage, WriteStorage};
+use crate::components::{Sprite};
+use specs::{Join, WriteStorage};
 use texel_types::Position;
 
-pub use texel_types::{Scene, SceneV1};
+pub use texel_types::{Scene, SceneV2};
 
 pub fn scene_from_objects(
-    e: &Entities,
     sp: &WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
-    s: &ReadStorage<Selection>,
 ) -> Scene {
     let mut objects = Vec::new();
 
-    for (entity, sprite, pos) in (e, sp, p).join() {
-        objects.push((sprite.clone(), *pos, s.contains(entity)));
+    for (sprite, pos) in (sp, p).join() {
+        objects.push((sprite.clone(), *pos));
     }
 
-    Scene::V1(SceneV1 { objects })
+    Scene::V2(SceneV2 { objects })
 }

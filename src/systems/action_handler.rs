@@ -80,7 +80,7 @@ impl<'a> System<'a> for ActionHandler {
                     }
                 }
                 Action::Write(path) => {
-                    if let Err(err) = save_scene(&e, &mut state, &sp, &p, &s, &path) {
+                    if let Err(err) = save_scene(&mut state, &sp, &p, &path) {
                         state.set_error(err)
                     } else if let Some(path) = path {
                         state.saved(path)
@@ -97,7 +97,7 @@ impl<'a> System<'a> for ActionHandler {
                     Err(err) => state.set_error(err),
                 },
                 Action::Export(format, path) => {
-                    if let Err(err) = export_to_file(format, &path, &e, &sp, &p, &s) {
+                    if let Err(err) = export_to_file(format, &path, &sp, &p) {
                         state.set_error(err)
                     } else {
                         false
@@ -184,7 +184,7 @@ fn set_mode(
         }
         Mode::Quitting(OnQuit::Save) => {
             if state.unsaved_changes() {
-                if let Err(err) = save_scene(e, state, sp, p, s, &None) {
+                if let Err(err) = save_scene(state, sp, p, &None) {
                     state.set_error(err)
                 } else {
                     true
@@ -808,15 +808,13 @@ fn import_sprite(
 }
 
 fn save_scene(
-    e: &Entities,
     state: &mut State,
     sp: &WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
-    s: &ReadStorage<Selection>,
     new_path: &Option<String>,
 ) -> Result<(), Error> {
     let path = state.save_file(new_path)?;
-    let scene = scene_from_objects(e, sp, p, s);
+    let scene = scene_from_objects(sp, p);
 
     fio::scene_to_file(&scene, &path)
 }
@@ -824,12 +822,10 @@ fn save_scene(
 fn export_to_file(
     format: ExportFormat,
     path: &str,
-    e: &Entities,
     sp: &WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
-    s: &ReadStorage<Selection>,
 ) -> Result<(), Error> {
-    let scene = scene_from_objects(e, sp, p, s);
+    let scene = scene_from_objects(sp, p);
 
     fio::export_to_file(scene, format, path)
 }
@@ -905,7 +901,7 @@ fn apply_scene(
 
     let current = scene.current();
     for obj in current.objects {
-        import_sprite(obj.0, e, s, u, Some(obj.1), obj.2)?;
+        import_sprite(obj.0, e, s, u, Some(obj.1), false)?;
     }
 
     Ok(())

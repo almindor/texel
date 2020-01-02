@@ -37,8 +37,8 @@ impl Terminal {
 
     pub fn goto(x: i32, y: i32) -> impl std::fmt::Display {
         // ensure we don't try to go to < 1 on any axis
-        let o_x = std::cmp::max(1, x);
-        let o_y = std::cmp::max(1, y);
+        let o_x = std::cmp::max(1, x + 1); // termion is 1 based
+        let o_y = std::cmp::max(1, y + 1);
         // TODO: figure out better way to handle this
         let u_x = o_x as u16;
         let u_y = o_y as u16;
@@ -80,11 +80,11 @@ impl Terminal {
 
         write!(self.0, "{}", termion::clear::All,).unwrap();
 
-        for y in 1..=ts.1 {
+        for y in 0..ts.1 {
             write!(
                 self.0,
                 "{}{}{}",
-                Self::goto(1, i32::from(y)),
+                Self::goto(0, i32::from(y)),
                 termion::color::Bg(termion::color::AnsiValue(16)),
                 empty_line,
             )

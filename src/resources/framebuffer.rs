@@ -1,7 +1,7 @@
 use crate::os::Terminal;
 use std::io::Write;
 use std::vec::Vec;
-use texel_types::{Position2D, SymbolStyles, Texel, Texels, Bounds, Dimension};
+use texel_types::{Position2D, SymbolStyles, Texel, Texels};
 
 #[derive(Debug, Default)]
 struct TexelBuf {
@@ -46,12 +46,6 @@ impl TexelBuf {
         }
     }
 
-    pub fn set_texels(&mut self, texels: Texels) {
-        for t in texels {
-            self.set_texel(t);
-        }
-    }
-
     pub fn override_texel_bg(&mut self, texel: Texel) {
         if let Some(index) = self.index(texel.pos) {
             if index >= self.buf.len() {
@@ -87,17 +81,17 @@ impl TexelBuf {
     }
 
     fn index(&self, pos: Position2D) -> Option<usize> {
-        if pos.y - 1 < 0 || pos.x - 1 < 0 {
+        if pos.y < 0 || pos.x < 0 {
             None
         } else {
-            Some(self.size_x * ((pos.y - 1) as usize) + ((pos.x - 1) as usize))
+            Some(self.size_x * (pos.y as usize) + (pos.x as usize))
         }
     }
 
     fn deindex(&self, i: usize) -> Position2D {
         Position2D {
-            x: (i % self.size_x) as i32 + 1,
-            y: (i / self.size_x) as i32 + 1,
+            x: (i % self.size_x) as i32,
+            y: (i / self.size_x) as i32,
         }
     }
 }
@@ -128,15 +122,19 @@ impl FrameBuffer {
     }
 
     pub fn write_texel(&mut self, texel: Texel) {
+        if !Self::is_visible(texel.pos.x, texel.pos.y) {
+            return;
+        }
+
         let buf = self.buf_mut();
 
         buf.set_texel(texel);
     }
 
     pub fn write_texels(&mut self, texels: Texels) {
-        let buf = self.buf_mut();
-
-        buf.set_texels(texels);
+        for t in texels {
+            self.write_texel(t);
+        }
     }
 
     pub fn override_texel_bg(&mut self, texel: Texel) {
@@ -155,11 +153,10 @@ impl FrameBuffer {
         styles: SymbolStyles,
     ) {
         let text = format!("{}", source);
-        let buf = self.buf_mut();
 
         let mut x: i32 = start_x;
         for symbol in text.chars() {
-            buf.set_texel(Texel {
+            self.write_texel(Texel {
                 pos: Position2D { x, y },
                 symbol,
                 fg,
@@ -187,14 +184,20 @@ impl FrameBuffer {
         self.buf_mut().clear();
     }
 
+    pub fn resize(&mut self) {
+        let ts = Terminal::terminal_size();
+        let size_x = ts.0 as usize;
+        let size_y = ts.1 as usize;
+
+        self.buffers = [TexelBuf::new(size_x, size_y), TexelBuf::new(size_x, size_y)];
+    }
+
     pub fn flush_into(&self, out: &mut dyn Write) -> Result<(), std::io::Error> {
         use crate::common::TexelExt;
 
-        let terminal_size = Terminal::terminal_size();
-        let bounds = Bounds::Free(Position2D::default(), Dimension::from(terminal_size));
         let vec = TexelBuf::diff(self.buf(), self.previous_buf());
 
-        for texel in vec.iter().filter(|t| bounds.contains(t.pos)) {
+        for texel in vec {
             write!(out, "{}", texel.to_string())?;
         }
 
@@ -214,11 +217,19 @@ impl FrameBuffer {
     fn previous_buf(&self) -> &TexelBuf {
         &self.buffers[1 - self.index]
     }
+
+    fn is_visible(x: i32, y: i32) -> bool {
+        let ts = Terminal::terminal_size();
+        let w = i32::from(ts.0);
+        let h = i32::from(ts.1);
+
+        x >= 0 && x <= w && y >= 0 && y <= h
+    }
 }
 
 fn within(val: i32, max: usize) -> i32 {
     if val < 0 {
-        1
+        0
     } else if val as usize > max {
         max as i32
     } else {
