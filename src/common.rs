@@ -19,7 +19,7 @@ pub use input::*;
 pub use mode::{Mode, OnQuit};
 pub use program::run;
 pub use scene::{scene_from_objects, Scene};
-pub use sprite::SpriteExt;
+pub use sprite::{SelectedInfo, SpriteExt};
 pub use texel::TexelExt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

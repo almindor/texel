@@ -62,8 +62,8 @@ fn print_selected_colors(out: &mut FrameBuffer, state: &State, w: i32, h: i32) {
     let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
     let saved_symbol = if state.unsaved_changes() { "*" } else { " " };
 
-    out.write_line_default(w - 19, h - 1, saved_symbol);
-    out.write_line(w - 18, h - 1, "▞", sc.0, sc.1, SymbolStyles::new());
+    out.write_line_default(w - 25, h - 1, saved_symbol);
+    out.write_line(w - 24, h - 1, "▞", sc.0, sc.1, SymbolStyles::new());
     out.set_cursor_pos(w - 1, h - 1);
 }
 

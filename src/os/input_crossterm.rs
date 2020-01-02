@@ -11,12 +11,10 @@ struct MappedIter<'a> {
 
 impl MappedIter<'_> {
     fn map_input(&self, raw_event: TEvent) -> InputEvent {
-        let mapped = self.map.get(&raw_event).copied().unwrap_or_else(
-            || match raw_event {
-                TEvent::Resize(_, _) => Event::Resize,
-                _ => Event::None,
-            }
-        );
+        let mapped = self.map.get(&raw_event).copied().unwrap_or_else(|| match raw_event {
+            TEvent::Resize(_, _) => Event::Resize,
+            _ => Event::None,
+        });
 
         match raw_event {
             TEvent::Key(key_event) => match key_event.code {
@@ -34,7 +32,7 @@ impl Iterator for MappedIter<'_> {
     fn next(&mut self) -> Option<InputEvent> {
         match read() {
             Err(err) => panic!(err), // TODO: maybe find a better handler?
-            Ok(result) => Some(self.map_input(result))
+            Ok(result) => Some(self.map_input(result)),
         }
     }
 }

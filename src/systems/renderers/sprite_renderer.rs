@@ -1,4 +1,4 @@
-use crate::common::{scene_for_help_index, Mode, Scene};
+use crate::common::{scene_for_help_index, Mode, Scene, SelectedInfo};
 use crate::components::{Border, Dimension, Position, Selection, Sprite};
 use crate::os::Terminal;
 use crate::resources::{FrameBuffer, State};
@@ -25,7 +25,7 @@ impl<'a> System<'a> for SpriteRenderer {
             return; // show help, done
         }
 
-        let mut sprite_info: Option<(&Position, usize, usize)> = None;
+        let mut selected_info = SelectedInfo::default();
 
         // TODO: optimize using FlaggedStorage
         let mut sorted = (&e, &p, &d, &s).join().collect::<Vec<_>>();
@@ -36,18 +36,19 @@ impl<'a> System<'a> for SpriteRenderer {
 
             if b.contains(entity) && sel.contains(entity) {
                 render_border(&mut out, &pos, *dim);
-                sprite_info = Some((pos, sprite.frame_index(), sprite.frame_count()));
+                selected_info.append(sprite, pos);
             }
         }
 
         // location info status line
-        if let Some(si) = sprite_info {
+        if selected_info.selected_count > 0 {
             let ts = Terminal::terminal_size();
             let w = i32::from(ts.0);
             let h = i32::from(ts.1);
-            let text = format!("[{}]::[{}/{}]", si.0, si.1, si.2);
+            let text = selected_info.to_string();
+            let text_len = text.len() as i32;
 
-            out.write_line_default(w - 16, h - 1, text);
+            out.write_line_default(w - text_len - 1, h - 1, text);
         }
     }
 }

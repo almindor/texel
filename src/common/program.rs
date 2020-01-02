@@ -2,7 +2,7 @@ use specs::prelude::*;
 use std::io::stdout;
 use std::path::Path;
 
-use crate::common::{fio, Action, Config, ConfigV1, InputEvent, Event};
+use crate::common::{fio, Action, Config, ConfigV1, Event, InputEvent};
 use crate::os::{InputSource, Terminal};
 use crate::resources::{ColorPalette, FrameBuffer, State, SymbolPalette};
 use crate::systems::*;
@@ -106,7 +106,8 @@ fn dispatch_input_event(world: &World, event: InputEvent, terminal: &mut Termina
     if event.0 == Event::Resize {
         terminal.blank_to_black();
         world.fetch_mut::<FrameBuffer>().resize();
-    } else { // otherwise just push event into input handler's pipeline
+    } else {
+        // otherwise just push event into input handler's pipeline
         world.fetch_mut::<State>().push_event(event);
     }
 }
