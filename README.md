@@ -13,11 +13,20 @@ ASCII Art and landscape editor. Texel aims to make editing ASCII art easy especi
 
 Rust v1.38+ is required.
 
-Platforms supported are Redox, Mac OS X, and Linux due to [Termion](https://docs.rs/termion/1.5.4/termion/). Crossterm support is planned to add Windows support later.
+The default terminal backend used is [Crossterm](https://crates.io/crates/crossterm) which supports Linux, Mac OS X and Windows.
+
+
+[Termion](https://docs.rs/termion/1.5.4/termion/) can be used as well by switching to the `ion` feature.
 
 ### Compiling
 
+#### Linux, Windows, Mac OS X
+
 `cargo build --release`
+
+#### Redox/Termion
+
+`cargo build --release --no-default-features --features ion`
 
 ### [Changelog](CHANGELOG.md)
 
