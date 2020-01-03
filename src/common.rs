@@ -6,6 +6,7 @@ mod input;
 mod mode;
 mod program;
 mod scene;
+mod selected_info;
 mod sprite;
 mod texel;
 
@@ -19,7 +20,8 @@ pub use input::*;
 pub use mode::{Mode, OnQuit};
 pub use program::run;
 pub use scene::{scene_from_objects, Scene};
-pub use sprite::{SelectedInfo, SpriteExt};
+pub use selected_info::SelectedInfo;
+pub use sprite::SpriteExt;
 pub use texel::TexelExt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

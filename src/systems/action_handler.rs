@@ -390,6 +390,12 @@ fn translate_selected(
         Mode::Object | Mode::Write => {
             let mut changed = false;
 
+            // nothing selected, move viewport
+            if s.count() == 0 {
+                let screen_bounds = Bounds::Free(Position2D::default(), screen_dim);
+                state.offset.apply(t, screen_bounds);
+            }
+
             for (position, _, dim) in (p, s, d).join() {
                 let sprite_bounds = Bounds::Free(position.into(), *dim);
                 let screen_bounds = Bounds::Free(Position2D::default(), screen_dim - *dim);

@@ -18,6 +18,7 @@ pub struct State {
     dirty: bool,
     pub clipboard: Clipboard,
     pub cursor: Position2D,
+    pub offset: Position2D, // viewport "offset"
 }
 
 impl Default for State {
@@ -34,6 +35,7 @@ impl Default for State {
             dirty: false,
             clipboard: Clipboard::Empty,
             cursor: Position2D::default(),
+            offset: Position2D::default(),
         };
 
         result.modes.push_back(Mode::default()); // there is always a mode!

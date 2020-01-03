@@ -1,9 +1,9 @@
 use crate::common::{scene_for_help_index, Mode, Scene, SelectedInfo};
-use crate::components::{Border, Dimension, Position, Selection, Sprite};
+use crate::components::{Border, Dimension, Position, Position2D, Selection, Sprite};
 use crate::os::Terminal;
 use crate::resources::{FrameBuffer, State};
 use specs::{Entities, Join, Read, ReadStorage, System};
-use texel_types::Texel;
+use texel_types::{Texel, SymbolStyles, DEFAULT_BG_U8, DEFAULT_FG_U8};
 
 pub struct SpriteRenderer;
 
@@ -21,53 +21,52 @@ impl<'a> System<'a> for SpriteRenderer {
 
     fn run(&mut self, (mut out, e, state, p, d, s, b, sel): Self::SystemData) {
         if let Mode::Help(index) = state.mode() {
-            render_scene(&mut out, scene_for_help_index(index));
+            render_scene(&mut out, &state, scene_for_help_index(index));
             return; // show help, done
         }
 
-        let mut selected_info = SelectedInfo::default();
+        let mut selected_info = SelectedInfo::from(state.offset);
 
         // TODO: optimize using FlaggedStorage
         let mut sorted = (&e, &p, &d, &s).join().collect::<Vec<_>>();
         sorted.sort_by(|&a, &b| b.1.z.cmp(&a.1.z));
 
         for (entity, pos, dim, sprite) in sorted {
-            render_sprite(&mut out, &pos, &sprite);
+            render_sprite(&mut out, &state, &pos, &sprite);
 
             if b.contains(entity) && sel.contains(entity) {
-                render_border(&mut out, &pos, *dim);
+                render_border(&mut out, &state, &pos, *dim);
                 selected_info.append(sprite, pos);
             }
         }
 
         // location info status line
-        if selected_info.selected_count > 0 {
-            let ts = Terminal::terminal_size();
-            let w = i32::from(ts.0);
-            let h = i32::from(ts.1);
-            let text = selected_info.to_string();
-            let text_len = text.len() as i32;
+        let ts = Terminal::terminal_size();
+        let w = i32::from(ts.0);
+        let h = i32::from(ts.1);
+        let text = selected_info.to_string();
+        let text_len = text.len() as i32;
 
-            out.write_line_default(w - text_len - 1, h - 1, text);
-        }
+        out.write_line_default(w - text_len - 1, h - 1, text);
     }
 }
 
-fn render_scene(out: &mut FrameBuffer, scene: Scene) {
+fn render_scene(out: &mut FrameBuffer, state: &State, scene: Scene) {
     for obj in scene.current().objects {
-        render_sprite(out, &obj.1, &obj.0);
+        render_sprite(out, state, &obj.1, &obj.0);
     }
 }
 
-fn render_sprite(out: &mut FrameBuffer, p: &Position, s: &Sprite) {
+fn render_sprite(out: &mut FrameBuffer, state: &State, p: &Position, s: &Sprite) {
     for t in s.frame_iter() {
-        print_texel(out, p, t);
+        print_texel(out, state, p, t);
     }
 }
 
-fn print_texel(out: &mut FrameBuffer, p: &Position, t: &Texel) {
+fn print_texel(out: &mut FrameBuffer, state: &State, p: &Position, t: &Texel) {
+    let pos2d: Position2D = (*p + t.pos).into();
     let abs_texel = Texel {
-        pos: (*p + t.pos).into(),
+        pos: pos2d - state.offset,
         symbol: t.symbol,
         bg: t.bg,
         fg: t.fg,
@@ -77,31 +76,65 @@ fn print_texel(out: &mut FrameBuffer, p: &Position, t: &Texel) {
     out.write_texel(abs_texel);
 }
 
-fn render_border(out: &mut FrameBuffer, p: &Position, d: Dimension) {
-    let ts = Terminal::terminal_size();
-    let min_x = p.x - 1;
-    let min_y = p.y - 1;
+fn render_border(out: &mut FrameBuffer, state: &State, p: &Position, d: Dimension) {
+    let min_x = std::cmp::max(0, p.x - 1);
+    let min_y = std::cmp::max(0, p.y - 1);
     let b_w = i32::from(d.w + 1);
     let b_h = i32::from(d.h + 1);
 
+    let t_side = Texel {
+        symbol: '|',
+        pos: Position2D::default(),
+        styles: SymbolStyles::new(),
+        bg: DEFAULT_BG_U8,
+        fg: DEFAULT_FG_U8,
+    };
+
+    let t_top = Texel {
+        symbol: '-',
+        pos: Position2D::default(),
+        styles: SymbolStyles::new(),
+        bg: DEFAULT_BG_U8,
+        fg: DEFAULT_FG_U8,
+    };
+
+    let t_bottom = Texel {
+        symbol: '_',
+        pos: Position2D::default(),
+        styles: SymbolStyles::new(),
+        bg: DEFAULT_BG_U8,
+        fg: DEFAULT_FG_U8,
+    };
+
     for y in min_y..=min_y + b_h {
-        if y < 0 {
-            continue;
-        }
+        let pos_left = Position {
+            x: min_x,
+            y: y,
+            z: p.z
+        };
+        let pos_right = Position {
+            x: min_x + b_w,
+            y: y,
+            z: p.z
+        };
 
-        if y == min_y || y == min_y + b_h {
-            let a = if y == min_y { '-' } else { '_' };
-            for x in min_x..=min_x + b_w {
-                out.write_line_default(x, y, a);
-            }
-        }
+        print_texel(out, state, &pos_left, &t_side);
+        print_texel(out, state, &pos_right, &t_side);
+    }
 
-        if min_x + b_w <= i32::from(ts.0) {
-            out.write_line_default(min_x + b_w, y, "|");
-        }
+    for x in min_x..=min_x + b_w {
+        let pos_top = Position {
+            x: x,
+            y: min_y,
+            z: p.z
+        };
+        let pos_bottom = Position {
+            x: x,
+            y: min_y + b_h,
+            z: p.z
+        };
 
-        if min_x >= 0 {
-            out.write_line_default(min_x, y, "|");
-        }
+        print_texel(out, state, &pos_top, &t_top);
+        print_texel(out, state, &pos_bottom, &t_bottom);
     }
 }
