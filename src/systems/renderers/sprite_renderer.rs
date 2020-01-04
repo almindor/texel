@@ -3,7 +3,7 @@ use crate::components::{Border, Dimension, Position, Position2D, Selection, Spri
 use crate::os::Terminal;
 use crate::resources::{FrameBuffer, State};
 use specs::{Entities, Join, Read, ReadStorage, System};
-use texel_types::{Texel, SymbolStyles, DEFAULT_BG_U8, DEFAULT_FG_U8};
+use texel_types::{SymbolStyles, Texel, DEFAULT_BG_U8, DEFAULT_FG_U8};
 
 pub struct SpriteRenderer;
 
@@ -42,12 +42,9 @@ impl<'a> System<'a> for SpriteRenderer {
 
         // location info status line
         let ts = Terminal::terminal_size();
-        let w = i32::from(ts.0);
-        let h = i32::from(ts.1);
-        let text = selected_info.to_string();
-        let text_len = text.len() as i32;
+        let texels = selected_info.texels(ts.0, ts.1);
 
-        out.write_line_default(w - text_len - 1, h - 1, text);
+        out.write_texels(texels);
     }
 }
 
@@ -107,15 +104,11 @@ fn render_border(out: &mut FrameBuffer, state: &State, p: &Position, d: Dimensio
     };
 
     for y in min_y..=min_y + b_h {
-        let pos_left = Position {
-            x: min_x,
-            y: y,
-            z: p.z
-        };
+        let pos_left = Position { x: min_x, y, z: p.z };
         let pos_right = Position {
             x: min_x + b_w,
-            y: y,
-            z: p.z
+            y,
+            z: p.z,
         };
 
         print_texel(out, state, &pos_left, &t_side);
@@ -123,15 +116,11 @@ fn render_border(out: &mut FrameBuffer, state: &State, p: &Position, d: Dimensio
     }
 
     for x in min_x..=min_x + b_w {
-        let pos_top = Position {
-            x: x,
-            y: min_y,
-            z: p.z
-        };
+        let pos_top = Position { x, y: min_y, z: p.z };
         let pos_bottom = Position {
-            x: x,
+            x,
             y: min_y + b_h,
-            z: p.z
+            z: p.z,
         };
 
         print_texel(out, state, &pos_top, &t_top);

@@ -12,7 +12,11 @@ pub fn run(args: Vec<String>) {
 
     let mut world = World::new();
     let config_file = dirs::config_dir().unwrap().join("texel/config.ron");
-    let input_source = build_resources(&config_file, &mut world);
+    let config = match fio::from_config_file(&config_file) {
+        Ok(val) => val.current(), // ensures we upgrade if there's a version change
+        Err(_) => Config::default().current(),
+    };
+    let input_source = build_resources(&config, &mut world);
 
     let (mut updater, mut renderer) = build_dispatchers();
     // setup dispatchers with world
@@ -55,7 +59,7 @@ pub fn run(args: Vec<String>) {
     terminal.restore();
 
     // save config
-    save_config(&config_file, &world);
+    save_config(config, &config_file, &world);
 }
 
 fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher) {
@@ -84,21 +88,16 @@ fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher) {
     }
 }
 
-fn build_resources(config_file: &Path, world: &mut World) -> InputSource {
-    let config = match fio::from_config_file(config_file) {
-        Ok(val) => val.current(), // ensures we upgrade if there's a version change
-        Err(_) => Config::default().current(),
-    };
-
+fn build_resources(config: &ConfigV1, world: &mut World) -> InputSource {
     let ts = Terminal::terminal_size();
 
     // prep resources
     world.insert(FrameBuffer::new(usize::from(ts.0), usize::from(ts.1)));
     world.insert(State::default());
-    world.insert(config.color_palette);
-    world.insert(config.symbol_palette);
+    world.insert(config.color_palette.clone());
+    world.insert(config.symbol_palette.clone());
 
-    InputSource::from(config.char_map)
+    InputSource::from(config.char_map.clone())
 }
 
 fn dispatch_input_event(world: &World, event: InputEvent, terminal: &mut Terminal) {
@@ -141,9 +140,16 @@ fn build_dispatchers<'a, 'b>() -> (Dispatcher<'a, 'b>, Dispatcher<'a, 'b>) {
     (updater, renderer)
 }
 
-fn save_config(config_file: &Path, world: &World) {
+fn save_config(mut v1: ConfigV1, config_file: &Path, world: &World) {
+    use std::ops::Deref;
+
     let cp = world.fetch::<ColorPalette>();
     let sp = world.fetch::<SymbolPalette>();
-    let config = Config::V1(ConfigV1::from((&*cp, &*sp)));
+
+    v1.color_palette = cp.deref().clone();
+    v1.symbol_palette = sp.deref().clone();
+
+    let config = Config::from(v1);
+
     config.to_config_file(config_file).unwrap();
 }

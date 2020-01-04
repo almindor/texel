@@ -39,6 +39,7 @@ pub enum Event {
     NewFrame,
     DeleteFrame,
     NewObject,
+    Deselect,
     // "meta" keys
     Delete,
     Backspace,
@@ -56,7 +57,7 @@ impl Default for Event {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CharMap(pub HashMap<char, Event>);
 
 impl Default for CharMap {
@@ -120,6 +121,7 @@ impl Default for CharMap {
         map.insert('p', Event::Clipboard(ClipboardOp::Paste));
 
         map.insert('n', Event::NewObject);
+        map.insert('g', Event::Deselect);
 
         map.insert('\n', Event::Confirm);
         map.insert('\t', Event::SelectObject(Which::Next, false));

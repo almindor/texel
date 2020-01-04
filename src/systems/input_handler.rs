@@ -48,6 +48,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
 
         Event::Clipboard(op) => Action::Clipboard(op),
         Event::NewObject => Action::NewObject,
+        Event::Deselect => Action::Deselect,
 
         Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
         Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
@@ -122,6 +123,8 @@ fn write_event(event: InputEvent, state: &mut State) {
             Action::Delete
         }
 
+        Event::Deselect => Action::Deselect,
+
         _ => {
             if let Some(c) = event.1 {
                 state.push_action(Action::ApplySymbol(c));
@@ -150,6 +153,8 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
 
         Event::Undo => Action::Undo,
         Event::Redo => Action::Redo,
+
+        Event::Deselect => Action::Deselect,
 
         Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
         Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),

@@ -3,7 +3,7 @@ use crate::resources::{ColorPalette, SymbolPalette};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Config {
     V1(ConfigV1),
 }
@@ -17,7 +17,7 @@ impl Default for Config {
 impl Config {
     pub fn current(self) -> ConfigV1 {
         match self {
-            Self::V1(config) => config,
+            Self::V1(config) => check_new_keys(config),
             // TODO: once we have V2+ we'll need to return that and convert previous
         }
     }
@@ -35,19 +35,29 @@ impl Config {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+impl From<ConfigV1> for Config {
+    fn from(v1: ConfigV1) -> Config {
+        Config::V1(v1)
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ConfigV1 {
     pub color_palette: ColorPalette,
     pub symbol_palette: SymbolPalette,
     pub char_map: CharMap,
 }
 
-impl From<(&ColorPalette, &SymbolPalette)> for ConfigV1 {
-    fn from(palettes: (&ColorPalette, &SymbolPalette)) -> Self {
-        ConfigV1 {
-            color_palette: palettes.0.clone(),
-            symbol_palette: palettes.1.clone(),
-            char_map: CharMap::default(),
+// goes over defaults and adds them if they're not existing yet
+// this is a "minor version" upgrade process
+fn check_new_keys(mut config: ConfigV1) -> ConfigV1 {
+    let defaults = CharMap::default();
+
+    for (key, value) in &defaults.0 {
+        if config.char_map.0.values().find(|v| *v == value).is_none() && !config.char_map.0.contains_key(key) {
+            config.char_map.0.insert(*key, *value);
         }
     }
+
+    config
 }
