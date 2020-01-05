@@ -42,7 +42,7 @@ impl<'a> System<'a> for SpriteRenderer {
 
         // location info status line
         let ts = Terminal::terminal_size();
-        let texels = selected_info.texels(ts.0, ts.1);
+        let texels = selected_info.texels(&state, ts.0, ts.1);
 
         out.write_texels(texels);
     }
