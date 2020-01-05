@@ -820,7 +820,7 @@ fn save_scene(
     new_path: &Option<String>,
 ) -> Result<(), Error> {
     let path = state.save_file(new_path)?;
-    let scene = Scene::from_objects(sp, p);
+    let scene = Scene::from_runtime(sp, p);
 
     fio::scene_to_file(&scene, &path)
 }
@@ -831,7 +831,7 @@ fn export_to_file(
     sp: &WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
 ) -> Result<(), Error> {
-    let scene = Scene::from_objects(sp, p);
+    let scene = Scene::from_runtime(sp, p);
 
     fio::export_to_file(scene, format, path)
 }
@@ -902,7 +902,7 @@ fn apply_scene(
     s: &ReadStorage<Selection>,
     sp: &WriteStorage<Sprite>,
     u: &LazyUpdate,
-    selections: Option<Vec<bool>>,
+    selections: Option<Vec<usize>>,
 ) -> Result<(), Error> {
     clear_scene(e, sp)?;
 
@@ -910,21 +910,11 @@ fn apply_scene(
     let selections = selections.unwrap_or_default();
 
     for (i, obj) in current.objects.into_iter().enumerate() {
-        let selected = *selections.get(i).unwrap_or(&false);
+        let selected = selections.contains(&i);
         import_sprite(obj.0, e, s, u, Some(obj.1), selected)?;
     }
 
     Ok(())
-}
-
-fn selections(e: &Entities, sp: &WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> Vec<bool> {
-    let mut result = Vec::new();
-
-    for (entity, _) in (e, sp).join() {
-        result.push(s.contains(entity));
-    }
-
-    result
 }
 
 fn undo(
@@ -934,10 +924,8 @@ fn undo(
     sp: &WriteStorage<Sprite>,
     u: &LazyUpdate,
 ) -> bool {
-    let selections = selections(e, sp, s);
-
-    if let Some(scene) = state.undo() {
-        match apply_scene(scene, e, s, sp, u, Some(selections)) {
+    if let Some(value) = state.undo() {
+        match apply_scene(value.0, e, s, sp, u, Some(value.1)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }
@@ -954,10 +942,8 @@ fn redo(
     sp: &WriteStorage<Sprite>,
     u: &LazyUpdate,
 ) -> bool {
-    let selections = selections(e, sp, s);
-
-    if let Some(scene) = state.redo() {
-        match apply_scene(scene, e, s, sp, u, Some(selections)) {
+    if let Some(value) = state.redo() {
+        match apply_scene(value.0, e, s, sp, u, Some(value.1)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }
