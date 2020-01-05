@@ -1,5 +1,6 @@
 use crate::os::Terminal;
-use texel_types::{Position, Position2D, Sprite, SymbolStyle, SymbolStyles, Texels};
+use crate::resources::State;
+use texel_types::{ColorMode, Position, Position2D, Sprite, SymbolStyle, SymbolStyles, Texels};
 
 // meta info for showing in the bottom right corner
 // use for multiples too
@@ -37,7 +38,17 @@ impl From<Position2D> for SelectedInfo {
     }
 }
 
-const SELECTED_INFO_TEMPLATE: &str = "{   ,   }:(   ,   ):[   /   ]";
+/*
+    // color selection
+    let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
+    let saved_symbol = if state.unsaved_changes() { "*" } else { " " };
+
+    out.write_line_default(w - 35, h - 1, saved_symbol);
+    out.write_line(w - 34, h - 1, "▞", sc.0, sc.1, SymbolStyles::new());
+    out.set_cursor_pos(w - 1, h - 1);
+*/
+
+const SELECTED_INFO_TEMPLATE: &str = "*▞ (   ,   ):[   /   ]:{   ,   }";
 
 impl SelectedInfo {
     pub fn append(&mut self, sprite: &Sprite, pos: &Position) {
@@ -59,7 +70,7 @@ impl SelectedInfo {
         }
     }
 
-    pub fn texels(&self, w: u16, h: u16) -> Texels {
+    pub fn texels(&self, state: &State, w: u16, h: u16) -> Texels {
         // TODO: optimize styles/colors in template into singleton
         let start = Position2D {
             x: i32::from(w) - (SELECTED_INFO_TEMPLATE.len() as i32) - 1,
@@ -75,31 +86,31 @@ impl SelectedInfo {
             texel_types::write_to_texels(&str_y, &mut line, start_x + 4 - str_y.len());
         };
 
-        write_coords_to_line(self.offset.x, self.offset.y, 4);
-
         if self.selected_count > 0 {
-            write_coords_to_line(self.pos.x, self.pos.y, 14);
+            write_coords_to_line(self.pos.x, self.pos.y, 7);
+            write_coords_to_line(self.frame_index as i32, self.frame_count as i32, 17);
         }
-
-        if self.frame_count > 1 {
-            write_coords_to_line(self.frame_index as i32, self.frame_count as i32, 24);
-        }
+        write_coords_to_line(self.offset.x, self.offset.y, 27);
 
         let white = Terminal::grayscale_u8(23);
         let dark_green = Terminal::rgb_u8(1, 3, 1);
         let dark_blue = Terminal::rgb_u8(1, 1, 3);
+        line[1].fg = state.color(ColorMode::Fg);
+        line[1].bg = state.color(ColorMode::Bg);
+        line[0].styles = SymbolStyles::only(SymbolStyle::Bold);
+        line[0].symbol = if state.unsaved_changes() { '*' } else { ' ' };
 
-        for i in 0..9 {
-            line[i].fg = dark_blue;
+        for t in line.iter_mut().skip(3).take(9) {
+            t.styles = bold; // selected position in bold
+            t.fg = white;
         }
 
-        for i in 10..19 {
-            line[i].styles = bold; // selected position in bold
-            line[i].fg = white;
+        for t in line.iter_mut().skip(13).take(9) {
+            t.fg = dark_green;
         }
 
-        for i in 20..line.len() {
-            line[i].fg = dark_green;
+        for t in line.iter_mut().skip(23) {
+            t.fg = dark_blue;
         }
 
         line
