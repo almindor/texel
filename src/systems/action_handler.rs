@@ -1,4 +1,4 @@
-use crate::common::{fio, scene_from_objects, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene};
+use crate::common::{fio, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SceneExt};
 use crate::components::*;
 use crate::os::Terminal;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
@@ -820,7 +820,7 @@ fn save_scene(
     new_path: &Option<String>,
 ) -> Result<(), Error> {
     let path = state.save_file(new_path)?;
-    let scene = scene_from_objects(sp, p);
+    let scene = Scene::from_objects(sp, p);
 
     fio::scene_to_file(&scene, &path)
 }
@@ -831,7 +831,7 @@ fn export_to_file(
     sp: &WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
 ) -> Result<(), Error> {
-    let scene = scene_from_objects(sp, p);
+    let scene = Scene::from_objects(sp, p);
 
     fio::export_to_file(scene, format, path)
 }
@@ -853,7 +853,7 @@ fn tutorial(
             Loaded::Sprite(_) => return Err(Error::execution("Invalid const situation")),
         };
 
-        apply_scene(scene.clone(), e, s, sp, u)?;
+        apply_scene(scene.clone(), e, s, sp, u, None)?;
         state.clear_history(scene); // we're going from this scene now
         state.reset_save_file(); // ensure we don't save the tutorial into previous file
         Ok(false)
@@ -875,7 +875,7 @@ fn load_from_file(
             if state.unsaved_changes() {
                 Err(Error::execution("Unsaved changes, save before opening another scene"))
             } else {
-                apply_scene(scene.clone(), e, s, sp, u)?;
+                apply_scene(scene.clone(), e, s, sp, u, None)?;
                 state.clear_history(scene); // we're going from this scene now
                 state.saved(String::from(path));
                 Ok(false)
@@ -902,15 +902,29 @@ fn apply_scene(
     s: &ReadStorage<Selection>,
     sp: &WriteStorage<Sprite>,
     u: &LazyUpdate,
+    selections: Option<Vec<bool>>,
 ) -> Result<(), Error> {
     clear_scene(e, sp)?;
 
     let current = scene.current();
-    for obj in current.objects {
-        import_sprite(obj.0, e, s, u, Some(obj.1), false)?;
+    let selections = selections.unwrap_or_default();
+
+    for (i, obj) in current.objects.into_iter().enumerate() {
+        let selected = *selections.get(i).unwrap_or(&false);
+        import_sprite(obj.0, e, s, u, Some(obj.1), selected)?;
     }
 
     Ok(())
+}
+
+fn selections(e: &Entities, sp: &WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> Vec<bool> {
+    let mut result = Vec::new();
+
+    for (entity, _) in (e, sp).join() {
+        result.push(s.contains(entity));
+    }
+
+    result
 }
 
 fn undo(
@@ -920,8 +934,10 @@ fn undo(
     sp: &WriteStorage<Sprite>,
     u: &LazyUpdate,
 ) -> bool {
+    let selections = selections(e, sp, s);
+
     if let Some(scene) = state.undo() {
-        match apply_scene(scene, &e, &s, &sp, &u) {
+        match apply_scene(scene, e, s, sp, u, Some(selections)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }
@@ -938,8 +954,10 @@ fn redo(
     sp: &WriteStorage<Sprite>,
     u: &LazyUpdate,
 ) -> bool {
+    let selections = selections(e, sp, s);
+
     if let Some(scene) = state.redo() {
-        match apply_scene(scene, &e, &s, &sp, &u) {
+        match apply_scene(scene, e, s, sp, u, Some(selections)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }

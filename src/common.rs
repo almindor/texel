@@ -19,7 +19,7 @@ pub use help::*;
 pub use input::*;
 pub use mode::{Mode, OnQuit};
 pub use program::run;
-pub use scene::{scene_from_objects, Scene};
+pub use scene::{Scene, SceneExt};
 pub use selected_info::SelectedInfo;
 pub use sprite::SpriteExt;
 pub use texel::TexelExt;
