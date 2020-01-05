@@ -15,6 +15,10 @@ impl<'a> System<'a> for HistoryHandler {
     );
 
     fn run(&mut self, (mut state, e, p, sp, s): Self::SystemData) {
+        if !state.dirty {
+            return;
+        }
+
         let mut objects = Vec::new();
         let mut selections = Vec::new();
 

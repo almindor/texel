@@ -15,7 +15,8 @@ pub struct State {
     history_index: usize,
     selected_color: (u8, u8),
     save_state: (Option<String>, usize),
-    dirty: bool,
+    // TODO: refactor these off?
+    pub dirty: bool,
     pub clipboard: Clipboard,
     pub cursor: Position2D,
     pub offset: Position2D, // viewport "offset"
@@ -161,10 +162,6 @@ impl State {
         self.actions.pop_front()
     }
 
-    pub fn dirty(&mut self) {
-        self.dirty = true;
-    }
-
     // resets history to start with this scene
     pub fn clear_history(&mut self, scene: Scene) {
         self.history.clear();
@@ -204,7 +201,7 @@ impl State {
         if self.history_index == 0 {
             return None;
         }
-
+        
         self.history_index -= 1;
         if let Some(value) = self.history.get(self.history_index) {
             return Some(value.clone());

@@ -126,7 +126,7 @@ fn build_dispatchers<'a, 'b>() -> (Dispatcher<'a, 'b>, Dispatcher<'a, 'b>) {
         .with(ActionHandler, "action_handler", &["input_handler"])
         .build();
     let renderer = DispatcherBuilder::new()
-        .with(HistoryHandler, "history_handler", &[]) // needs to run after world.update
+        .with(HistoryHandler, "history_handler", &[])
         .with(ClearScreen, "clear_screen", &[])
         .with(SpriteRenderer, "sprite_renderer", &["clear_screen"])
         .with(SubselectionRenderer, "subselection_renderer", &["sprite_renderer"])

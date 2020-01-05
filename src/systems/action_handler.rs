@@ -110,9 +110,7 @@ impl<'a> System<'a> for ActionHandler {
                 Action::ClearBlank => clear_blank_texels(&mut state, &mut sp, &s),
             };
 
-            if keep_history && changed {
-                state.dirty();
-            }
+            state.dirty = keep_history && changed;
         }
     }
 }
