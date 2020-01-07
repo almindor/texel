@@ -34,6 +34,7 @@ pub enum Event {
     EditPalette(usize), // index of symbol/color, 0x0-0xF as usize <0, 16)
     ApplyColor(ColorMode),
     SelectObject(Which<Position2D>, bool), // sticky boolean
+    SelectRegion,
     SelectFrame(Which<usize>),
     Clipboard(ClipboardOp),
     NewFrame,
@@ -127,6 +128,7 @@ impl Default for CharMap {
 
         map.insert('\n', Event::Confirm);
         map.insert('\t', Event::SelectObject(Which::Next, false));
+        map.insert('v', Event::SelectRegion);
 
         CharMap(map)
     }

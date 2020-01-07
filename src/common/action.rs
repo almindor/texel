@@ -20,6 +20,7 @@ pub enum Action {
     DeleteFrame,
     NewFrame,
     SelectObject(Which<Position2D>, bool), // select next keeping old if true
+    SelectRegion,
     Read(String),
     Write(Option<String>),
     Export(ExportFormat, String),

@@ -69,11 +69,8 @@ impl<'a> System<'a> for ActionHandler {
                     _ => translate_selected(t, &mut state, &mut p, &s, &d),
                 },
                 Action::SelectFrame(which) => change_frame_on_selected(which, &mut state, &mut sp, &s),
-                Action::SelectObject(which, sticky) => match state.mode() {
-                    Mode::Object => select_obj(which, &e, &sel, &s, &u, sticky),
-                    Mode::Edit => select_edit(&e, &state, &mut ss, &u),
-                    _ => state.set_error(Error::execution("Unexpected mode on selection")),
-                },
+                Action::SelectObject(which, sticky) => select_obj(which, &e, &sel, &s, &u, sticky),
+                Action::SelectRegion => select_edit(&e, &state, &mut ss, &u),
                 Action::Delete => {
                     if state.mode() == Mode::Edit || state.mode() == Mode::Write {
                         clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)

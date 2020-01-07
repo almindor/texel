@@ -149,7 +149,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::Delete | Event::Backspace => Action::Delete,
         Event::DeleteFrame => Action::DeleteFrame,
         Event::NewFrame => Action::NewFrame,
-        Event::SelectObject(which, false) => Action::SelectObject(which, false),
+        Event::SelectRegion => Action::SelectRegion,
         Event::SelectFrame(which) => Action::SelectFrame(which),
 
         Event::Undo => Action::Undo,
