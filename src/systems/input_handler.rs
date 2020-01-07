@@ -48,6 +48,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
 
         Event::Clipboard(op) => Action::Clipboard(op),
         Event::NewObject => Action::NewObject,
+        Event::Duplicate(count) => Action::Duplicate(count),
         Event::Deselect => Action::Deselect,
 
         Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),

@@ -199,6 +199,7 @@ impl CmdLine {
             Action::ClearBlank | Action::Deselect | Action::Tutorial | Action::Delete | Action::SetMode(_) => {
                 Ok(action)
             }
+            Action::Duplicate(_) => self.parse_duplicate(parts),
             Action::Translate(_) => self.parse_translate(parts),
             Action::Write(_) => self.parse_save(parts),
             Action::Read(_) => self.parse_load(parts),
@@ -206,6 +207,15 @@ impl CmdLine {
             Action::Export(_, _) => self.parse_export(parts),
             _ => Err(Error::InvalidCommand),
         }
+    }
+
+    fn parse_duplicate(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
+        let count = parts
+            .next()
+            .unwrap_or("1")
+            .parse::<usize>()
+            .map_err(|_| Error::InvalidParam("Invalid count value"))?;
+        Ok(Action::Duplicate(count))
     }
 
     fn parse_translate(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {

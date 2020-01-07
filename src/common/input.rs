@@ -39,6 +39,7 @@ pub enum Event {
     NewFrame,
     DeleteFrame,
     NewObject,
+    Duplicate(usize), // count
     Deselect,
     // "meta" keys
     Delete,
@@ -121,6 +122,7 @@ impl Default for CharMap {
         map.insert('p', Event::Clipboard(ClipboardOp::Paste));
 
         map.insert('n', Event::NewObject);
+        map.insert('m', Event::Duplicate(1));
         map.insert('g', Event::Deselect);
 
         map.insert('\n', Event::Confirm);

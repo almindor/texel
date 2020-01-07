@@ -6,6 +6,7 @@ use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 pub enum Action {
     None,
     NewObject,
+    Duplicate(usize),
     Clipboard(ClipboardOp),
     Cancel,
     ClearError,
@@ -52,6 +53,7 @@ impl From<&str> for Action {
             "export" => Action::Export(ExportFormat::default(), String::default()),
             "tutorial" => Action::Tutorial,
             "clear_blank" => Action::ClearBlank,
+            "duplicate" => Action::Duplicate(1),
             _ => Action::None,
         }
     }
@@ -96,7 +98,7 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 11] = [
+        const ACTION_WORDS: [&str; 12] = [
             "read",
             "write",
             "translate",
@@ -108,6 +110,7 @@ impl Action {
             "export",
             "tutorial",
             "clear_blank",
+            "duplicate",
         ];
 
         for word in &ACTION_WORDS {

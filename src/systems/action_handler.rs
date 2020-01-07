@@ -34,6 +34,10 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Redo => redo(&mut state, &e, &s, &sp, &u),
                 Action::Clipboard(op) => clipboard(op, &mut state, &e, &mut sp, &s, &ss, &mut p, &pss, &mut d, &u),
                 Action::NewObject => new_sprite(&e, &s, &u, None),
+                Action::Duplicate(count) => match duplicate_selected(count, &e, &p, &sp, &s, &u) {
+                    Ok(_) => true,
+                    Err(err) => state.set_error(err),
+                },
                 Action::NewFrame => new_frame_on_selected(&mut state, &mut sp, &s),
                 Action::DeleteFrame => delete_frame_on_selected(&mut state, &mut sp, &s),
                 Action::Cancel => {
@@ -785,6 +789,17 @@ fn new_sprite(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate, pos: Opt
     u.insert(entity, sprite);
 
     true
+}
+
+fn duplicate_selected(count: usize, e: &Entities, p: &WriteStorage<Position>, sp: &WriteStorage<Sprite>, s: &ReadStorage<Selection>, u: &LazyUpdate) -> Result<(), Error> {
+    for i in 0..count {
+        let iteration = (i * 2) as i32;
+        for (sprite, pos, _) in (sp, p, s).join() {
+            import_sprite(sprite.clone(), e, s, u, Some(*pos + 2 + iteration), true)?;
+        }
+    }
+
+    Ok(())
 }
 
 fn import_sprite(
