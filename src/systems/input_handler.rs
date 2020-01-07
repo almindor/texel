@@ -36,6 +36,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Mode(mode) => Action::SetMode(mode),
         Event::SelectObject(which, sticky) => Action::SelectObject(which, sticky),
         Event::SelectFrame(which) => Action::SelectFrame(which),
+        Event::SelectRegion => Action::SelectRegion,
 
         Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,

@@ -33,8 +33,8 @@ impl<'a> System<'a> for ActionHandler {
                 Action::Undo => undo(&mut state, &e, &s, &sp, &u),
                 Action::Redo => redo(&mut state, &e, &s, &sp, &u),
                 Action::Clipboard(op) => clipboard(op, &mut state, &e, &mut sp, &s, &ss, &mut p, &pss, &mut d, &u),
-                Action::NewObject => new_sprite(&e, &s, &u, None),
-                Action::Duplicate(count) => match duplicate_selected(count, &e, &p, &sp, &s, &u) {
+                Action::NewObject => new_sprite(&state, &e, &s, &u, None),
+                Action::Duplicate(count) => match duplicate_selected(count, &state, &e, &p, &sp, &s, &u) {
                     Ok(_) => true,
                     Err(err) => state.set_error(err),
                 },
@@ -70,7 +70,10 @@ impl<'a> System<'a> for ActionHandler {
                 },
                 Action::SelectFrame(which) => change_frame_on_selected(which, &mut state, &mut sp, &s),
                 Action::SelectObject(which, sticky) => select_obj(which, &e, &sel, &s, &u, sticky),
-                Action::SelectRegion => select_edit(&e, &state, &mut ss, &u),
+                Action::SelectRegion => match state.mode() {
+                    Mode::Edit => select_edit(&e, &state, &mut ss, &u),
+                    _ => state.set_error(Error::execution("Region select in unexpected mode")),
+                },
                 Action::Delete => {
                     if state.mode() == Mode::Edit || state.mode() == Mode::Write {
                         clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
@@ -212,7 +215,7 @@ fn set_mode(
             0 => {
                 state.clear_error();
                 state.cursor = (&NEW_POSITION).into();
-                new_sprite(e, s, u, None)
+                new_sprite(state, e, s, u, None)
             }
             _ => state.set_error(Error::execution("Multiple objects selected")),
         },
@@ -688,7 +691,7 @@ fn paste_selection(state: &mut State, e: &Entities, s: &ReadStorage<Selection>, 
     let sprites: Vec<Sprite> = state.clipboard.clone().into();
 
     for sprite in sprites.into_iter() {
-        if match import_sprite(sprite, e, s, u, None, true) {
+        if match import_sprite(sprite, state, e, s, u, None, true) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         } {
@@ -771,7 +774,7 @@ fn paste_subselection(
     changed
 }
 
-fn new_sprite(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate, pos: Option<Position>) -> bool {
+fn new_sprite(state: &State, e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate, pos: Option<Position>) -> bool {
     deselect_obj(e, s, u);
     let entity = e.create();
     let sprite = Sprite::default();
@@ -779,7 +782,7 @@ fn new_sprite(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate, pos: Opt
     let dim = Dimension::for_sprite(&sprite);
 
     u.insert(entity, dim);
-    u.insert(entity, pos.unwrap_or(NEW_POSITION));
+    u.insert(entity, pos.unwrap_or(NEW_POSITION + state.offset));
     u.insert(entity, Selection);
     u.insert(entity, Selectable);
     u.insert(entity, Border);
@@ -790,6 +793,7 @@ fn new_sprite(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate, pos: Opt
 
 fn duplicate_selected(
     count: usize,
+    state: &State,
     e: &Entities,
     p: &WriteStorage<Position>,
     sp: &WriteStorage<Sprite>,
@@ -799,7 +803,7 @@ fn duplicate_selected(
     for i in 0..count {
         let iteration = (i * 2) as i32;
         for (sprite, pos, _) in (sp, p, s).join() {
-            import_sprite(sprite.clone(), e, s, u, Some(*pos + 2 + iteration), true)?;
+            import_sprite(sprite.clone(), state, e, s, u, Some(*pos + 2 + iteration), true)?;
         }
     }
 
@@ -808,6 +812,7 @@ fn duplicate_selected(
 
 fn import_sprite(
     sprite: Sprite,
+    state: &State,
     e: &Entities,
     s: &ReadStorage<Selection>,
     u: &LazyUpdate,
@@ -818,7 +823,7 @@ fn import_sprite(
     let entity = e.create();
 
     u.insert(entity, Dimension::for_sprite(&sprite));
-    u.insert(entity, pos.unwrap_or(NEW_POSITION));
+    u.insert(entity, pos.unwrap_or(NEW_POSITION + state.offset));
     u.insert(entity, Selectable);
     u.insert(entity, Border);
     u.insert(entity, sprite);
@@ -870,7 +875,7 @@ fn tutorial(
             Loaded::Sprite(_) => return Err(Error::execution("Invalid const situation")),
         };
 
-        apply_scene(scene.clone(), e, s, sp, u, None)?;
+        apply_scene(scene.clone(), state, e, s, sp, u, None)?;
         state.clear_history(scene); // we're going from this scene now
         state.reset_save_file(); // ensure we don't save the tutorial into previous file
         Ok(false)
@@ -892,14 +897,14 @@ fn load_from_file(
             if state.unsaved_changes() {
                 Err(Error::execution("Unsaved changes, save before opening another scene"))
             } else {
-                apply_scene(scene.clone(), e, s, sp, u, None)?;
+                apply_scene(scene.clone(), state, e, s, sp, u, None)?;
                 state.clear_history(scene); // we're going from this scene now
                 state.saved(String::from(path));
                 Ok(false)
             }
         }
         Loaded::Sprite(sprite) => {
-            import_sprite(sprite, e, s, u, None, true)?;
+            import_sprite(sprite, state, e, s, u, None, true)?;
             Ok(true)
         }
     }
@@ -915,6 +920,7 @@ fn clear_scene(e: &Entities, sp: &WriteStorage<Sprite>) -> Result<(), Error> {
 
 fn apply_scene(
     scene: Scene,
+    state: &State,
     e: &Entities,
     s: &ReadStorage<Selection>,
     sp: &WriteStorage<Sprite>,
@@ -928,7 +934,7 @@ fn apply_scene(
 
     for (i, obj) in current.objects.into_iter().enumerate() {
         let selected = selections.contains(&i);
-        import_sprite(obj.0, e, s, u, Some(obj.1), selected)?;
+        import_sprite(obj.0, state, e, s, u, Some(obj.1), selected)?;
     }
 
     Ok(())
@@ -942,7 +948,7 @@ fn undo(
     u: &LazyUpdate,
 ) -> bool {
     if let Some(value) = state.undo() {
-        match apply_scene(value.0, e, s, sp, u, Some(value.1)) {
+        match apply_scene(value.0, state, e, s, sp, u, Some(value.1)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }
@@ -960,7 +966,7 @@ fn redo(
     u: &LazyUpdate,
 ) -> bool {
     if let Some(value) = state.redo() {
-        match apply_scene(value.0, e, s, sp, u, Some(value.1)) {
+        match apply_scene(value.0, state, e, s, sp, u, Some(value.1)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }
