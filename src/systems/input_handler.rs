@@ -1,4 +1,4 @@
-use crate::common::{Action, Event, InputEvent, Mode, SelectMode, MoveMeta};
+use crate::common::{Action, Event, InputEvent, Mode, MoveMeta, SelectMode};
 use crate::components::{Direction, Translation};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette};
 use specs::{System, Write};

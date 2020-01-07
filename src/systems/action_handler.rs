@@ -56,7 +56,9 @@ impl<'a> System<'a> for ActionHandler {
                 Action::ApplyStyle(style) => {
                     apply_style_to_selected(style, &state, &e, &mut sp, &p, &d, &s, &ss, &pss, &u)
                 }
-                Action::ApplyRegion => apply_region(subselection(&ss, &pss, &d), &mut state, &e, &sel, &p, &d, &s, &ss, &u),
+                Action::ApplyRegion => {
+                    apply_region(subselection(&ss, &pss, &d), &mut state, &e, &sel, &p, &d, &s, &ss, &u)
+                }
                 Action::ReverseMode => reverse_mode(&e, &mut state, &s, &ss, &p, &mut pss, &u),
                 Action::Deselect => clear_subselection(&e, &ss, &u) || deselect_obj(&e, &s, &u),
                 Action::Translate(t) => match state.mode() {
@@ -225,7 +227,7 @@ fn set_mode(
             };
 
             true
-        },
+        }
         Mode::Object(SelectMode::Region) => {
             deselect_obj(e, s, u);
             true
@@ -243,28 +245,33 @@ fn set_mode(
 }
 
 fn select_region(
-    state: &mut State, 
+    state: &mut State,
     e: &Entities,
     ss: &mut WriteStorage<Subselection>,
     sel: &ReadStorage<Selectable>,
     p: &WriteStorage<Position>,
     d: &WriteStorage<Dimension>,
     s: &ReadStorage<Selection>,
-    u: &LazyUpdate
+    u: &LazyUpdate,
 ) -> bool {
     match state.mode() {
         Mode::Edit => {
             mark_subselection(e, state, ss, u);
             false
-        },
+        }
         Mode::Object(SelectMode::Region) => {
             apply_region(mark_subselection(e, state, ss, u), state, e, sel, p, d, s, ss, u)
-        },
-        _ => state.set_error(Error::execution("Region select in unexpected mode"))
+        }
+        _ => state.set_error(Error::execution("Region select in unexpected mode")),
     }
 }
 
-fn mark_subselection(e: &Entities, state: &State, ss: &mut WriteStorage<Subselection>, u: &LazyUpdate) -> Option<Bounds> {
+fn mark_subselection(
+    e: &Entities,
+    state: &State,
+    ss: &mut WriteStorage<Subselection>,
+    u: &LazyUpdate,
+) -> Option<Bounds> {
     let mut joined = (e, ss).join();
 
     let clear_edit = |entity| {
@@ -312,14 +319,15 @@ fn apply_region(
 ) -> bool {
     let area = match region {
         Some(bounds) => bounds,
-        None => return false
+        None => return false,
     };
 
     deselect_obj(e, s, u);
 
     for (entity, pos, dim, _) in (e, p, d, sel).join() {
         // any point inside region -> select
-        if area.intersects(pos.into(), *dim) {
+        let pos2d: Position2D = pos.into();
+        if area.intersects(pos2d - state.offset, *dim) {
             u.insert(entity, Selection);
         }
     }

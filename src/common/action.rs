@@ -16,7 +16,7 @@ pub enum Action {
     ApplyColor(ColorMode),
     ApplySymbol(char),
     ApplyStyle(SymbolStyle),
-    ApplyRegion, // takes "selected region" and translates into selection on objects
+    ApplyRegion,               // takes "selected region" and translates into selection on objects
     SelectFrame(Which<usize>), // next/prev + index into number
     DeleteFrame,
     NewFrame,

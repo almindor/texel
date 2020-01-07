@@ -17,7 +17,7 @@ pub use clipboard::{Clipboard, ClipboardOp};
 pub use config::{Config, ConfigV1};
 pub use help::*;
 pub use input::*;
-pub use mode::{Mode, SelectMode, OnQuit};
+pub use mode::{Mode, OnQuit, SelectMode};
 pub use program::run;
 pub use scene::{Scene, SceneExt};
 pub use selected_info::SelectedInfo;
