@@ -201,7 +201,7 @@ impl State {
         if self.history_index == 0 {
             return None;
         }
-        
+
         self.history_index -= 1;
         if let Some(value) = self.history.get(self.history_index) {
             return Some(value.clone());

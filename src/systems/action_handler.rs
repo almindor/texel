@@ -791,7 +791,14 @@ fn new_sprite(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate, pos: Opt
     true
 }
 
-fn duplicate_selected(count: usize, e: &Entities, p: &WriteStorage<Position>, sp: &WriteStorage<Sprite>, s: &ReadStorage<Selection>, u: &LazyUpdate) -> Result<(), Error> {
+fn duplicate_selected(
+    count: usize,
+    e: &Entities,
+    p: &WriteStorage<Position>,
+    sp: &WriteStorage<Sprite>,
+    s: &ReadStorage<Selection>,
+    u: &LazyUpdate,
+) -> Result<(), Error> {
     for i in 0..count {
         let iteration = (i * 2) as i32;
         for (sprite, pos, _) in (sp, p, s).join() {
