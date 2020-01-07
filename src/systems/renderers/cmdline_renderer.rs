@@ -1,4 +1,4 @@
-use crate::common::{Error, Mode};
+use crate::common::{Error, Mode, SelectMode};
 use crate::os::Terminal;
 use crate::resources::{CmdLine, ColorPalette, FrameBuffer, State, SymbolPalette, PALETTE_OFFSET};
 use specs::System;
@@ -32,7 +32,7 @@ impl<'a> System<'a> for CmdLineRenderer {
         match mode {
             Mode::Quitting(_) => {}
             Mode::Command => print_cmdline(&mut out, &cmdline, h),
-            Mode::Object | Mode::Help(_) => print_mode(&mut out, mode, w, h),
+            Mode::Object(_) | Mode::Help(_) => print_mode(&mut out, &state, mode, w, h),
             Mode::Write => print_write(&mut out, &state, h),
             Mode::Edit => print_edit(&mut out, &state, &symbol_palette, h),
             Mode::Color(cm) => print_color_select(&mut out, &state, &color_palette, cm, w, h),
@@ -76,13 +76,17 @@ fn print_write(out: &mut FrameBuffer, state: &State, h: i32) {
     out.set_cursor_pos(state.cursor.x, state.cursor.y);
 }
 
-fn print_mode(out: &mut FrameBuffer, mode: Mode, w: i32, h: i32) {
+fn print_mode(out: &mut FrameBuffer, state: &State, mode: Mode, w: i32, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", mode.to_str());
 
     out.write_line(0, h - 1, text, texel_types::DEFAULT_BG_U8, white, bold);
-    out.set_cursor_pos(w - 1, h - 1);
+    if mode == Mode::Object(SelectMode::Region) {
+        out.set_cursor_pos(state.cursor.x, state.cursor.y);
+    } else {
+        out.set_cursor_pos(w - 1, h - 1);
+    }
 }
 
 fn print_edit(out: &mut FrameBuffer, state: &State, palette: &SymbolPalette, h: i32) {

@@ -10,8 +10,20 @@ pub enum OnQuit {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Mode {
+pub enum SelectMode {
     Object,
+    Region,
+}
+
+impl Default for SelectMode {
+    fn default() -> Self {
+        Self::Object
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Mode {
+    Object(SelectMode),
     Color(ColorMode),
     SelectColor(usize, ColorMode), // index for which color 0 -> 16 (0x0 to 0xF)
     SelectSymbol(usize),           // index for which symbol 0 -> 16 (0x0 to 0xF)
@@ -24,14 +36,15 @@ pub enum Mode {
 
 impl Default for Mode {
     fn default() -> Self {
-        Mode::Object
+        Mode::Object(SelectMode::default())
     }
 }
 
 impl Mode {
     pub fn to_str(&self) -> &'static str {
         match self {
-            Mode::Object => "OBJECT",
+            Mode::Object(SelectMode::Object) => "OBJECT[OBJECT]",
+            Mode::Object(SelectMode::Region) => "OBJECT[REGION]",
             Mode::Color(ColorMode::Fg) => "COLOR[FG]",
             Mode::Color(ColorMode::Bg) => "COLOR[BG]",
             Mode::SelectColor(_, ColorMode::Fg) => "COLOR[SET-FG]", // TODO: construct static numbered index

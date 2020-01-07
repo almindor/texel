@@ -1,4 +1,4 @@
-use crate::common::{fio, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SceneExt};
+use crate::common::{fio, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SceneExt, SelectMode};
 use crate::components::*;
 use crate::os::Terminal;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
@@ -56,24 +56,23 @@ impl<'a> System<'a> for ActionHandler {
                 Action::ApplyStyle(style) => {
                     apply_style_to_selected(style, &state, &e, &mut sp, &p, &d, &s, &ss, &pss, &u)
                 }
+                Action::ApplyRegion => apply_region(subselection(&ss, &pss, &d), &mut state, &e, &sel, &p, &d, &s, &ss, &u),
                 Action::ReverseMode => reverse_mode(&e, &mut state, &s, &ss, &p, &mut pss, &u),
-                Action::Deselect => match state.mode() {
-                    Mode::Edit => clear_subselection(&e, &ss, &u),
-                    _ => deselect_obj(&e, &s, &u),
-                },
+                Action::Deselect => clear_subselection(&e, &ss, &u) || deselect_obj(&e, &s, &u),
                 Action::Translate(t) => match state.mode() {
                     Mode::Edit => {
                         let sprite_bounds = selected_bounds(&s, &p, &d);
                         translate_subselection(t, &mut state, &mut ss, &mut pss, &mut d, sprite_bounds)
                     }
+                    Mode::Object(SelectMode::Region) => {
+                        let viewport_bounds = viewport_bounds(&state);
+                        translate_subselection(t, &mut state, &mut ss, &mut pss, &mut d, viewport_bounds)
+                    }
                     _ => translate_selected(t, &mut state, &mut p, &s, &d),
                 },
                 Action::SelectFrame(which) => change_frame_on_selected(which, &mut state, &mut sp, &s),
                 Action::SelectObject(which, sticky) => select_obj(which, &e, &sel, &s, &u, sticky),
-                Action::SelectRegion => match state.mode() {
-                    Mode::Edit => select_edit(&e, &state, &mut ss, &u),
-                    _ => state.set_error(Error::execution("Region select in unexpected mode")),
-                },
+                Action::SelectRegion => select_region(&mut state, &e, &mut ss, &sel, &p, &d, &s, &u),
                 Action::Delete => {
                     if state.mode() == Mode::Edit || state.mode() == Mode::Write {
                         clear_symbol_on_selected(&mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
@@ -145,13 +144,11 @@ fn reverse_mode(
 }
 
 fn deselect_obj(e: &Entities, s: &ReadStorage<Selection>, u: &LazyUpdate) -> bool {
-    let mut changed = false;
     for (entity, _) in (e, s).join() {
         u.remove::<Selection>(entity);
-        changed = true;
     }
 
-    changed
+    false
 }
 
 fn clear_subselection(e: &Entities, ss: &WriteStorage<Subselection>, u: &LazyUpdate) -> bool {
@@ -228,6 +225,10 @@ fn set_mode(
             };
 
             true
+        },
+        Mode::Object(SelectMode::Region) => {
+            deselect_obj(e, s, u);
+            true
         }
         _ => true,
     } {
@@ -241,7 +242,29 @@ fn set_mode(
     }
 }
 
-fn select_edit(e: &Entities, state: &State, ss: &mut WriteStorage<Subselection>, u: &LazyUpdate) -> bool {
+fn select_region(
+    state: &mut State, 
+    e: &Entities,
+    ss: &mut WriteStorage<Subselection>,
+    sel: &ReadStorage<Selectable>,
+    p: &WriteStorage<Position>,
+    d: &WriteStorage<Dimension>,
+    s: &ReadStorage<Selection>,
+    u: &LazyUpdate
+) -> bool {
+    match state.mode() {
+        Mode::Edit => {
+            mark_subselection(e, state, ss, u);
+            false
+        },
+        Mode::Object(SelectMode::Region) => {
+            apply_region(mark_subselection(e, state, ss, u), state, e, sel, p, d, s, ss, u)
+        },
+        _ => state.set_error(Error::execution("Region select in unexpected mode"))
+    }
+}
+
+fn mark_subselection(e: &Entities, state: &State, ss: &mut WriteStorage<Subselection>, u: &LazyUpdate) -> Option<Bounds> {
     let mut joined = (e, ss).join();
 
     let clear_edit = |entity| {
@@ -262,15 +285,47 @@ fn select_edit(e: &Entities, state: &State, ss: &mut WriteStorage<Subselection>,
         // existing selection, finish it
         if sel.active {
             sel.active = false; // we're done selecting
+            Some(sel.initial_pos.area(state.cursor))
         } else {
             // redo
             clear_edit(entity);
             new_edit();
+            None
         }
     } else {
         // initiating new selection/edit
         new_edit();
+        None
     }
+}
+
+fn apply_region(
+    region: Option<Bounds>,
+    state: &mut State,
+    e: &Entities,
+    sel: &ReadStorage<Selectable>,
+    p: &WriteStorage<Position>,
+    d: &WriteStorage<Dimension>,
+    s: &ReadStorage<Selection>,
+    ss: &WriteStorage<Subselection>,
+    u: &LazyUpdate,
+) -> bool {
+    let area = match region {
+        Some(bounds) => bounds,
+        None => return false
+    };
+
+    deselect_obj(e, s, u);
+
+    for (entity, pos, dim, _) in (e, p, d, sel).join() {
+        // any point inside region -> select
+        if area.intersects(pos.into(), *dim) {
+            u.insert(entity, Selection);
+        }
+    }
+
+    clear_subselection(e, ss, u);
+    state.reverse_mode();
 
     false
 }
@@ -333,6 +388,11 @@ fn delete_selected(e: &Entities, s: &ReadStorage<Selection>) -> Result<(), Error
     Ok(())
 }
 
+fn viewport_bounds(state: &State) -> Option<Bounds> {
+    let ts = Terminal::terminal_size();
+    Some(Bounds::Free(state.offset, Dimension::from_wh(ts.0, ts.1)))
+}
+
 fn selected_bounds(
     s: &ReadStorage<Selection>,
     p: &WriteStorage<Position>,
@@ -349,14 +409,14 @@ fn translate_subselection(
     t: Translation,
     state: &mut State,
     ss: &mut WriteStorage<Subselection>,
-    p_ss: &mut WriteStorage<Position2D>,
+    pss: &mut WriteStorage<Position2D>,
     d: &mut WriteStorage<Dimension>,
-    sprite_bounds: Option<Bounds>,
+    area_bounds: Option<Bounds>,
 ) -> bool {
-    if let Some(bounds) = sprite_bounds {
+    if let Some(bounds) = area_bounds {
         if state.cursor.apply(t, bounds) {
             // if we have a subselection
-            if let Some((ss_pos, sub_sel, dim)) = (p_ss, ss, d).join().next() {
+            if let Some((ss_pos, sub_sel, dim)) = (pss, ss, d).join().next() {
                 if sub_sel.active {
                     // adjusting subselection
                     let edit_box = sub_sel.initial_pos.area(state.cursor);
@@ -389,7 +449,7 @@ fn translate_selected(
     let mode = state.mode();
 
     match mode {
-        Mode::Object | Mode::Write => {
+        Mode::Object(_) | Mode::Write => {
             let mut changed = false;
 
             // nothing selected, move viewport
@@ -404,7 +464,7 @@ fn translate_selected(
 
                 if match state.mode() {
                     Mode::Write => state.cursor.apply(t, sprite_bounds),
-                    Mode::Object => position.apply(t, screen_bounds),
+                    Mode::Object(_) => position.apply(t, screen_bounds),
                     _ => false,
                 } {
                     changed = true;
@@ -427,7 +487,7 @@ fn apply_color_to_selected(
     s: &ReadStorage<Selection>,
     d: &WriteStorage<Dimension>,
     ss: &WriteStorage<Subselection>,
-    p_ss: &WriteStorage<Position2D>,
+    pss: &WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
     let mut changed = false;
@@ -435,7 +495,7 @@ fn apply_color_to_selected(
 
     for (sprite, pos, _) in (sp, p, s).join() {
         if state.mode() == Mode::Edit {
-            let sel_bounds = subselection(ss, p_ss, d).unwrap_or_else(|| Bounds::point(state.cursor));
+            let sel_bounds = subselection(ss, pss, d).unwrap_or_else(|| Bounds::point(state.cursor));
             let pos2d: Position2D = pos.into();
             let rel_bounds = sel_bounds - pos2d;
 
@@ -459,11 +519,11 @@ fn clear_symbol_on_selected(
     p: &mut WriteStorage<Position>,
     d: &mut WriteStorage<Dimension>,
     ss: &WriteStorage<Subselection>,
-    p_ss: &WriteStorage<Position2D>,
+    pss: &WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
     let mut changed = false;
-    let sel_bounds = subselection(ss, p_ss, d).unwrap_or_else(|| Bounds::point(state.cursor));
+    let sel_bounds = subselection(ss, pss, d).unwrap_or_else(|| Bounds::point(state.cursor));
 
     for (sprite, pos, dim, _) in (sp, p, d, s).join() {
         let pos2d: Position2D = pos.into();
@@ -490,10 +550,10 @@ fn clear_symbol_on_selected(
 
 fn subselection(
     ss: &WriteStorage<Subselection>,
-    p_ss: &WriteStorage<Position2D>,
+    pss: &WriteStorage<Position2D>,
     d: &WriteStorage<Dimension>,
 ) -> Option<Bounds> {
-    if let Some((pos, dim, _)) = (p_ss, d, ss).join().next() {
+    if let Some((pos, dim, _)) = (pss, d, ss).join().next() {
         Some(Bounds::Binding(*pos, *dim))
     } else {
         None
@@ -577,14 +637,14 @@ fn apply_style_to_selected(
     d: &WriteStorage<Dimension>,
     s: &ReadStorage<Selection>,
     ss: &WriteStorage<Subselection>,
-    p_ss: &WriteStorage<Position2D>,
+    pss: &WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
     let mut changed = false;
 
     for (sprite, pos, _) in (sp, p, s).join() {
         if state.mode() == Mode::Edit {
-            let sel_bounds = subselection(ss, p_ss, d).unwrap_or_else(|| Bounds::point(state.cursor));
+            let sel_bounds = subselection(ss, pss, d).unwrap_or_else(|| Bounds::point(state.cursor));
             let pos2d: Position2D = pos.into();
             let rel_bounds = sel_bounds - pos2d;
 
@@ -609,13 +669,13 @@ fn apply_symbol_to_selected(
     p: &mut WriteStorage<Position>,
     d: &mut WriteStorage<Dimension>,
     ss: &WriteStorage<Subselection>,
-    p_ss: &WriteStorage<Position2D>,
+    pss: &WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
     let mut changed = false;
     let bg = state.color(ColorMode::Bg);
     let fg = state.color(ColorMode::Fg);
-    let sel_bounds = subselection(ss, p_ss, d).unwrap_or_else(|| Bounds::point(state.cursor));
+    let sel_bounds = subselection(ss, pss, d).unwrap_or_else(|| Bounds::point(state.cursor));
 
     for (sprite, pos, dim, _) in (sp, p, d, s).join() {
         let pos2d: Position2D = pos.into();
@@ -641,18 +701,18 @@ fn clipboard(
     s: &ReadStorage<Selection>,
     ss: &WriteStorage<Subselection>,
     p: &mut WriteStorage<Position>,
-    p_ss: &WriteStorage<Position2D>,
+    pss: &WriteStorage<Position2D>,
     d: &mut WriteStorage<Dimension>,
     u: &LazyUpdate,
 ) -> bool {
     match (state.mode(), op) {
-        (Mode::Edit, ClipboardOp::Copy) => copy_or_cut_subselection(op, state, e, sp, s, ss, p, p_ss, d, u),
-        (Mode::Edit, ClipboardOp::Cut) => copy_or_cut_subselection(op, state, e, sp, s, ss, p, p_ss, d, u),
+        (Mode::Edit, ClipboardOp::Copy) => copy_or_cut_subselection(op, state, e, sp, s, ss, p, pss, d, u),
+        (Mode::Edit, ClipboardOp::Cut) => copy_or_cut_subselection(op, state, e, sp, s, ss, p, pss, d, u),
         (Mode::Edit, ClipboardOp::Paste) => paste_subselection(state, sp, s, p, d),
 
-        (Mode::Object, ClipboardOp::Copy) => copy_or_cut_selection(op, state, e, sp, s),
-        (Mode::Object, ClipboardOp::Cut) => copy_or_cut_selection(op, state, e, sp, s),
-        (Mode::Object, ClipboardOp::Paste) => paste_selection(state, e, s, u),
+        (Mode::Object(_), ClipboardOp::Copy) => copy_or_cut_selection(op, state, e, sp, s),
+        (Mode::Object(_), ClipboardOp::Cut) => copy_or_cut_selection(op, state, e, sp, s),
+        (Mode::Object(_), ClipboardOp::Paste) => paste_selection(state, e, s, u),
         _ => false,
     }
 }
@@ -710,12 +770,12 @@ fn copy_or_cut_subselection(
     s: &ReadStorage<Selection>,
     ss: &WriteStorage<Subselection>,
     p: &mut WriteStorage<Position>,
-    p_ss: &WriteStorage<Position2D>,
+    pss: &WriteStorage<Position2D>,
     d: &mut WriteStorage<Dimension>,
     u: &LazyUpdate,
 ) -> bool {
     let mut changed = false;
-    let sel_bounds = subselection(ss, p_ss, d).unwrap_or_else(|| Bounds::point(state.cursor));
+    let sel_bounds = subselection(ss, pss, d).unwrap_or_else(|| Bounds::point(state.cursor));
 
     if let Some((sprite, pos, dim, _)) = (sp, p, d, s).join().next() {
         let pos2d: Position2D = pos.into();

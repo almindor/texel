@@ -1,4 +1,4 @@
-use crate::common::Mode;
+use crate::common::{Mode, SelectMode};
 use crate::components::{Dimension, Position2D, Subselection};
 use crate::resources::{ColorPalette, FrameBuffer, State};
 use specs::{Join, Read, ReadStorage, System, Write};
@@ -16,8 +16,9 @@ impl<'a> System<'a> for SubselectionRenderer {
     );
 
     fn run(&mut self, (mut out, state, p, d, ss): Self::SystemData) {
-        if state.mode() != Mode::Edit {
-            return;
+        match state.mode() {
+            Mode::Edit | Mode::Object(SelectMode::Region) => (),
+            _ => return,
         }
 
         let select_color = ColorPalette::subselection_bg_u8();

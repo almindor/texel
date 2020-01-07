@@ -1,4 +1,4 @@
-use crate::common::{Action, Event, InputEvent, Mode, MoveMeta};
+use crate::common::{Action, Event, InputEvent, Mode, SelectMode, MoveMeta};
 use crate::components::{Direction, Translation};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette};
 use specs::{System, Write};
@@ -18,7 +18,8 @@ impl<'a> System<'a> for InputHandler {
         while let Some(event) = state.pop_event() {
             match state.mode() {
                 Mode::Command => cmdline_event(event, &mut state, &mut cmdline),
-                Mode::Object => objmode_event(event, &mut state),
+                Mode::Object(SelectMode::Object) => objmode_event(event, &mut state),
+                Mode::Object(SelectMode::Region) => objmode_region_event(event, &mut state),
                 Mode::Color(cm) => color_event(event, &mut state, cm, &color_palette),
                 Mode::SelectSymbol(index) => symbol_select_event(event, &mut state, index, &mut symbol_palette),
                 Mode::SelectColor(index, _) => color_select_event(event, &mut state, index, &mut color_palette),
@@ -36,7 +37,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Mode(mode) => Action::SetMode(mode),
         Event::SelectObject(which, sticky) => Action::SelectObject(which, sticky),
         Event::SelectFrame(which) => Action::SelectFrame(which),
-        Event::SelectRegion => Action::SelectRegion,
+        Event::SelectRegion => Action::SetMode(Mode::Object(SelectMode::Region)),
 
         Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,
@@ -57,6 +58,36 @@ fn objmode_event(event: InputEvent, state: &mut State) {
 
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
         Event::ApplyStyle(style) => Action::ApplyStyle(style),
+
+        Event::Left(MoveMeta::Relative) | Event::ArrowLeft => Action::Translate(Translation::Relative(-1, 0, 0)),
+        Event::Up(MoveMeta::Relative) | Event::ArrowUp => Action::Translate(Translation::Relative(0, -1, 0)),
+        Event::Down(MoveMeta::Relative) | Event::ArrowDown => Action::Translate(Translation::Relative(0, 1, 0)),
+        Event::Right(MoveMeta::Relative) | Event::ArrowRight => Action::Translate(Translation::Relative(1, 0, 0)),
+
+        Event::Left(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Left)),
+        Event::Up(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Top)),
+        Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
+        Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
+
+        _ => Action::None,
+    };
+
+    state.push_action(action);
+}
+
+fn objmode_region_event(event: InputEvent, state: &mut State) {
+    let action = match event.0 {
+        Event::Mode(mode) => Action::SetMode(mode),
+        Event::SelectRegion => Action::SelectRegion,
+
+        Event::Cancel => Action::Cancel,
+        Event::Confirm => Action::ApplyRegion,
+
+        Event::Undo => Action::Undo,
+        Event::Redo => Action::Redo,
+
+        Event::Clipboard(op) => Action::Clipboard(op),
+        Event::Deselect => Action::Deselect,
 
         Event::Left(MoveMeta::Relative) | Event::ArrowLeft => Action::Translate(Translation::Relative(-1, 0, 0)),
         Event::Up(MoveMeta::Relative) | Event::ArrowUp => Action::Translate(Translation::Relative(0, -1, 0)),
