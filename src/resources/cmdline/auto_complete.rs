@@ -1,4 +1,4 @@
-use crate::common::{fio, Error, HELP_TOPICS};
+use crate::common::{fio, Error};
 use std::fs::read_dir;
 use std::path::Path;
 
@@ -28,33 +28,7 @@ impl AutoComplete {
         self.index = None;
     }
 
-    // pub fn complete_export_format(&mut self, word: &str) -> Option<&Completion> {
-    //     if let Some(index) = self.index {
-    //         if index < self.completions.len() - 1 {
-    //             self.index = Some(index + 1);
-    //             return self.completions.get(index + 1);
-    //         } else if !self.completions.is_empty() {
-    //             self.index = Some(0);
-    //             return self.completions.first();
-    //         }
-
-    //         return None;
-    //     }
-
-    //     for found in fio::EXPORT_FORMAT_LIST.iter().filter(|f| f.starts_with(word)) {
-    //         let as_string = String::from(*found);
-    //         self.completions.push(Completion::Parameter(as_string));
-    //     }
-
-    //     if !self.completions.is_empty() {
-    //         self.index = Some(0usize);
-    //         return self.completions.first();
-    //     }
-
-    //     None
-    // }
-
-    pub fn complete_help_topic(&mut self, word: &str) -> Option<&Completion> {
+    pub fn complete_from_list(&mut self, word: &str, list: &[&str]) -> Option<&Completion> {
         if let Some(index) = self.index {
             if index < self.completions.len() - 1 {
                 self.index = Some(index + 1);
@@ -67,7 +41,7 @@ impl AutoComplete {
             return None;
         }
 
-        for found in HELP_TOPICS.iter().filter(|t| t.starts_with(word)) {
+        for found in list.iter().filter(|t| t.starts_with(word)) {
             let as_string = String::from(*found);
             self.completions.push(Completion::Parameter(as_string));
         }

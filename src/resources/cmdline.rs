@@ -1,4 +1,4 @@
-use crate::common::{fio, topic_index, Action, Error, Event, InputEvent};
+use crate::common::{fio, topic_index, Action, Layout, Error, Event, InputEvent};
 use crate::components::Translation;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
@@ -171,7 +171,10 @@ impl CmdLine {
                     .complete_filename(parts.last().unwrap_or_else(|| &"."))?,
                 "help" => self
                     .auto_complete
-                    .complete_help_topic(parts.last().unwrap_or_else(|| &"")),
+                    .complete_from_list(parts.last().unwrap_or_else(|| &""), &crate::common::HELP_TOPICS),
+                "layout" => self
+                    .auto_complete
+                    .complete_from_list(parts.last().unwrap_or_else(|| &""), &crate::common::LAYOUT_WORDS),
                 _ => None,
             } {
                 match completion {
@@ -199,6 +202,7 @@ impl CmdLine {
             Action::ClearBlank | Action::Deselect | Action::Tutorial | Action::Delete | Action::SetMode(_) => {
                 Ok(action)
             }
+            Action::Layout(_) => self.parse_layout(parts),
             Action::Duplicate(_) => self.parse_duplicate(parts),
             Action::Translate(_) => self.parse_translate(parts),
             Action::Write(_) => self.parse_save(parts),
@@ -206,6 +210,31 @@ impl CmdLine {
             Action::ShowHelp(_) => self.parse_help(parts),
             Action::Export(_, _) => self.parse_export(parts),
             _ => Err(Error::InvalidCommand),
+        }
+    }
+
+    fn parse_layout(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
+        let type_str = parts
+            .next()
+            .unwrap_or("none");
+
+        match Layout::from(type_str) {
+            Layout::Random => Ok(Action::Layout(Layout::Random)),
+            Layout::Column(_, _) => {
+                let cols = parts
+                    .next()
+                    .ok_or(Error::InvalidParam("No columns specified"))?
+                    .parse::<usize>()
+                    .map_err(|_| Error::InvalidParam("Invalid columns value"))?;
+                let padding = parts
+                    .next()
+                    .ok_or(Error::InvalidParam("No padding specified"))?
+                    .parse::<i32>()
+                    .map_err(|_| Error::InvalidParam("Invalid padding value"))?;
+                
+                Ok(Action::Layout(Layout::Column(cols, padding)))
+            }
+            Layout::None => Err(Error::InvalidParam("Invalid layout type"))
         }
     }
 

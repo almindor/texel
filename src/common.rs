@@ -12,7 +12,7 @@ mod texel;
 
 pub mod fio; // file io
 
-pub use action::Action;
+pub use action::{Action, Layout, LAYOUT_WORDS};
 pub use clipboard::{Clipboard, ClipboardOp};
 pub use config::{Config, ConfigV1};
 pub use help::*;

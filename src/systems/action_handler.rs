@@ -1,4 +1,4 @@
-use crate::common::{fio, Action, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SceneExt, SelectMode};
+use crate::common::{fio, Action, Layout, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SceneExt, SelectMode};
 use crate::components::*;
 use crate::os::Terminal;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
@@ -72,6 +72,7 @@ impl<'a> System<'a> for ActionHandler {
                     }
                     _ => translate_selected(t, &mut state, &mut p, &s, &d),
                 },
+                Action::Layout(layout) => apply_layout_to_selected(layout, &state, &mut p, &d, &s),
                 Action::SelectFrame(which) => change_frame_on_selected(which, &mut state, &mut sp, &s),
                 Action::SelectObject(which, sticky) => select_obj(which, &e, &sel, &s, &u, sticky),
                 Action::SelectRegion => select_region(&mut state, &e, &mut ss, &sel, &p, &d, &s, &u),
@@ -615,6 +616,79 @@ fn clear_blank_texels(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &Read
     }
 
     changed
+}
+
+fn apply_layout_to_selected(
+    layout: Layout,
+    state: &State,
+    p: &mut WriteStorage<Position>,
+    d: &WriteStorage<Dimension>,
+    s: &ReadStorage<Selection>,
+) -> bool {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+
+    let bounds = viewport_bounds(state).unwrap(); // this should never be empty
+
+    match layout {
+        Layout::None => (),
+        Layout::Column(cols, padding) => {
+            let mut col_sizes = [0i32].repeat(cols);
+            let mut row_sizes = Vec::new();
+            let mut start_x = i32::max_value();
+            let mut start_y = i32::max_value();
+            let mut positions: Vec<&mut Position> = Vec::new();
+
+            for (i, (pos, dim, _)) in (p, d, s).join().enumerate() {
+                let col = i % cols;
+                let row = i / cols;
+
+                if row_sizes.len() <= row {
+                    row_sizes.push(0i32);
+                }
+
+                col_sizes[col] = std::cmp::max(col_sizes[col], i32::from(dim.w));
+                row_sizes[row] = std::cmp::max(row_sizes[row], i32::from(dim.h));
+
+                if pos.x < start_x {
+                    start_x = pos.x;
+                }
+                if pos.y < start_y {
+                    start_y = pos.y;
+                }
+
+                positions.push(pos); // we can't re-iterate so keep the references
+            }
+
+            for (i, pos) in positions.iter_mut().enumerate() {
+                let col = i % cols;
+                let row = i / cols;
+
+                let offset_x = (if col > 0 { col_sizes[col - 1] } else { 0 } + padding) * col as i32;
+                let offset_y = (if row > 0 { row_sizes[row - 1] } else { 0 } + padding) * row as i32;
+
+                pos.x = start_x + offset_x;
+                pos.y = start_y + offset_y;
+            }
+        }
+        Layout::Random => for (pos, dim, _) in (p, d, s).join() {
+            let bounds_x = bounds.position().x;
+            let bounds_y = bounds.position().y;
+            let bounds_w = i32::from(bounds.dimension().w);
+            let bounds_h = i32::from(bounds.dimension().h);
+            let dim_w = i32::from(dim.w);
+            let dim_h = i32::from(dim.h);
+
+            if dim_w < bounds_w && dim_h < bounds_h {
+                let x: i32 = rng.gen_range(bounds_x, bounds_x + bounds_w - dim_w);
+                let y: i32 = rng.gen_range(bounds_y, bounds_y + bounds_h - dim_h);
+                pos.x = x;
+                pos.y = y;
+            }
+        }
+    }
+
+    false
 }
 
 fn change_frame_on_selected(

@@ -2,6 +2,28 @@ use crate::common::fio::ExportFormat;
 use crate::common::{ClipboardOp, Mode, OnQuit};
 use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Layout {
+    None,
+    Column(usize, i32), // number of columns, padding size
+    Random,
+}
+
+impl From<&str> for Layout {
+    fn from(source: &str) -> Self {
+        match source {
+            "column" => Layout::Column(0, 0),
+            "random" => Layout::Random,
+            _ => Layout::None,
+        }
+    }
+}
+
+pub const LAYOUT_WORDS: [&str; 2] = [
+    "column",
+    "random",
+];
+
 #[derive(Debug)]
 pub enum Action {
     None,
@@ -26,6 +48,7 @@ pub enum Action {
     Write(Option<String>),
     Export(ExportFormat, String),
     Translate(Translation),
+    Layout(Layout),
     Delete,
     Undo,
     Redo,
@@ -56,6 +79,7 @@ impl From<&str> for Action {
             "tutorial" => Action::Tutorial,
             "clear_blank" => Action::ClearBlank,
             "duplicate" => Action::Duplicate(1),
+            "layout" => Action::Layout(Layout::None),
             _ => Action::None,
         }
     }
@@ -100,7 +124,7 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 12] = [
+        const ACTION_WORDS: [&str; 13] = [
             "read",
             "write",
             "translate",
@@ -113,6 +137,7 @@ impl Action {
             "tutorial",
             "clear_blank",
             "duplicate",
+            "layout",
         ];
 
         for word in &ACTION_WORDS {
