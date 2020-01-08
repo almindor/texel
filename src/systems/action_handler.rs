@@ -1,4 +1,4 @@
-use crate::common::{fio, Action, Layout, Clipboard, ClipboardOp, Error, Mode, OnQuit, Scene, SceneExt, SelectMode};
+use crate::common::{fio, Action, Clipboard, ClipboardOp, Error, Layout, Mode, OnQuit, Scene, SceneExt, SelectMode};
 use crate::components::*;
 use crate::os::Terminal;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
@@ -671,19 +671,21 @@ fn apply_layout_to_selected(
                 pos.y = start_y + offset_y;
             }
         }
-        Layout::Random => for (pos, dim, _) in (p, d, s).join() {
-            let bounds_x = bounds.position().x;
-            let bounds_y = bounds.position().y;
-            let bounds_w = i32::from(bounds.dimension().w);
-            let bounds_h = i32::from(bounds.dimension().h);
-            let dim_w = i32::from(dim.w);
-            let dim_h = i32::from(dim.h);
+        Layout::Random => {
+            for (pos, dim, _) in (p, d, s).join() {
+                let bounds_x = bounds.position().x;
+                let bounds_y = bounds.position().y;
+                let bounds_w = i32::from(bounds.dimension().w);
+                let bounds_h = i32::from(bounds.dimension().h);
+                let dim_w = i32::from(dim.w);
+                let dim_h = i32::from(dim.h);
 
-            if dim_w < bounds_w && dim_h < bounds_h {
-                let x: i32 = rng.gen_range(bounds_x, bounds_x + bounds_w - dim_w);
-                let y: i32 = rng.gen_range(bounds_y, bounds_y + bounds_h - dim_h);
-                pos.x = x;
-                pos.y = y;
+                if dim_w < bounds_w && dim_h < bounds_h {
+                    let x: i32 = rng.gen_range(bounds_x, bounds_x + bounds_w - dim_w);
+                    let y: i32 = rng.gen_range(bounds_y, bounds_y + bounds_h - dim_h);
+                    pos.x = x;
+                    pos.y = y;
+                }
             }
         }
     }
@@ -942,14 +944,20 @@ fn duplicate_selected(
     s: &ReadStorage<Selection>,
     u: &LazyUpdate,
 ) -> Result<(), Error> {
+    let mut done = 0;
     for i in 0..count {
         let iteration = (i * 2) as i32;
         for (sprite, pos, _) in (sp, p, s).join() {
+            done += 1;
             import_sprite(sprite.clone(), state, e, s, u, Some(*pos + 2 + iteration), true)?;
         }
     }
 
-    Ok(())
+    if done > 0 {
+        Ok(())
+    } else {
+        Err(Error::execution("Nothing to duplicate"))
+    }
 }
 
 fn import_sprite(

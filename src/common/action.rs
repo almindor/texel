@@ -19,10 +19,7 @@ impl From<&str> for Layout {
     }
 }
 
-pub const LAYOUT_WORDS: [&str; 2] = [
-    "column",
-    "random",
-];
+pub const LAYOUT_WORDS: [&str; 2] = ["column", "random"];
 
 #[derive(Debug)]
 pub enum Action {

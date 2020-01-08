@@ -1,4 +1,4 @@
-use crate::common::{fio, topic_index, Action, Layout, Error, Event, InputEvent};
+use crate::common::{fio, topic_index, Action, Error, Event, InputEvent, Layout};
 use crate::components::Translation;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
@@ -82,6 +82,7 @@ impl CmdLine {
 
     fn flush(&mut self) {
         self.history.push(self.cmd.clone());
+        self.history_index = Some(self.history.len() - 1);
         self.cmd.clear();
         self.cursor_pos = 0;
     }
@@ -214,9 +215,7 @@ impl CmdLine {
     }
 
     fn parse_layout(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
-        let type_str = parts
-            .next()
-            .unwrap_or("none");
+        let type_str = parts.next().unwrap_or("none");
 
         match Layout::from(type_str) {
             Layout::Random => Ok(Action::Layout(Layout::Random)),
@@ -231,10 +230,16 @@ impl CmdLine {
                     .ok_or(Error::InvalidParam("No padding specified"))?
                     .parse::<i32>()
                     .map_err(|_| Error::InvalidParam("Invalid padding value"))?;
-                
+                if cols == 0 {
+                    return Err(Error::InvalidParam("Columns must be positive"));
+                }
+                if padding == 0 {
+                    return Err(Error::InvalidParam("Padding must be positive"));
+                }
+
                 Ok(Action::Layout(Layout::Column(cols, padding)))
             }
-            Layout::None => Err(Error::InvalidParam("Invalid layout type"))
+            Layout::None => Err(Error::InvalidParam("Invalid layout type")),
         }
     }
 
