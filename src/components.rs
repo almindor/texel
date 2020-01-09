@@ -41,3 +41,10 @@ pub struct Selectable;
 impl Component for Selectable {
     type Storage = NullStorage<Self>;
 }
+
+#[derive(Default)]
+pub struct Bookmark(pub usize);
+
+impl Component for Bookmark {
+    type Storage = VecStorage<Self>;
+}

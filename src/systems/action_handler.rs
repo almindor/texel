@@ -17,21 +17,22 @@ impl<'a> System<'a> for ActionHandler {
         WriteStorage<'a, Position>,
         ReadStorage<'a, Selectable>,
         ReadStorage<'a, Selection>,
+        ReadStorage<'a, Bookmark>,
         WriteStorage<'a, Subselection>,
-        WriteStorage<'a, Position2D>, // cursor position saved to sprite
+        WriteStorage<'a, Position2D>, // cursor position saved to sprite, bookmark position
         WriteStorage<'a, Dimension>,
         WriteStorage<'a, Sprite>,
         Read<'a, LazyUpdate>,
     );
 
-    fn run(&mut self, (mut state, e, mut p, sel, s, mut ss, mut pss, mut d, mut sp, u): Self::SystemData) {
+    fn run(&mut self, (mut state, e, mut p, sel, s, b, mut ss, mut pss, mut d, mut sp, u): Self::SystemData) {
         while let Some(action) = state.pop_action() {
             let keep_history = action.keeps_history();
 
             let changed = match action {
                 Action::None => false,
-                Action::Undo => undo(&mut state, &e, &s, &sp, &u),
-                Action::Redo => redo(&mut state, &e, &s, &sp, &u),
+                Action::Undo => undo(&mut state, &e, &s, &sp, &b, &mut pss, &u),
+                Action::Redo => redo(&mut state, &e, &s, &sp, &b, &mut pss, &u),
                 Action::Clipboard(op) => clipboard(op, &mut state, &e, &mut sp, &s, &ss, &mut p, &pss, &mut d, &u),
                 Action::NewObject => new_sprite(&state, &e, &s, &u, None),
                 Action::Duplicate(count) => match duplicate_selected(count, &state, &e, &p, &sp, &s, &u) {
@@ -40,7 +41,8 @@ impl<'a> System<'a> for ActionHandler {
                 },
                 Action::NewFrame => new_frame_on_selected(&mut state, &mut sp, &s),
                 Action::DeleteFrame => delete_frame_on_selected(&mut state, &mut sp, &s),
-                Action::Viewport(_, _) => false, // TODO
+                Action::Viewport(index, true) => set_bookmark(index, state.offset, &e, &b, &mut pss, &u),
+                Action::Viewport(index, false) => jump_to_bookmark(index, &mut state, &b, &pss),
                 Action::Cancel => {
                     if state.error().is_some() {
                         state.clear_error()
@@ -51,7 +53,7 @@ impl<'a> System<'a> for ActionHandler {
                     }
                 }
                 Action::ClearError => state.clear_error(),
-                Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &ss, &sp, &p, &pss, &u),
+                Action::SetMode(mode) => set_mode(mode, &mut state, &e, &s, &ss, &sp, &p, &pss, &b, &u),
                 Action::ApplyColor(cm) => apply_color_to_selected(cm, &state, &e, &mut sp, &p, &s, &d, &ss, &pss, &u),
                 Action::ApplySymbol(sym) => {
                     apply_symbol_to_selected(sym, &mut state, &e, &mut sp, &s, &mut p, &mut d, &ss, &pss, &u)
@@ -89,7 +91,7 @@ impl<'a> System<'a> for ActionHandler {
                     }
                 }
                 Action::Write(path) => {
-                    if let Err(err) = save_scene(&mut state, &sp, &p, &path) {
+                    if let Err(err) = save_scene(&mut state, &sp, &p, &b, &pss, &path) {
                         state.set_error(err)
                     } else if let Some(path) = path {
                         state.saved(path)
@@ -97,16 +99,16 @@ impl<'a> System<'a> for ActionHandler {
                         state.clear_changes()
                     }
                 }
-                Action::Read(path) => match load_from_file(&e, &mut state, &s, &sp, &u, &path) {
+                Action::Read(path) => match load_from_file(&e, &mut state, &s, &sp, &b, &mut pss, &u, &path) {
                     Ok(changed) => changed, // we reset history in some cases here
                     Err(err) => state.set_error(err),
                 },
-                Action::Tutorial => match tutorial(&e, &mut state, &s, &sp, &u) {
+                Action::Tutorial => match tutorial(&e, &mut state, &s, &sp, &b, &mut pss, &u) {
                     Ok(changed) => changed,
                     Err(err) => state.set_error(err),
                 },
                 Action::Export(format, path) => {
-                    if let Err(err) = export_to_file(format, &path, &sp, &p) {
+                    if let Err(err) = export_to_file(format, &path, &sp, &p, &b, &pss) {
                         state.set_error(err)
                     } else {
                         false
@@ -176,6 +178,7 @@ fn set_mode(
     sp: &WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
     cur_pos: &WriteStorage<Position2D>,
+    b: &ReadStorage<Bookmark>,
     u: &LazyUpdate,
 ) -> bool {
     if match mode {
@@ -189,7 +192,7 @@ fn set_mode(
         }
         Mode::Quitting(OnQuit::Save) => {
             if state.unsaved_changes() {
-                if let Err(err) = save_scene(state, sp, p, &None) {
+                if let Err(err) = save_scene(state, sp, p, b, cur_pos, &None) {
                     state.set_error(err)
                 } else {
                     true
@@ -605,6 +608,37 @@ fn delete_frame_on_selected(state: &mut State, sp: &mut WriteStorage<Sprite>, s:
     changed
 }
 
+fn set_bookmark(
+    index: usize,
+    location: Position2D,
+    e: &Entities,
+    b: &ReadStorage<Bookmark>,
+    pb: &mut WriteStorage<Position2D>,
+    u: &LazyUpdate,
+) -> bool {
+    if let Some((_, pos)) = (b, pb).join().find(|(bm, _)| bm.0 == index) {
+        if location != *pos {
+            *pos = location;
+        }
+    } else {
+        let entity = e.create();
+        u.insert(entity, Bookmark(index));
+        u.insert(entity, location);
+    }
+
+    true
+}
+
+fn jump_to_bookmark(index: usize, state: &mut State, b: &ReadStorage<Bookmark>, pb: &WriteStorage<Position2D>) -> bool {
+    if let Some((_, pos)) = (b, pb).join().find(|(bm, _)| bm.0 == index) {
+        state.offset = *pos;
+    } else {
+        state.set_error(Error::execution("Bookmark not found"));
+    }
+
+    false
+}
+
 fn clear_blank_texels(state: &mut State, sp: &mut WriteStorage<Sprite>, s: &ReadStorage<Selection>) -> bool {
     if s.count() == 0 {
         return state.set_error(Error::execution("No objects selected"));
@@ -634,7 +668,7 @@ fn apply_layout_to_selected(
     let bounds = viewport_bounds(state).unwrap(); // this should never be empty
 
     match layout {
-        Layout::None => {},
+        Layout::None => {}
         Layout::Column(cols, padding) => {
             let mut col_sizes = [0i32].repeat(cols);
             let mut row_sizes = Vec::new();
@@ -992,10 +1026,12 @@ fn save_scene(
     state: &mut State,
     sp: &WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
+    b: &ReadStorage<Bookmark>,
+    pb: &WriteStorage<Position2D>,
     new_path: &Option<String>,
 ) -> Result<(), Error> {
     let path = state.save_file(new_path)?;
-    let scene = Scene::from_runtime(sp, p);
+    let scene = Scene::from_runtime(sp, p, b, pb);
 
     fio::scene_to_file(&scene, &path)
 }
@@ -1005,8 +1041,10 @@ fn export_to_file(
     path: &str,
     sp: &WriteStorage<Sprite>,
     p: &WriteStorage<Position>,
+    b: &ReadStorage<Bookmark>,
+    pb: &WriteStorage<Position2D>,
 ) -> Result<(), Error> {
-    let scene = Scene::from_runtime(sp, p);
+    let scene = Scene::from_runtime(sp, p, b, pb);
 
     fio::export_to_file(scene, format, path)
 }
@@ -1016,6 +1054,8 @@ fn tutorial(
     state: &mut State,
     s: &ReadStorage<Selection>,
     sp: &WriteStorage<Sprite>,
+    b: &ReadStorage<Bookmark>,
+    pb: &mut WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> Result<bool, Error> {
     if state.unsaved_changes() {
@@ -1028,7 +1068,7 @@ fn tutorial(
             Loaded::Sprite(_) => return Err(Error::execution("Invalid const situation")),
         };
 
-        apply_scene(scene.clone(), state, e, s, sp, u, None)?;
+        apply_scene(scene.clone(), state, e, s, b, sp, pb, u, None)?;
         state.clear_history(scene); // we're going from this scene now
         state.reset_save_file(); // ensure we don't save the tutorial into previous file
         Ok(false)
@@ -1040,6 +1080,8 @@ fn load_from_file(
     state: &mut State,
     s: &ReadStorage<Selection>,
     sp: &WriteStorage<Sprite>,
+    b: &ReadStorage<Bookmark>,
+    pb: &mut WriteStorage<Position2D>,
     u: &LazyUpdate,
     path: &str,
 ) -> Result<bool, Error> {
@@ -1050,7 +1092,7 @@ fn load_from_file(
             if state.unsaved_changes() {
                 Err(Error::execution("Unsaved changes, save before opening another scene"))
             } else {
-                apply_scene(scene.clone(), state, e, s, sp, u, None)?;
+                apply_scene(scene.clone(), state, e, s, b, sp, pb, u, None)?;
                 state.clear_history(scene); // we're going from this scene now
                 state.saved(String::from(path));
                 Ok(false)
@@ -1076,7 +1118,9 @@ fn apply_scene(
     state: &State,
     e: &Entities,
     s: &ReadStorage<Selection>,
+    b: &ReadStorage<Bookmark>,
     sp: &WriteStorage<Sprite>,
+    pb: &mut WriteStorage<Position2D>,
     u: &LazyUpdate,
     selections: Option<Vec<usize>>,
 ) -> Result<(), Error> {
@@ -1090,6 +1134,10 @@ fn apply_scene(
         import_sprite(obj.0, state, e, s, u, Some(obj.1), selected)?;
     }
 
+    for (index, pos) in current.bookmarks.into_iter() {
+        set_bookmark(index, pos, e, b, pb, u);
+    }
+
     Ok(())
 }
 
@@ -1098,10 +1146,12 @@ fn undo(
     e: &Entities,
     s: &ReadStorage<Selection>,
     sp: &WriteStorage<Sprite>,
+    b: &ReadStorage<Bookmark>,
+    pb: &mut WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
     if let Some(value) = state.undo() {
-        match apply_scene(value.0, state, e, s, sp, u, Some(value.1)) {
+        match apply_scene(value.0, state, e, s, b, sp, pb, u, Some(value.1)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }
@@ -1116,10 +1166,12 @@ fn redo(
     e: &Entities,
     s: &ReadStorage<Selection>,
     sp: &WriteStorage<Sprite>,
+    b: &ReadStorage<Bookmark>,
+    pb: &mut WriteStorage<Position2D>,
     u: &LazyUpdate,
 ) -> bool {
     if let Some(value) = state.redo() {
-        match apply_scene(value.0, state, e, s, sp, u, Some(value.1)) {
+        match apply_scene(value.0, state, e, s, b, sp, pb, u, Some(value.1)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }

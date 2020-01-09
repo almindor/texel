@@ -26,7 +26,7 @@ impl<'a> System<'a> for InputHandler {
                 Mode::Edit => edit_event(event, &mut state, &symbol_palette),
                 Mode::Write => write_event(event, &mut state),
                 Mode::Help(_) => help_event(event, &mut state),
-                Mode::Quitting(_) => {},
+                Mode::Quitting(_) => {}
             }
         }
     }
@@ -38,6 +38,8 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::SelectObject(which, sticky) => Action::SelectObject(which, sticky),
         Event::SelectFrame(which) => Action::SelectFrame(which),
         Event::SelectRegion => Action::SetMode(Mode::Object(SelectMode::Region)),
+        Event::SelectPalette(index) => Action::Viewport(index, false),
+        Event::EditPalette(index) => Action::Viewport(index, true),
 
         Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,
@@ -132,7 +134,7 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
             state.push_action(Action::ReverseMode);
         }
         Event::Cancel => state.push_action(Action::Cancel),
-        _ => {},
+        _ => {}
     };
 }
 
