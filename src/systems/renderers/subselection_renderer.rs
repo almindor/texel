@@ -17,7 +17,7 @@ impl<'a> System<'a> for SubselectionRenderer {
 
     fn run(&mut self, (mut out, state, p, d, ss): Self::SystemData) {
         match state.mode() {
-            Mode::Edit | Mode::Object(SelectMode::Region) => (),
+            Mode::Edit | Mode::Object(SelectMode::Region) => {},
             _ => return,
         }
 

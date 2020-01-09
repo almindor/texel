@@ -634,7 +634,7 @@ fn apply_layout_to_selected(
     let bounds = viewport_bounds(state).unwrap(); // this should never be empty
 
     match layout {
-        Layout::None => (),
+        Layout::None => {},
         Layout::Column(cols, padding) => {
             let mut col_sizes = [0i32].repeat(cols);
             let mut row_sizes = Vec::new();

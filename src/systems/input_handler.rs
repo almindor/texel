@@ -26,7 +26,7 @@ impl<'a> System<'a> for InputHandler {
                 Mode::Edit => edit_event(event, &mut state, &symbol_palette),
                 Mode::Write => write_event(event, &mut state),
                 Mode::Help(_) => help_event(event, &mut state),
-                Mode::Quitting(_) => (),
+                Mode::Quitting(_) => {},
             }
         }
     }
@@ -132,7 +132,7 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
             state.push_action(Action::ReverseMode);
         }
         Event::Cancel => state.push_action(Action::Cancel),
-        _ => (),
+        _ => {},
     };
 }
 
