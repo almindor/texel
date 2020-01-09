@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
 use crate::components::{Bookmark, Sprite};
 use specs::{Join, ReadStorage, WriteStorage};
+use std::collections::BTreeMap;
 use texel_types::{Position, Position2D};
 
 pub use texel_types::{Scene, SceneV2};

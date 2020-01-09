@@ -5,14 +5,14 @@ use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Layout {
     None,
-    Column(usize, i32), // number of columns, padding size
+    Column(usize, (u16, u16)), // number of columns, padding size x, y
     Random,
 }
 
 impl From<&str> for Layout {
     fn from(source: &str) -> Self {
         match source {
-            "column" => Layout::Column(0, 0),
+            "column" => Layout::Column(0, (0, 0)),
             "random" => Layout::Random,
             _ => Layout::None,
         }

@@ -701,8 +701,8 @@ fn apply_layout_to_selected(
                 let col = i % cols;
                 let row = i / cols;
 
-                let offset_x = (if col > 0 { col_sizes[col - 1] } else { 0 } + padding) * col as i32;
-                let offset_y = (if row > 0 { row_sizes[row - 1] } else { 0 } + padding) * row as i32;
+                let offset_x = (if col > 0 { col_sizes[col - 1] } else { 0 } + i32::from(padding.0)) * col as i32;
+                let offset_y = (if row > 0 { row_sizes[row - 1] } else { 0 } + i32::from(padding.1)) * row as i32;
 
                 pos.x = start_x + offset_x;
                 pos.y = start_y + offset_y;

@@ -225,18 +225,27 @@ impl CmdLine {
                     .ok_or(Error::InvalidParam("No columns specified"))?
                     .parse::<usize>()
                     .map_err(|_| Error::InvalidParam("Invalid columns value"))?;
-                let padding = parts
+                let padding_x = parts
                     .next()
                     .ok_or(Error::InvalidParam("No padding specified"))?
-                    .parse::<i32>()
-                    .map_err(|_| Error::InvalidParam("Invalid padding value"))?;
+                    .parse::<u16>()
+                    .map_err(|_| Error::InvalidParam("Invalid padding X value"))?;
+                let padding_y = match parts.next() {
+                    None => padding_x,
+                    Some(str_y) => str_y
+                        .parse::<u16>()
+                        .map_err(|_| Error::InvalidParam("Invalid padding Y value"))?,
+                };
+
                 if cols == 0 {
                     return Err(Error::InvalidParam("Columns must be positive"));
                 }
-                if padding == 0 {
+
+                if padding_x == 0 {
                     return Err(Error::InvalidParam("Padding must be positive"));
                 }
 
+                let padding = (padding_x, padding_y);
                 Ok(Action::Layout(Layout::Column(cols, padding)))
             }
             Layout::None => Err(Error::InvalidParam("Invalid layout type")),

@@ -1,8 +1,8 @@
-use std::collections::BTreeMap;
 use crate::common::{Scene, SceneExt};
 use crate::components::{Bookmark, Position, Position2D, Selection, Sprite};
 use crate::resources::State;
 use specs::{Entities, Join, ReadStorage, System, Write, WriteStorage};
+use std::collections::BTreeMap;
 
 pub struct HistoryHandler;
 
