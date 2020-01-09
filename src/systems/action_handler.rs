@@ -345,8 +345,8 @@ fn apply_region(
     false
 }
 
-fn select_obj(
-    which: Which<Position2D>, // TODO: absolute position selection via mouse
+fn select_obj_relative(
+    forward: bool,
     e: &Entities,
     sel: &ReadStorage<Selectable>,
     s: &ReadStorage<Selection>,
@@ -383,6 +383,50 @@ fn select_obj(
     }
 
     false
+}
+
+fn select_obj_all(
+    e: &Entities,
+    sel: &ReadStorage<Selectable>,
+    s: &ReadStorage<Selection>,
+    u: &LazyUpdate,
+) -> bool {
+    for (entity, _) in (e, sel).join() {
+        if !s.contains(entity) {
+            u.insert(entity, Selection);
+        }
+    }
+
+    false
+}
+
+fn select_obj_at(
+    pos: Position2D,
+    e: &Entities,
+    sel: &ReadStorage<Selectable>,
+    s: &ReadStorage<Selection>,
+    u: &LazyUpdate,
+    sticky: bool,
+) -> bool {
+    // TODO
+    false
+}
+
+fn select_obj(
+    which: Which<Position2D>,
+    e: &Entities,
+    sel: &ReadStorage<Selectable>,
+    s: &ReadStorage<Selection>,
+    u: &LazyUpdate,
+    sticky: bool,
+) -> bool {
+    match which {
+        Which::Next => select_obj_relative(true, e, sel, s, u, sticky),
+        Which::Previous => select_obj_relative(false, e, sel, s, u, sticky),
+        Which::All => select_obj_all(e, sel, s, u),
+        Which::At(pos) => select_obj_at(pos, e, sel, s, u, sticky),
+    }
+
 }
 
 fn delete_selected(e: &Entities, s: &ReadStorage<Selection>) -> Result<(), Error> {

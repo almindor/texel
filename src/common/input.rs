@@ -130,8 +130,8 @@ impl Default for CharMap {
 
         map.insert(']', Event::SelectFrame(Which::Next));
         map.insert('[', Event::SelectFrame(Which::Previous));
-        map.insert('+', Event::NewFrame);
-        map.insert('_', Event::DeleteFrame);
+        map.insert('}', Event::NewFrame);
+        map.insert('{', Event::DeleteFrame);
 
         map.insert('u', Event::Undo);
         map.insert('U', Event::Redo);

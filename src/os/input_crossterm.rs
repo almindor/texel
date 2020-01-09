@@ -102,7 +102,10 @@ impl From<CharMap> for InputSource {
             TEvent::Key(KeyEvent::from(Key::BackTab)),
             Event::SelectObject(Which::Next, true),
         );
-
+        result.map.insert(
+            TEvent::Key(KeyEvent::new(Key::Char('a'), KeyModifiers::CONTROL)),
+            Event::SelectObject(Which::All, false),
+        );
         result
     }
 }
