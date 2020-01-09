@@ -36,7 +36,7 @@ impl<'a> System<'a> for CmdLineRenderer {
             Mode::Write => print_write(&mut out, &state, h),
             Mode::Edit => print_edit(&mut out, &state, &symbol_palette, h),
             Mode::Color(cm) => print_color_select(&mut out, &state, &color_palette, cm, w, h),
-            Mode::SelectSymbol(i) => print_symbol_palette(&mut out, &state, i, w, h),
+            Mode::SelectSymbol(i) => print_symbol_palette(&mut out, &state, &symbol_palette ,i, w, h),
             Mode::SelectColor(i, cm) => print_color_palette(&mut out, &state, &color_palette, i, cm, h),
         }
     }
@@ -108,17 +108,16 @@ fn print_color_select(out: &mut FrameBuffer, state: &State, palette: &ColorPalet
     out.set_cursor_pos(w - 1, h - 1);
 }
 
-fn print_symbol_palette(out: &mut FrameBuffer, state: &State, index: usize, w: i32, h: i32) {
+fn print_symbol_palette(out: &mut FrameBuffer, state: &State,  palette: &SymbolPalette, index: usize, w: i32, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
     let text = format!("--{}--", state.mode().to_str());
-    let i_txt = format!("{}", crate::common::index_from_one(index));
 
     out.write_line(1, h - 1, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.write_line(
-        PALETTE_OFFSET + index as i32,
+        PALETTE_OFFSET + (index * 2) as i32,
         h - 1,
-        i_txt,
+        palette.symbol(index),
         texel_types::DEFAULT_BG_U8,
         white,
         bold,

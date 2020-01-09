@@ -6,9 +6,6 @@ const SYMBOLS_IN_PALETTE: usize = 16;
 const DEFAULT_SYMBOLS: [char; SYMBOLS_IN_PALETTE] = [
     '|', '-', '_', '=', '\\', '/', '[', ']', '~', 'O', '*', '^', '#', '@', '!', '?',
 ];
-const SYMBOL_SELECTOR: [char; SYMBOLS_IN_PALETTE] = [
-    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'a', 'b', 'c', 'd', 'e', 'f',
-];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolPalette {
@@ -60,29 +57,18 @@ impl SymbolPalette {
         let mut result = Vec::with_capacity(SYMBOLS_IN_PALETTE * 4);
 
         let mut x = start_x;
-        for (i, symbol) in DEFAULT_SYMBOLS.iter().enumerate() {
-            let selector = SYMBOL_SELECTOR[i];
-            result.push(Texel {
-                pos: Position2D { x, y },
-                symbol: selector,
-                bg: texel_types::DEFAULT_BG_U8,
-                fg: texel_types::DEFAULT_FG_U8,
-                styles: SymbolStyles::new(),
-            });
-            x += 1;
-
-            result.push(Texel {
-                pos: Position2D { x, y },
-                symbol: ':',
-                bg: texel_types::DEFAULT_BG_U8,
-                fg: texel_types::DEFAULT_FG_U8,
-                styles: SymbolStyles::new(),
-            });
-            x += 1;
-
+        for symbol in self.symbols.iter() {
             result.push(Texel {
                 pos: Position2D { x, y },
                 symbol: *symbol,
+                bg: texel_types::DEFAULT_BG_U8,
+                fg: texel_types::DEFAULT_FG_U8,
+                styles: SymbolStyles::new(),
+            });
+            x += 1;
+            result.push(Texel {
+                pos: Position2D { x, y },
+                symbol: ' ',
                 bg: texel_types::DEFAULT_BG_U8,
                 fg: texel_types::DEFAULT_FG_U8,
                 styles: SymbolStyles::new(),
