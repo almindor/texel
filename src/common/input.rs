@@ -141,8 +141,7 @@ impl Default for CharMap {
         map.insert('p', Event::Clipboard(ClipboardOp::Paste));
 
         map.insert('n', Event::NewObject);
-        map.insert('m', Event::Duplicate(1));
-        map.insert('g', Event::Deselect);
+        map.insert('t', Event::Duplicate(1));
 
         map.insert('\n', Event::Confirm);
         map.insert('\t', Event::SelectObject(Which::Next, false));
