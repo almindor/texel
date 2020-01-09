@@ -26,7 +26,7 @@ impl<'a> System<'a> for InputHandler {
                 Mode::Edit => edit_event(event, &mut state, &symbol_palette),
                 Mode::Write => write_event(event, &mut state),
                 Mode::Help(_) => help_event(event, &mut state),
-                Mode::Quitting(_) => {}
+                Mode::Quitting(_) => (),
             }
         }
     }
@@ -127,13 +127,12 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
             state.push_action(Action::SetMode(Mode::Command));
         }
         Event::EditPalette(index) => state.push_action(Action::SetMode(Mode::SelectColor(index, cm))),
-        Event::Cancel => state.push_action(Action::Cancel),
-        _ => {
-            if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
-                state.set_color(palette.color(index as usize), cm);
-                state.push_action(Action::ReverseMode);
-            }
+        Event::SelectPalette(index) => {
+            state.set_color(palette.color(index), cm);
+            state.push_action(Action::ReverseMode);
         }
+        Event::Cancel => state.push_action(Action::Cancel),
+        _ => (),
     };
 }
 
@@ -175,6 +174,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
     let action = match event.0 {
         Event::Mode(mode) => Action::SetMode(mode),
         Event::EditPalette(index) => Action::SetMode(Mode::SelectSymbol(index)),
+        Event::SelectPalette(index) => Action::ApplySymbol(palette.symbol(index)),
         Event::Clipboard(op) => Action::Clipboard(op),
 
         Event::Cancel => Action::Cancel,
@@ -205,13 +205,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
         Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
 
-        _ => {
-            if let Some(index) = event.1.and_then(|c| c.to_digit(16)) {
-                Action::ApplySymbol(palette.symbol(index as usize))
-            } else {
-                Action::None
-            }
-        }
+        _ => Action::None,
     };
 
     state.push_action(action);

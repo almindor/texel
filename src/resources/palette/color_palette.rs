@@ -71,15 +71,7 @@ impl From<&[u8]> for ColorPalette {
 
 impl ColorPalette {
     pub fn color(&self, index: usize) -> u8 {
-        // index here is natural digit conversion, but we go 1,2...9,0,a,b,c...f
-        let mut i = index;
-        if index == 0 {
-            i = 9;
-        } else if index < 10 {
-            i = index - 1;
-        }
-
-        self.colors[i]
+        self.colors[index]
     }
 
     pub fn set_color(&mut self, index: usize, color: u8) -> Result<(), Error> {

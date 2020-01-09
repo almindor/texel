@@ -40,11 +40,14 @@ impl<'a> System<'a> for ActionHandler {
                 },
                 Action::NewFrame => new_frame_on_selected(&mut state, &mut sp, &s),
                 Action::DeleteFrame => delete_frame_on_selected(&mut state, &mut sp, &s),
+                Action::Viewport(_, _) => false, // TODO
                 Action::Cancel => {
                     if state.error().is_some() {
                         state.clear_error()
+                    } else if !reverse_mode(&e, &mut state, &s, &ss, &p, &mut pss, &u) {
+                        deselect_obj(&e, &s, &u)
                     } else {
-                        reverse_mode(&e, &mut state, &s, &ss, &p, &mut pss, &u)
+                        false
                     }
                 }
                 Action::ClearError => state.clear_error(),

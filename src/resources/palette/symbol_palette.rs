@@ -43,15 +43,7 @@ impl From<&[char]> for SymbolPalette {
 
 impl SymbolPalette {
     pub fn symbol(&self, index: usize) -> char {
-        // index here is natural digit conversion, but we go 1,2...9,0,a,b,c...f
-        let mut i = index;
-        if index == 0 {
-            i = 9;
-        } else if index < 10 {
-            i = index - 1;
-        }
-
-        self.symbols[i]
+        self.symbols[index]
     }
 
     pub fn set_symbol(&mut self, index: usize, symbol: char) -> Result<(), Error> {

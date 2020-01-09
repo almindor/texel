@@ -145,7 +145,7 @@ fn print_color_palette(
         y: h - PALETTE_H,
     };
 
-    for y in min.y..min.y + PALETTE_H {
+    for y in min.y..min.y + PALETTE_H - 1 {
         for x in min.x..min.x + PALETTE_W {
             if count >= MAX_COLOR_INDEX {
                 break;

@@ -31,7 +31,8 @@ pub enum Event {
     Redo,
     Mode(Mode),
     ApplyStyle(SymbolStyle),
-    EditPalette(usize), // index of symbol/color, 0x0-0xF as usize <0, 16)
+    SelectPalette(usize), // index of symbol/color/bookmark, 0x0-0xF as usize <0, 16)
+    EditPalette(usize),   // index of symbol/color/bookmark, 0x0-0xF as usize <0, 16)
     ApplyColor(ColorMode),
     SelectObject(Which<Position2D>, bool), // sticky boolean
     SelectRegion,
@@ -86,6 +87,23 @@ impl Default for CharMap {
         map.insert('D', Event::EditPalette(13));
         map.insert('E', Event::EditPalette(14));
         map.insert('F', Event::EditPalette(15));
+
+        map.insert('1', Event::SelectPalette(0));
+        map.insert('2', Event::SelectPalette(1));
+        map.insert('3', Event::SelectPalette(2));
+        map.insert('4', Event::SelectPalette(3));
+        map.insert('5', Event::SelectPalette(4));
+        map.insert('6', Event::SelectPalette(5));
+        map.insert('7', Event::SelectPalette(6));
+        map.insert('8', Event::SelectPalette(7));
+        map.insert('9', Event::SelectPalette(8));
+        map.insert('0', Event::SelectPalette(9));
+        map.insert('a', Event::SelectPalette(10));
+        map.insert('b', Event::SelectPalette(11));
+        map.insert('c', Event::SelectPalette(12));
+        map.insert('d', Event::SelectPalette(13));
+        map.insert('e', Event::SelectPalette(14));
+        map.insert('f', Event::SelectPalette(15));
 
         map.insert('Z', Event::Mode(Mode::Color(ColorMode::Fg)));
         map.insert('X', Event::Mode(Mode::Color(ColorMode::Bg)));

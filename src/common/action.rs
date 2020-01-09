@@ -50,6 +50,7 @@ pub enum Action {
     Undo,
     Redo,
     ShowHelp(usize),
+    Viewport(usize, bool), // index and "set"
     Tutorial,
     ClearBlank, // clears "blank" texels from sprite/selection
 }
