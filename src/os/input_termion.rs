@@ -67,7 +67,9 @@ impl From<CharMap> for InputSource {
         result.map.insert(TEvent::Key(Key::Down), Event::ArrowDown);
         result.map.insert(TEvent::Key(Key::Delete), Event::Delete);
         result.map.insert(TEvent::Key(Key::Backspace), Event::Backspace);
-        result.map.insert(TEvent::Key(Key::Ctrl('a')), Event::SelectObject(Which::All, false));
+        result
+            .map
+            .insert(TEvent::Key(Key::Ctrl('a')), Event::SelectObject(Which::All, false));
 
         result
             .map

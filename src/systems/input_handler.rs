@@ -84,6 +84,12 @@ fn objmode_region_event(event: InputEvent, state: &mut State) {
 
         Event::Cancel => Action::Cancel,
         Event::Confirm => Action::ApplyRegion,
+        Event::Delete | Event::Backspace => {
+            // TODO: this is currently broken because actionhandler does the pop
+            // select and delete
+            state.push_action(Action::ApplyRegion);
+            Action::Delete
+        }
 
         Event::Undo => Action::Undo,
         Event::Redo => Action::Redo,

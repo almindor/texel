@@ -346,7 +346,7 @@ fn apply_region(
 }
 
 fn select_obj_relative(
-    forward: bool,
+    forward: bool, // TODO: support inverse selection
     e: &Entities,
     sel: &ReadStorage<Selectable>,
     s: &ReadStorage<Selection>,
@@ -385,12 +385,7 @@ fn select_obj_relative(
     false
 }
 
-fn select_obj_all(
-    e: &Entities,
-    sel: &ReadStorage<Selectable>,
-    s: &ReadStorage<Selection>,
-    u: &LazyUpdate,
-) -> bool {
+fn select_obj_all(e: &Entities, sel: &ReadStorage<Selectable>, s: &ReadStorage<Selection>, u: &LazyUpdate) -> bool {
     for (entity, _) in (e, sel).join() {
         if !s.contains(entity) {
             u.insert(entity, Selection);
@@ -426,7 +421,6 @@ fn select_obj(
         Which::All => select_obj_all(e, sel, s, u),
         Which::At(pos) => select_obj_at(pos, e, sel, s, u, sticky),
     }
-
 }
 
 fn delete_selected(e: &Entities, s: &ReadStorage<Selection>) -> Result<(), Error> {
