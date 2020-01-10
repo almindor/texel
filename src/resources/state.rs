@@ -162,6 +162,10 @@ impl State {
         self.actions.pop_front()
     }
 
+    pub fn queued_actions(&self) -> usize {
+        self.actions.len()
+    }
+
     // resets history to start with this scene
     pub fn clear_history(&mut self, scene: Scene) {
         self.history.clear();

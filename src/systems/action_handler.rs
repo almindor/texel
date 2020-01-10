@@ -26,7 +26,7 @@ impl<'a> System<'a> for ActionHandler {
     );
 
     fn run(&mut self, (mut state, e, mut p, sel, s, b, mut ss, mut pss, mut d, mut sp, u): Self::SystemData) {
-        while let Some(action) = state.pop_action() {
+        if let Some(action) = state.pop_action() {
             let keep_history = action.keeps_history();
 
             let changed = match action {
@@ -121,7 +121,9 @@ impl<'a> System<'a> for ActionHandler {
                 Action::ClearBlank => clear_blank_texels(&mut state, &mut sp, &s),
             };
 
-            state.dirty = keep_history && changed;
+            if keep_history && changed {
+                state.dirty = true;
+            }
         }
     }
 }

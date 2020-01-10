@@ -18,9 +18,12 @@ pub fn run(args: Vec<String>) {
     };
     let input_source = build_resources(&config, &mut world);
 
-    let (mut updater, mut renderer) = build_dispatchers();
+    let mut renderer = build_dispatchers();
+    let mut input_handler = InputHandler;
+    let mut action_handler = ActionHandler;
     // setup dispatchers with world
-    updater.setup(&mut world);
+    specs::System::setup(&mut input_handler, &mut world);
+    specs::System::setup(&mut action_handler, &mut world);
     renderer.setup(&mut world);
 
     // initial clear screen
@@ -28,7 +31,10 @@ pub fn run(args: Vec<String>) {
     terminal.blank_to_black();
 
     // load files as needed
-    load_from(args, &mut world, &mut updater);
+    if load_from(args, &mut world) {
+        action_handler.run_now(&world);
+        world.maintain();
+    }
     // draw initial set
     renderer.dispatch(&world);
     // flush buffers to terminal
@@ -40,13 +46,17 @@ pub fn run(args: Vec<String>) {
     for mapped in input_source.events() {
         // handle input
         dispatch_input_event(&world, mapped, &mut terminal);
-        updater.dispatch(&world);
+        input_handler.run_now(&world);
+        // apply each action until done
+        while world.fetch_mut::<State>().queued_actions() > 0 {
+            action_handler.run_now(&world);
+            world.maintain();
+        }
         // quit if needed
         if world.fetch_mut::<State>().quitting() {
             break;
         }
         // ensure we lazy update
-        world.maintain();
         // render only after world is up to date
         renderer.dispatch(&world);
         // flush buffers to terminal
@@ -62,29 +72,28 @@ pub fn run(args: Vec<String>) {
     save_config(config, &config_file, &world);
 }
 
-fn load_from(args: Vec<String>, world: &mut World, updater: &mut Dispatcher) {
+fn load_from(args: Vec<String>, world: &mut World) -> bool {
     if args.len() > 1 {
-        {
-            let mut state = world.fetch_mut::<State>();
+        let mut state = world.fetch_mut::<State>();
 
-            // single non-existing file -> make it
-            if (&args[1..]).len() == 1 && !std::path::Path::new(&args[1]).exists() {
+        // single non-existing file -> make it
+        if (&args[1..]).len() == 1 && !std::path::Path::new(&args[1]).exists() {
+            let path = args.get(1).unwrap();
+            state.saved(path.into()); // consider this file our save file
+        } else {
+            for path in &args[1..] {
+                state.push_action(Action::Read(String::from(path)));
+            }
+
+            if args.len() == 2 {
                 let path = args.get(1).unwrap();
                 state.saved(path.into()); // consider this file our save file
-            } else {
-                for path in &args[1..] {
-                    state.push_action(Action::Read(String::from(path)));
-                }
-
-                if args.len() == 2 {
-                    let path = args.get(1).unwrap();
-                    state.saved(path.into()); // consider this file our save file
-                }
             }
         }
 
-        updater.dispatch(&world);
-        world.maintain();
+        true
+    } else {
+        false
     }
 }
 
@@ -119,12 +128,8 @@ fn check_terminal_size() {
     }
 }
 
-fn build_dispatchers<'a, 'b>() -> (Dispatcher<'a, 'b>, Dispatcher<'a, 'b>) {
-    // create dispatchers
-    let updater = DispatcherBuilder::new()
-        .with(InputHandler, "input_handler", &[])
-        .with(ActionHandler, "action_handler", &["input_handler"])
-        .build();
+fn build_dispatchers<'a, 'b>() -> Dispatcher<'a, 'b> {
+    // create renderer dispatcher
     let renderer = DispatcherBuilder::new()
         .with(HistoryHandler, "history_handler", &[])
         .with(ClearScreen, "clear_screen", &[])
@@ -137,7 +142,7 @@ fn build_dispatchers<'a, 'b>() -> (Dispatcher<'a, 'b>, Dispatcher<'a, 'b>) {
         )
         .build();
 
-    (updater, renderer)
+    renderer
 }
 
 fn save_config(mut v1: ConfigV1, config_file: &Path, world: &World) {
