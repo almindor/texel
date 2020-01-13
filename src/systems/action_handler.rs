@@ -397,17 +397,17 @@ fn select_obj_all(e: &Entities, sel: &ReadStorage<Selectable>, s: &ReadStorage<S
     false
 }
 
-fn select_obj_at(
-    pos: Position2D,
-    e: &Entities,
-    sel: &ReadStorage<Selectable>,
-    s: &ReadStorage<Selection>,
-    u: &LazyUpdate,
-    sticky: bool,
-) -> bool {
-    // TODO
-    false
-}
+// fn select_obj_at(
+//     pos: Position2D,
+//     e: &Entities,
+//     sel: &ReadStorage<Selectable>,
+//     s: &ReadStorage<Selection>,
+//     u: &LazyUpdate,
+//     sticky: bool,
+// ) -> bool {
+//     // TODO
+//     false
+// }
 
 fn select_obj(
     which: Which<Position2D>,
@@ -421,7 +421,8 @@ fn select_obj(
         Which::Next => select_obj_relative(true, e, sel, s, u, sticky),
         Which::Previous => select_obj_relative(false, e, sel, s, u, sticky),
         Which::All => select_obj_all(e, sel, s, u),
-        Which::At(pos) => select_obj_at(pos, e, sel, s, u, sticky),
+        Which::At(_) => false,
+        // Which::At(pos) => select_obj_at(pos, e, sel, s, u, sticky),
     }
 }
 
