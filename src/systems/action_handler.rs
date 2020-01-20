@@ -3,29 +3,23 @@ use crate::components::*;
 use crate::os::Terminal;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use fio::ExportFormat;
-use specs::{Entities, Entity, Join, LazyUpdate, Read, ReadStorage, System, Write, WriteStorage};
+use specs::{Entities, Entity, Join, LazyUpdate, ReadStorage, System, WriteStorage};
 use texel_types::{ColorMode, SymbolStyle, Texels, Which};
+
+mod system_data;
+
+use system_data::*;
 
 pub struct ActionHandler;
 
 const NEW_POSITION: Position = Position { x: 10, y: 10, z: 0 };
 
 impl<'a> System<'a> for ActionHandler {
-    type SystemData = (
-        Write<'a, State>,
-        Entities<'a>,
-        WriteStorage<'a, Position>,
-        ReadStorage<'a, Selectable>,
-        ReadStorage<'a, Selection>,
-        ReadStorage<'a, Bookmark>,
-        WriteStorage<'a, Subselection>,
-        WriteStorage<'a, Position2D>, // cursor position saved to sprite, bookmark position
-        WriteStorage<'a, Dimension>,
-        WriteStorage<'a, Sprite>,
-        Read<'a, LazyUpdate>,
-    );
+    type SystemData = SystemData<'a>;
 
-    fn run(&mut self, (mut state, e, mut p, sel, s, b, mut ss, mut pss, mut d, mut sp, u): Self::SystemData) {
+    fn run(&mut self, sd: Self::SystemData) {
+        let (mut state, e, mut p, sel, s, b, mut ss, mut pss, mut d, mut sp, u) = sd;
+
         if let Some(action) = state.pop_action() {
             let keep_history = action.keeps_history();
 
