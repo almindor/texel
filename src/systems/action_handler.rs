@@ -302,8 +302,8 @@ fn select_obj_relative(forward: bool, sticky: bool, world: &mut World) -> bool {
 
     // ensure we keep sorting order
     all.sort_by(|a, b| {
-        let a_score = a.1.y * 100000 + a.1.x * 100 + a.1.z;
-        let b_score = b.1.y * 100000 + b.1.x * 100 + b.1.z;
+        let a_score = a.1.y * 100_000 + a.1.x * 100 + a.1.z;
+        let b_score = b.1.y * 100_000 + b.1.x * 100 + b.1.z;
 
         if forward {
             a_score.cmp(&b_score)
@@ -343,7 +343,7 @@ fn select_obj_all(world: &mut World) -> bool {
     let todo = CommandBuffer::default();
     let query = <TryRead<Selection>>::query().filter(tag::<Selectable>());
     for (entity, selected) in query.iter_entities(world) {
-        if !selected.is_some() {
+        if selected.is_none() {
             todo.add_component(entity, Selection);
         }
     }
