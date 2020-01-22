@@ -1,51 +1,47 @@
 use crate::common::{scene_for_help_index, Mode, Scene, SelectedInfo};
-use crate::components::{Border, Dimension, Position, Position2D, Selection, Sprite};
+use crate::components::{Dimension, Position, Position2D, Selection, Sprite};
 use crate::os::Terminal;
 use crate::resources::{FrameBuffer, State};
-use specs::{Entities, Join, Read, ReadStorage, System};
+use legion::prelude::*;
 use texel_types::{SymbolStyles, Texel, DEFAULT_BG_U8, DEFAULT_FG_U8};
 
-pub struct SpriteRenderer;
-
-impl<'a> System<'a> for SpriteRenderer {
-    type SystemData = (
-        specs::Write<'a, FrameBuffer>,
-        Entities<'a>,
-        Read<'a, State>,
-        ReadStorage<'a, Position>,
-        ReadStorage<'a, Dimension>,
-        ReadStorage<'a, Sprite>,
-        ReadStorage<'a, Border>,
-        ReadStorage<'a, Selection>,
-    );
-
-    fn run(&mut self, (mut out, e, state, p, d, s, b, sel): Self::SystemData) {
-        if let Mode::Help(index) = state.mode() {
-            render_scene(&mut out, &state, scene_for_help_index(index));
-            return; // show help, done
-        }
-
-        let mut selected_info = SelectedInfo::from(state.offset);
-
-        // TODO: optimize using FlaggedStorage
-        let mut sorted = (&e, &p, &d, &s).join().collect::<Vec<_>>();
-        sorted.sort_by(|&a, &b| b.1.z.cmp(&a.1.z));
-
-        for (entity, pos, dim, sprite) in sorted {
-            render_sprite(&mut out, &state, &pos, &sprite);
-
-            if b.contains(entity) && sel.contains(entity) {
-                render_border(&mut out, &state, &pos, *dim);
-                selected_info.append(sprite, pos);
-            }
-        }
-
-        // location info status line
-        let ts = Terminal::terminal_size();
-        let texels = selected_info.texels(&state, ts.0, ts.1);
-
-        out.write_texels(texels);
+pub fn render_sprites(world: &mut World, state: &mut State, out: &mut FrameBuffer) {
+    if let Mode::Help(index) = state.mode() {
+        render_scene(out, &state, scene_for_help_index(index));
+        return; // show help, done
     }
+
+    let mut selected_info = SelectedInfo::from(state.offset);
+
+    let query = <(
+        Read<Position>,
+        Read<Dimension>,
+        Read<Sprite>,
+        TryRead<Selection>,
+    )>::query();
+    
+    // TODO: optimize
+    let mut sorted = Vec::new();
+    
+    for tuple in query.iter(world) {
+        sorted.push(tuple);
+    }
+    sorted.sort_by(|a, b| b.0.z.cmp(&a.0.z));
+
+    for (pos, dim, sprite, is_selected) in sorted {
+        render_sprite(out, state, &pos, &sprite);
+
+        if is_selected.is_some() {
+            render_border(out, &state, &pos, *dim);
+            selected_info.append(&sprite, &pos);
+        }
+    }
+
+    // location info status line
+    let ts = Terminal::terminal_size();
+    let texels = selected_info.texels(&state, ts.0, ts.1);
+
+    out.write_texels(texels);
 }
 
 fn render_scene(out: &mut FrameBuffer, state: &State, scene: Scene) {

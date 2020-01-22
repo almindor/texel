@@ -1,9 +1,28 @@
+use legion::prelude::World;
+use crate::resources::{State, FrameBuffer};
+
 mod action_handler;
 mod history_handler;
 mod input_handler;
 mod renderers;
 
-pub use action_handler::ActionHandler;
-pub use history_handler::HistoryHandler;
-pub use input_handler::InputHandler;
-pub use renderers::{ClearScreen, CmdLineRenderer, SpriteRenderer, SubselectionRenderer};
+pub use action_handler::handle_actions;
+pub use history_handler::preserve_history;
+pub use input_handler::handle_input;
+pub use renderers::{render_sprites, render_subselections, render_cmdline};
+
+pub struct TexelSystems;
+
+impl TexelSystems {
+    pub fn run(world: &mut World, state: &mut State, out: &mut FrameBuffer) {
+        out.flip_buffers();
+
+        handle_input(world, state);
+        handle_actions(world, state);
+        preserve_history(world, state);
+
+        render_sprites(world, state, out);
+        render_subselections(world, state, out);
+        render_cmdline(world, state, out);
+    }
+}

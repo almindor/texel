@@ -1,44 +1,43 @@
 use crate::common::{Error, Mode, SelectMode};
 use crate::os::Terminal;
 use crate::resources::{CmdLine, ColorPalette, FrameBuffer, State, SymbolPalette, PALETTE_OFFSET};
-use specs::System;
+use legion::prelude::*;
 use texel_types::{ColorMode, Position2D, SymbolStyle, SymbolStyles};
 
-pub struct CmdLineRenderer;
+    // type SystemData = (
+    //     specs::Write<'a, FrameBuffer>,
+    //     specs::Read<'a, State>,
+    //     specs::Read<'a, CmdLine>,
+    //     specs::Read<'a, ColorPalette>,
+    //     specs::Read<'a, SymbolPalette>,
+    // );
 
-impl<'a> System<'a> for CmdLineRenderer {
-    type SystemData = (
-        specs::Write<'a, FrameBuffer>,
-        specs::Read<'a, State>,
-        specs::Read<'a, CmdLine>,
-        specs::Read<'a, ColorPalette>,
-        specs::Read<'a, SymbolPalette>,
-    );
+pub fn render_cmdline(world: &mut World, state: &State, out: &mut FrameBuffer) {
+    let ts = Terminal::terminal_size();
+    let w = i32::from(ts.0);
+    let h = i32::from(ts.1);
 
-    fn run(&mut self, (mut out, state, cmdline, color_palette, symbol_palette): Self::SystemData) {
-        let ts = Terminal::terminal_size();
-        let w = i32::from(ts.0);
-        let h = i32::from(ts.1);
+    print_selected_colors(out, state, w, h);
 
-        print_selected_colors(&mut out, &state, w, h);
+    if let Some(error) = state.error() {
+        print_error(out, error, h);
+        return;
+    }
 
-        if let Some(error) = state.error() {
-            print_error(&mut out, error, h);
-            return;
-        }
+    let mode = state.mode();
+    let cmdline = world.resources.get::<CmdLine>().unwrap();
+    let symbol_palette = world.resources.get::<SymbolPalette>().unwrap();
+    let color_palette = world.resources.get::<ColorPalette>().unwrap();
 
-        let mode = state.mode();
-
-        match mode {
-            Mode::Quitting(_) => {}
-            Mode::Command => print_cmdline(&mut out, &cmdline, h),
-            Mode::Object(_) | Mode::Help(_) => print_mode(&mut out, &state, mode, w, h),
-            Mode::Write => print_write(&mut out, &state, h),
-            Mode::Edit => print_edit(&mut out, &state, &symbol_palette, h),
-            Mode::Color(cm) => print_color_select(&mut out, &state, &color_palette, cm, w, h),
-            Mode::SelectSymbol(i) => print_symbol_palette(&mut out, &state, &symbol_palette, i, w, h),
-            Mode::SelectColor(i, cm) => print_color_palette(&mut out, &state, &color_palette, i, cm, h),
-        }
+    match mode {
+        Mode::Quitting(_) => {}
+        Mode::Command => print_cmdline(out, &cmdline, h),
+        Mode::Object(_) | Mode::Help(_) => print_mode(out, state, mode, w, h),
+        Mode::Write => print_write(out, state, h),
+        Mode::Edit => print_edit(out, state, &symbol_palette, h),
+        Mode::Color(cm) => print_color_select(out, state, &color_palette, cm, w, h),
+        Mode::SelectSymbol(i) => print_symbol_palette(out, state, &symbol_palette, i, w, h),
+        Mode::SelectColor(i, cm) => print_color_palette(out, state, &color_palette, i, cm, h),
     }
 }
 

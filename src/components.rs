@@ -1,15 +1,9 @@
-use specs::{Component, NullStorage, VecStorage};
-
 pub use texel_types::{Bounds, Dimension, Direction, Position, Position2D, Sprite, Translation};
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct Selection;
 
-impl Component for Selection {
-    type Storage = NullStorage<Self>;
-}
-
-#[derive(Default)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct Subselection {
     pub active: bool, // if we're resizing atm.
     pub initial_pos: Position2D,
@@ -24,27 +18,8 @@ impl Subselection {
     }
 }
 
-impl Component for Subselection {
-    type Storage = VecStorage<Self>;
-}
-
-#[derive(Default)]
-pub struct Border;
-
-impl Component for Border {
-    type Storage = NullStorage<Self>;
-}
-
-#[derive(Default)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct Selectable;
 
-impl Component for Selectable {
-    type Storage = NullStorage<Self>;
-}
-
-#[derive(Default)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct Bookmark(pub usize);
-
-impl Component for Bookmark {
-    type Storage = VecStorage<Self>;
-}

@@ -1,33 +1,26 @@
 use crate::common::{Action, Event, InputEvent, Mode, MoveMeta, SelectMode};
 use crate::components::{Direction, Translation};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette};
-use specs::{System, Write};
+use legion::prelude::*;
 use texel_types::ColorMode;
 
-pub struct InputHandler;
+pub fn handle_input(world: &mut World, state: &mut State) {
+    let cmdline = &mut world.resources.get_mut::<CmdLine>().unwrap();
+    let symbol_palette = &mut world.resources.get_mut::<SymbolPalette>().unwrap();
+    let color_palette = &mut world.resources.get_mut::<ColorPalette>().unwrap();
 
-impl<'a> System<'a> for InputHandler {
-    type SystemData = (
-        Write<'a, State>,
-        Write<'a, CmdLine>,
-        Write<'a, SymbolPalette>,
-        Write<'a, ColorPalette>,
-    );
-
-    fn run(&mut self, (mut state, mut cmdline, mut symbol_palette, mut color_palette): Self::SystemData) {
-        while let Some(event) = state.pop_event() {
-            match state.mode() {
-                Mode::Command => cmdline_event(event, &mut state, &mut cmdline),
-                Mode::Object(SelectMode::Object) => objmode_event(event, &mut state),
-                Mode::Object(SelectMode::Region) => objmode_region_event(event, &mut state),
-                Mode::Color(cm) => color_event(event, &mut state, cm, &color_palette),
-                Mode::SelectSymbol(index) => symbol_select_event(event, &mut state, index, &mut symbol_palette),
-                Mode::SelectColor(index, _) => color_select_event(event, &mut state, index, &mut color_palette),
-                Mode::Edit => edit_event(event, &mut state, &symbol_palette),
-                Mode::Write => write_event(event, &mut state),
-                Mode::Help(_) => help_event(event, &mut state),
-                Mode::Quitting(_) => {}
-            }
+    while let Some(event) = state.pop_event() {
+        match state.mode() {
+            Mode::Command => cmdline_event(event, state, cmdline),
+            Mode::Object(SelectMode::Object) => objmode_event(event, state),
+            Mode::Object(SelectMode::Region) => objmode_region_event(event, state),
+            Mode::Color(cm) => color_event(event, state, cm, color_palette),
+            Mode::SelectSymbol(index) => symbol_select_event(event, state, index, symbol_palette),
+            Mode::SelectColor(index, _) => color_select_event(event, state, index, color_palette),
+            Mode::Edit => edit_event(event, state, &symbol_palette),
+            Mode::Write => write_event(event, state),
+            Mode::Help(_) => help_event(event, state),
+            Mode::Quitting(_) => {}
         }
     }
 }

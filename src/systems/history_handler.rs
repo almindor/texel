@@ -1,43 +1,34 @@
 use crate::common::{Scene, SceneExt};
 use crate::components::{Bookmark, Position, Position2D, Selection, Sprite};
 use crate::resources::State;
-use specs::{Entities, Join, ReadStorage, System, Write, WriteStorage};
+use legion::prelude::*;
 use std::collections::BTreeMap;
+use std::ops::Deref;
 
-pub struct HistoryHandler;
-
-impl<'a> System<'a> for HistoryHandler {
-    type SystemData = (
-        Write<'a, State>,
-        Entities<'a>,
-        WriteStorage<'a, Position>,
-        WriteStorage<'a, Sprite>,
-        WriteStorage<'a, Position2D>,
-        ReadStorage<'a, Selection>,
-        ReadStorage<'a, Bookmark>,
-    );
-
-    fn run(&mut self, (mut state, e, p, sp, pb, s, b): Self::SystemData) {
-        if !state.dirty {
-            return;
-        }
-
-        let mut objects = Vec::new();
-        let mut selections = Vec::new();
-        let mut bookmarks = BTreeMap::new();
-
-        for (i, (entity, pos, sprite)) in (&e, &p, &sp).join().enumerate() {
-            objects.push((sprite.clone(), *pos));
-            if s.contains(entity) {
-                selections.push(i);
-            }
-        }
-
-        for (bookmark, pos) in (&b, &pb).join() {
-            bookmarks.insert(bookmark.0, *pos);
-        }
-
-        let scene = Scene::from_objects(objects, bookmarks);
-        state.push_history(scene, selections);
+pub fn preserve_history(world: &mut World, state: &mut State) {
+    if !state.dirty {
+        return;
     }
+
+    let mut objects = Vec::new();
+    let mut selections = Vec::new();
+    let mut bookmarks = BTreeMap::new();
+
+    let query = <(Read<Position>, Read<Sprite>, TryRead<Selection>)>::query();
+
+    for (i, (pos, sprite, selected)) in query.iter(world).enumerate() {
+        objects.push((sprite.deref().clone(), *pos));
+        if selected.is_some() {
+            selections.push(i);
+        }
+    }
+
+    let query = <(Read<Position2D>, Read<Bookmark>)>::query();
+
+    for (pos, bookmark) in query.iter(world) {
+        bookmarks.insert(bookmark.0, *pos);
+    }
+
+    let scene = Scene::from_objects(objects, bookmarks);
+    state.push_history(scene, selections);
 }
