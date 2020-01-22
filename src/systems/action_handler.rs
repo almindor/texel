@@ -50,7 +50,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
                 }
                 Mode::Object(SelectMode::Region) => {
                     let viewport_bounds = viewport_bounds(&state);
-                    translate_subselection(t, viewport_bounds, world, state)
+                    translate_subselection(t, Some(viewport_bounds), world, state)
                 }
                 _ => translate_selected(t, world, state),
             },
@@ -391,9 +391,9 @@ fn delete_selected(world: &mut World) -> Result<(), Error> {
     Ok(())
 }
 
-fn viewport_bounds(state: &State) -> Option<Bounds> {
+fn viewport_bounds(state: &State) -> Bounds {
     let ts = Terminal::terminal_size();
-    Some(Bounds::Free(state.offset, Dimension::from_wh(ts.0, ts.1)))
+    Bounds::Free(state.offset, Dimension::from_wh(ts.0, ts.1))
 }
 
 fn selected_bounds(world: &mut World) -> Option<Bounds> {
@@ -614,7 +614,7 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
     use rand::Rng;
     let mut rng = rand::thread_rng();
 
-    let bounds = viewport_bounds(state).unwrap(); // this should never be empty
+    let bounds = viewport_bounds(state);
 
     match layout {
         Layout::None => {}
