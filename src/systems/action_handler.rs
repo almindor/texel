@@ -56,7 +56,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             },
             Action::Layout(layout) => apply_layout_to_selected(layout, world, state),
             Action::SelectFrame(which) => change_frame_on_selected(which, world, state),
-            Action::SelectObject(which, sticky) => select_obj(which, sticky, world),
+            Action::SelectObject(which, sticky) => select_obj(which, sticky, world, state),
             Action::SelectRegion => select_region(world, state),
             Action::Delete => {
                 if state.mode() == Mode::Edit || state.mode() == Mode::Write {
@@ -291,12 +291,17 @@ fn apply_region(region: Option<Bounds>, world: &mut World, state: &mut State) ->
     false
 }
 
-fn select_obj_relative(forward: bool, sticky: bool, world: &mut World) -> bool {
+fn select_obj_relative(forward: bool, sticky: bool, world: &mut World, state: &State) -> bool {
     let mut all = Vec::new();
     let mut start = 0usize;
+    let viewport = viewport_bounds(state);
 
-    let query = <(Read<Position>, TryRead<Selection>)>::query().filter(tag::<Selectable>());
-    for (entity, (pos, selected)) in query.iter_entities(world) {
+    let query = <(Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(tag::<Selectable>());
+    for (entity, (pos, _, selected)) in query.iter_entities(world).filter(|item| {
+        let p = *((item.1).0);
+        let d = *((item.1).1);
+        viewport.intersects(p.into(), d)
+    }) {
         all.push((entity, *pos, selected.is_some()));
     }
 
@@ -362,10 +367,10 @@ fn select_obj_all(world: &mut World) -> bool {
 //     false
 // }
 
-fn select_obj(which: Which<Position2D>, sticky: bool, world: &mut World) -> bool {
+fn select_obj(which: Which<Position2D>, sticky: bool, world: &mut World, state: &State) -> bool {
     match which {
-        Which::Next => select_obj_relative(true, sticky, world),
-        Which::Previous => select_obj_relative(false, sticky, world),
+        Which::Next => select_obj_relative(true, sticky, world, state),
+        Which::Previous => select_obj_relative(false, sticky, world, state),
         Which::All => select_obj_all(world),
         Which::At(_) => false,
         // Which::At(pos) => select_obj_at(pos, sticky, world),
