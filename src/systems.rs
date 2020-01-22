@@ -1,5 +1,5 @@
+use crate::resources::{FrameBuffer, State};
 use legion::prelude::World;
-use crate::resources::{State, FrameBuffer};
 
 mod action_handler;
 mod history_handler;
@@ -9,7 +9,7 @@ mod renderers;
 pub use action_handler::handle_actions;
 pub use history_handler::preserve_history;
 pub use input_handler::handle_input;
-pub use renderers::{render_sprites, render_subselections, render_cmdline};
+pub use renderers::{render_cmdline, render_sprites, render_subselections};
 
 pub struct TexelSystems;
 

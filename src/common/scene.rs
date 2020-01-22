@@ -1,8 +1,8 @@
+use crate::components::Bookmark;
+use legion::prelude::*;
 use std::collections::BTreeMap;
 use std::ops::Deref;
-use legion::prelude::*;
-use crate::components::Bookmark;
-pub use texel_types::{Scene, SceneV2, Sprite, Position, Position2D};
+pub use texel_types::{Position, Position2D, Scene, SceneV2, Sprite};
 
 pub trait SceneExt {
     fn from_world(world: &mut World) -> Scene;

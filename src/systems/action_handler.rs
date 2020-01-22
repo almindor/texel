@@ -104,10 +104,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
     }
 }
 
-fn reverse_mode(
-    world: &mut World,
-    state: &mut State,
-) -> bool {
+fn reverse_mode(world: &mut World, state: &mut State) -> bool {
     if state.reverse_mode() {
         let todo = CommandBuffer::default();
         let query = <(Read<Position>, TryWrite<Position2D>)>::query().filter(tag::<Selection>());
@@ -153,11 +150,7 @@ fn clear_subselection(world: &mut World) -> bool {
     false
 }
 
-fn set_mode(
-    mode: Mode,
-    world: &mut World,
-    state: &mut State,
-) -> bool {
+fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
     if match mode {
         Mode::Quitting(OnQuit::Check) => {
             if state.unsaved_changes() {
@@ -230,26 +223,18 @@ fn set_mode(
     }
 }
 
-fn select_region(
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn select_region(world: &mut World, state: &mut State) -> bool {
     match state.mode() {
         Mode::Edit => {
             mark_subselection(world, state);
             false
         }
-        Mode::Object(SelectMode::Region) => {
-            apply_region(mark_subselection(world, state), world, state)
-        }
+        Mode::Object(SelectMode::Region) => apply_region(mark_subselection(world, state), world, state),
         _ => state.set_error(Error::execution("Region select in unexpected mode")),
     }
 }
 
-fn mark_subselection(
-    world: &mut World,
-    state: &State
-) -> Option<Bounds> {
+fn mark_subselection(world: &mut World, state: &State) -> Option<Bounds> {
     let todo = CommandBuffer::default();
 
     let clear_edit = |entity| {
@@ -258,7 +243,7 @@ fn mark_subselection(
 
     let new_edit = || {
         let pos = state.cursor;
-        todo.insert((Subselection::at(pos),), vec!((pos, Dimension::unit())));
+        todo.insert((Subselection::at(pos),), vec![(pos, Dimension::unit())]);
     };
 
     let query = <Write<Subselection>>::query(); // TODO: Tagged?
@@ -280,11 +265,7 @@ fn mark_subselection(
     }
 }
 
-fn apply_region(
-    region: Option<Bounds>,
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn apply_region(region: Option<Bounds>, world: &mut World, state: &mut State) -> bool {
     let area = match region {
         Some(bounds) => bounds,
         None => return false,
@@ -310,11 +291,7 @@ fn apply_region(
     false
 }
 
-fn select_obj_relative(
-    forward: bool,
-    sticky: bool,
-    world: &mut World
-) -> bool {
+fn select_obj_relative(forward: bool, sticky: bool, world: &mut World) -> bool {
     let mut all = Vec::new();
     let mut start = 0usize;
 
@@ -385,11 +362,7 @@ fn select_obj_all(world: &mut World) -> bool {
 //     false
 // }
 
-fn select_obj(
-    which: Which<Position2D>,
-    sticky: bool,
-    world: &mut World
-) -> bool {
+fn select_obj(which: Which<Position2D>, sticky: bool, world: &mut World) -> bool {
     match which {
         Which::Next => select_obj_relative(true, sticky, world),
         Which::Previous => select_obj_relative(false, sticky, world),
@@ -423,9 +396,7 @@ fn viewport_bounds(state: &State) -> Option<Bounds> {
     Some(Bounds::Free(state.offset, Dimension::from_wh(ts.0, ts.1)))
 }
 
-fn selected_bounds(
-    world: &mut World
-) -> Option<Bounds> {
+fn selected_bounds(world: &mut World) -> Option<Bounds> {
     let query = <(Read<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
     if let Some((position, dim)) = query.iter(world).next() {
         Some(Bounds::Free((*position).into(), *dim))
@@ -434,12 +405,7 @@ fn selected_bounds(
     }
 }
 
-fn translate_subselection(
-    t: Translation,
-    area_bounds: Option<Bounds>,
-    world: &mut World,
-    state: &mut State,
-) -> bool {
+fn translate_subselection(t: Translation, area_bounds: Option<Bounds>, world: &mut World, state: &mut State) -> bool {
     if let Some(bounds) = area_bounds {
         if state.cursor.apply(t, bounds) {
             // if we have a subselection
@@ -458,11 +424,7 @@ fn translate_subselection(
     false
 }
 
-fn translate_selected(
-    t: Translation,
-    world: &mut World,
-    state: &mut State,
-) -> bool {
+fn translate_selected(t: Translation, world: &mut World, state: &mut State) -> bool {
     let ts = Terminal::terminal_size();
     let screen_dim = Dimension::from_wh(ts.0, ts.1);
     let palette_pos = Position2D {
@@ -505,11 +467,7 @@ fn translate_selected(
     }
 }
 
-fn apply_color_to_selected(
-    cm: ColorMode,
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn apply_color_to_selected(cm: ColorMode, world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
     let color = state.color(cm);
     let sel_bounds = subselection(world).unwrap_or_else(|| Bounds::point(state.cursor));
@@ -535,10 +493,7 @@ fn apply_color_to_selected(
     changed
 }
 
-fn clear_symbol_on_selected(
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn clear_symbol_on_selected(world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
     let sel_bounds = subselection(world).unwrap_or_else(|| Bounds::point(state.cursor));
 
@@ -568,9 +523,7 @@ fn clear_symbol_on_selected(
     changed
 }
 
-fn subselection(
-    world: &mut World
-) -> Option<Bounds> {
+fn subselection(world: &mut World) -> Option<Bounds> {
     let query = <(Read<Position2D>, Read<Dimension>)>::query().filter(component::<Subselection>());
     if let Some((pos, dim)) = query.iter(world).next() {
         Some(Bounds::Binding(*pos, *dim))
@@ -614,11 +567,7 @@ fn delete_frame_on_selected(world: &mut World, state: &mut State) -> bool {
     changed
 }
 
-fn set_bookmark(
-    index: usize,
-    location: Position2D,
-    world: &mut World,
-) -> bool {
+fn set_bookmark(index: usize, location: Position2D, world: &mut World) -> bool {
     let query = <(Write<Position2D>, Read<Bookmark>)>::query();
     if let Some((mut pos, _)) = query.iter(world).find(|(_, bm)| bm.0 == index) {
         if location != *pos {
@@ -628,10 +577,7 @@ fn set_bookmark(
         return true;
     }
 
-    world.insert((), vec!((
-        Bookmark(index),
-        location,
-    )));
+    world.insert((), vec![(Bookmark(index), location)]);
 
     true
 }
@@ -664,11 +610,7 @@ fn clear_blank_texels(world: &mut World, state: &mut State) -> bool {
     }
 }
 
-fn apply_layout_to_selected(
-    layout: Layout,
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State) -> bool {
     use rand::Rng;
     let mut rng = rand::thread_rng();
 
@@ -739,11 +681,7 @@ fn apply_layout_to_selected(
     false
 }
 
-fn change_frame_on_selected(
-    which: Which<usize>,
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn change_frame_on_selected(which: Which<usize>, world: &mut World, state: &mut State) -> bool {
     if <Read<Selection>>::query().iter(world).count() == 0 {
         return state.set_error(Error::execution("No objects selected"));
     }
@@ -758,11 +696,7 @@ fn change_frame_on_selected(
     changed
 }
 
-fn apply_style_to_selected(
-    style: SymbolStyle,
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn apply_style_to_selected(style: SymbolStyle, world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
     let sel_bounds = subselection(world).unwrap_or_else(|| Bounds::point(state.cursor));
 
@@ -787,11 +721,7 @@ fn apply_style_to_selected(
     changed
 }
 
-fn apply_symbol_to_selected(
-    symbol: char,
-    world: &mut World,
-    state: &mut State,
-) -> bool {
+fn apply_symbol_to_selected(symbol: char, world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
     let bg = state.color(ColorMode::Bg);
     let fg = state.color(ColorMode::Fg);
@@ -817,11 +747,7 @@ fn apply_symbol_to_selected(
     changed
 }
 
-fn clipboard(
-    op: ClipboardOp,
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn clipboard(op: ClipboardOp, world: &mut World, state: &mut State) -> bool {
     match (state.mode(), op) {
         (Mode::Edit, ClipboardOp::Copy) => copy_or_cut_subselection(op, world, state),
         (Mode::Edit, ClipboardOp::Cut) => copy_or_cut_subselection(op, world, state),
@@ -834,11 +760,7 @@ fn clipboard(
     }
 }
 
-fn copy_or_cut_selection(
-    op: ClipboardOp,
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn copy_or_cut_selection(op: ClipboardOp, world: &mut World, state: &mut State) -> bool {
     let mut sprites: Vec<Sprite> = Vec::new();
 
     let query = <Read<Sprite>>::query().filter(component::<Selection>());
@@ -862,13 +784,10 @@ fn copy_or_cut_selection(
     }
 }
 
-fn paste_selection(
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn paste_selection(world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
     let sprites: Vec<Sprite> = state.clipboard.clone().into();
-     
+
     deselect_obj(world);
     for sprite in sprites.into_iter() {
         if match import_sprite(sprite, None, true, world, state) {
@@ -882,11 +801,7 @@ fn paste_selection(
     changed
 }
 
-fn copy_or_cut_subselection(
-    op: ClipboardOp,
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn copy_or_cut_subselection(op: ClipboardOp, world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
     let mut found = false;
     let sel_bounds = subselection(world).unwrap_or_else(|| Bounds::point(state.cursor));
@@ -900,9 +815,7 @@ fn copy_or_cut_subselection(
 
         if op == ClipboardOp::Cut {
             changed = match sprite.clear_symbol(rel_bounds) {
-                None => {
-                    false
-                } // no change, symbol was applied in bounds
+                None => false, // no change, symbol was applied in bounds
                 Some(bounds) => {
                     // changed pos or dim => apply new bounds
                     *pos += *bounds.position();
@@ -922,10 +835,7 @@ fn copy_or_cut_subselection(
     changed
 }
 
-fn paste_subselection(
-    world: &mut World,
-    state: &mut State
-) -> bool {
+fn paste_subselection(world: &mut World, state: &mut State) -> bool {
     if state.clipboard.is_empty() {
         return false;
     }
@@ -950,28 +860,20 @@ fn paste_subselection(
 
 fn new_sprite(world: &mut World, state: &State, pos: Option<Position>) -> bool {
     deselect_obj(world);
-    
+
     let sprite = Sprite::default();
 
     let dim = Dimension::for_sprite(&sprite);
 
-    world.insert((
-        Selectable,
-    ), vec!((
-        Selection,
-        pos.unwrap_or(NEW_POSITION + state.offset),
-        dim,
-        sprite,
-    )));
+    world.insert(
+        (Selectable,),
+        vec![(Selection, pos.unwrap_or(NEW_POSITION + state.offset), dim, sprite)],
+    );
 
     true
 }
 
-fn duplicate_selected(
-    count: usize,
-    world: &mut World,
-    state: &State
-) -> Result<(), Error> {
+fn duplicate_selected(count: usize, world: &mut World, state: &State) -> Result<(), Error> {
     let mut done = 0;
     let query = <(Read<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
     let mut clones = Vec::new();
@@ -1003,50 +905,45 @@ fn import_sprite(
     pre_select: bool,
     world: &mut World,
     state: &State,
-) -> Result<(), Error> {    
+) -> Result<(), Error> {
     if pre_select {
-        world.insert((Selectable,), vec!((
-            Selection,
-            pos.unwrap_or(NEW_POSITION + state.offset),
-            Dimension::for_sprite(&sprite),
-            sprite,
-        )));
+        world.insert(
+            (Selectable,),
+            vec![(
+                Selection,
+                pos.unwrap_or(NEW_POSITION + state.offset),
+                Dimension::for_sprite(&sprite),
+                sprite,
+            )],
+        );
     } else {
-        world.insert((Selectable,), vec!((
-            pos.unwrap_or(NEW_POSITION + state.offset),
-            Dimension::for_sprite(&sprite),
-            sprite,
-        )));
+        world.insert(
+            (Selectable,),
+            vec![(
+                pos.unwrap_or(NEW_POSITION + state.offset),
+                Dimension::for_sprite(&sprite),
+                sprite,
+            )],
+        );
     }
 
     Ok(())
 }
 
-fn save_scene(
-    new_path: &Option<String>,
-    world: &mut World,
-    state: &mut State,
-) -> Result<(), Error> {
+fn save_scene(new_path: &Option<String>, world: &mut World, state: &mut State) -> Result<(), Error> {
     let path = state.save_file(new_path)?;
     let scene = Scene::from_world(world);
 
     fio::scene_to_file(&scene, &path)
 }
 
-fn export_to_file(
-    format: ExportFormat,
-    path: &str,
-    world: &mut World
-) -> Result<(), Error> {
+fn export_to_file(format: ExportFormat, path: &str, world: &mut World) -> Result<(), Error> {
     let scene = Scene::from_world(world);
 
     fio::export_to_file(scene, format, path)
 }
 
-fn tutorial(
-    world: &mut World,
-    state: &mut State,
-) -> Result<bool, Error> {
+fn tutorial(world: &mut World, state: &mut State) -> Result<bool, Error> {
     if state.unsaved_changes() {
         Err(Error::execution("Unsaved changes, save before opening tutorial"))
     } else {
@@ -1064,11 +961,7 @@ fn tutorial(
     }
 }
 
-fn load_from_file(
-    path: &str,
-    world: &mut World,
-    state: &mut State,
-) -> Result<bool, Error> {
+fn load_from_file(path: &str, world: &mut World, state: &mut State) -> Result<bool, Error> {
     use fio::Loaded;
 
     match fio::load_from_file(path)? {
@@ -1092,7 +985,7 @@ fn load_from_file(
 
 fn clear_scene(world: &mut World) -> Result<(), Error> {
     let todo = CommandBuffer::default();
-    
+
     let query = <Tagged<Selectable>>::query();
     for (entity, _) in query.iter_entities(world) {
         todo.delete(entity);
@@ -1103,12 +996,7 @@ fn clear_scene(world: &mut World) -> Result<(), Error> {
     Ok(())
 }
 
-fn apply_scene(
-    scene: Scene,
-    world: &mut World,
-    state: &State,
-    selections: Option<Vec<usize>>,
-) -> Result<(), Error> {
+fn apply_scene(scene: Scene, world: &mut World, state: &State, selections: Option<Vec<usize>>) -> Result<(), Error> {
     clear_scene(world)?;
 
     let current = scene.current();
@@ -1126,10 +1014,7 @@ fn apply_scene(
     Ok(())
 }
 
-fn undo(
-    world: &mut World,
-    state: &mut State,
-) -> bool {
+fn undo(world: &mut World, state: &mut State) -> bool {
     if let Some(value) = state.undo() {
         match apply_scene(value.0, world, state, Some(value.1)) {
             Ok(_) => true,
@@ -1141,10 +1026,7 @@ fn undo(
     }
 }
 
-fn redo(
-    world: &mut World,
-    state: &mut State,
-) -> bool {
+fn redo(world: &mut World, state: &mut State) -> bool {
     if let Some(value) = state.redo() {
         match apply_scene(value.0, world, state, Some(value.1)) {
             Ok(_) => true,

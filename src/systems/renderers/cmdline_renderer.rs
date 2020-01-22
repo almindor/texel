@@ -4,13 +4,13 @@ use crate::resources::{CmdLine, ColorPalette, FrameBuffer, State, SymbolPalette,
 use legion::prelude::*;
 use texel_types::{ColorMode, Position2D, SymbolStyle, SymbolStyles};
 
-    // type SystemData = (
-    //     specs::Write<'a, FrameBuffer>,
-    //     specs::Read<'a, State>,
-    //     specs::Read<'a, CmdLine>,
-    //     specs::Read<'a, ColorPalette>,
-    //     specs::Read<'a, SymbolPalette>,
-    // );
+// type SystemData = (
+//     specs::Write<'a, FrameBuffer>,
+//     specs::Read<'a, State>,
+//     specs::Read<'a, CmdLine>,
+//     specs::Read<'a, ColorPalette>,
+//     specs::Read<'a, SymbolPalette>,
+// );
 
 pub fn render_cmdline(world: &mut World, state: &State, out: &mut FrameBuffer) {
     let ts = Terminal::terminal_size();

@@ -13,16 +13,11 @@ pub fn render_sprites(world: &mut World, state: &mut State, out: &mut FrameBuffe
 
     let mut selected_info = SelectedInfo::from(state.offset);
 
-    let query = <(
-        Read<Position>,
-        Read<Dimension>,
-        Read<Sprite>,
-        TryRead<Selection>,
-    )>::query();
-    
+    let query = <(Read<Position>, Read<Dimension>, Read<Sprite>, TryRead<Selection>)>::query();
+
     // TODO: optimize
     let mut sorted = Vec::new();
-    
+
     for tuple in query.iter(world) {
         sorted.push(tuple);
     }

@@ -4,7 +4,7 @@ use std::path::Path;
 
 use crate::common::{fio, Action, Config, ConfigV1, Event, InputEvent};
 use crate::os::{InputSource, Terminal};
-use crate::resources::{ColorPalette, FrameBuffer, State, SymbolPalette, CmdLine};
+use crate::resources::{CmdLine, ColorPalette, FrameBuffer, State, SymbolPalette};
 use crate::systems::*;
 
 pub fn run(args: Vec<String>) {
