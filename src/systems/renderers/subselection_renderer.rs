@@ -12,7 +12,7 @@ pub fn render_subselections(world: &mut World, state: &mut State, out: &mut Fram
 
     let select_color = ColorPalette::subselection_bg_u8();
 
-    let query = <(Read<Position2D>, Read<Dimension>)>::query().filter(tag::<Subselection>());
+    let query = <(Read<Position2D>, Read<Dimension>)>::query().filter(component::<Subselection>());
 
     for (pos, dim) in query.iter(world) {
         let texels = Position2D::area_texels(*pos, *dim);

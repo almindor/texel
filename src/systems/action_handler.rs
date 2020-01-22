@@ -243,11 +243,11 @@ fn mark_subselection(world: &mut World, state: &State) -> Option<Bounds> {
 
     let new_edit = || {
         let pos = state.cursor;
-        todo.insert((Subselection::at(pos),), vec![(pos, Dimension::unit())]);
+        todo.insert((), vec![(pos, Dimension::unit(), Subselection::at(pos))]);
     };
 
-    let query = <Write<Subselection>>::query(); // TODO: Tagged?
-    if let Some((entity, mut sel)) = query.iter_entities(world).next() {
+    let query = <Write<Subselection>>::query();
+    let result = if let Some((entity, mut sel)) = query.iter_entities(world).next() {
         // existing selection, finish it
         if sel.active {
             sel.active = false; // we're done selecting
@@ -262,7 +262,11 @@ fn mark_subselection(world: &mut World, state: &State) -> Option<Bounds> {
         // initiating new selection/edit
         new_edit();
         None
-    }
+    };
+
+    todo.write(world);
+
+    result
 }
 
 fn apply_region(region: Option<Bounds>, world: &mut World, state: &mut State) -> bool {
