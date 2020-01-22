@@ -107,7 +107,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
 fn reverse_mode(world: &mut World, state: &mut State) -> bool {
     if state.reverse_mode() {
         let todo = CommandBuffer::default();
-        let query = <(Read<Position>, TryWrite<Position2D>)>::query().filter(tag::<Selection>());
+        let query = <(Read<Position>, TryWrite<Position2D>)>::query().filter(component::<Selection>());
         for (entity, (pos, cur_pos)) in query.iter_entities(world) {
             let pos2d: Position2D = (*pos).into();
             if let Some(mut cp) = cur_pos {
@@ -174,8 +174,8 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
         Mode::Edit | Mode::Write => match <Read<Selection>>::query().iter(world).count() {
             1 => {
                 state.clear_error();
-                let query = <(Read<Position>, TryRead<Position2D>)>::query().filter(tag::<Selection>());
 
+                let query = <(Read<Position>, TryRead<Position2D>)>::query().filter(component::<Selection>());
                 if let Some((pos, cur_pos)) = query.iter(world).next() {
                     let pos2d: Position2D = (*pos).into();
 
