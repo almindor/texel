@@ -12,7 +12,7 @@ mod texel;
 
 pub mod fio; // file io
 
-pub use action::{Action, Layout, LAYOUT_WORDS};
+pub use action::{Action, Layout, MetadataType, LAYOUT_WORDS, METADATA_TYPES};
 pub use clipboard::{Clipboard, ClipboardOp};
 pub use config::{Config, ConfigV1};
 pub use help::*;
@@ -77,5 +77,13 @@ pub fn index_from_one(index: usize) -> i32 {
         0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 => (index + 1) as i32,
         9 => 0,
         _ => index as i32,
+    }
+}
+
+pub fn shortened_str(source: &str, max_chars: usize) -> (&str, bool) {
+    if source.len() > max_chars {
+        (&source[0..max_chars - 3], true)
+    } else {
+        (source, false)
     }
 }

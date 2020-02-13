@@ -1,5 +1,5 @@
 use crate::common::fio::ExportFormat;
-use crate::common::{ClipboardOp, Mode, OnQuit};
+use crate::common::{ClipboardOp, Error, Mode, OnQuit};
 use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,11 +22,43 @@ impl From<&str> for Layout {
 pub const LAYOUT_WORDS: [&str; 2] = ["column", "random"];
 
 #[derive(Debug)]
+pub enum MetadataType {
+    Id(Option<u32>),
+    Labels(Vec<String>),
+}
+
+impl MetadataType {
+    pub fn is_id(&self) -> bool {
+        match self {
+            Self::Id(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn parse_id(source: &str) -> Result<Self, Error> {
+        match source {
+            "none" => Ok(MetadataType::Id(None)),
+            _ => Ok(MetadataType::Id(Some(source.parse()?))),
+        }
+    }
+
+    pub fn parse_labels(source: &str) -> Result<Self, Error> {
+        let labels = source.split(",").map(String::from).collect::<Vec<String>>();
+
+        Ok(MetadataType::Labels(labels))
+    }
+}
+
+pub const METADATA_TYPES: [&str; 2] = ["id", "labels"];
+
+#[derive(Debug)]
 pub enum Action {
     None,
     NewObject,
     Duplicate(usize),
     Clipboard(ClipboardOp),
+    ToggleMetadata,
+    SetMetadata(MetadataType),
     Cancel,
     ClearError,
     SetMode(Mode),
@@ -78,6 +110,7 @@ impl From<&str> for Action {
             "clear_blank" => Action::ClearBlank,
             "duplicate" => Action::Duplicate(1),
             "layout" => Action::Layout(Layout::None),
+            "set" => Action::SetMetadata(MetadataType::Id(None)),
             _ => Action::None,
         }
     }
@@ -116,13 +149,14 @@ impl Action {
             | Action::ReverseMode
             | Action::ShowHelp(_)
             | Action::SetMode(_)
-            | Action::Write(_) => false,
+            | Action::Write(_)
+            | Action::ToggleMetadata => false,
             _ => true,
         }
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 13] = [
+        const ACTION_WORDS: [&str; 14] = [
             "read",
             "write",
             "translate",
@@ -136,6 +170,7 @@ impl Action {
             "clear_blank",
             "duplicate",
             "layout",
+            "set",
         ];
 
         for word in &ACTION_WORDS {

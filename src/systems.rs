@@ -9,7 +9,7 @@ mod renderers;
 pub use action_handler::handle_actions;
 pub use history_handler::preserve_history;
 pub use input_handler::handle_input;
-pub use renderers::{render_cmdline, render_sprites, render_subselections};
+pub use renderers::*;
 
 pub struct TexelSystems;
 
@@ -23,6 +23,7 @@ impl TexelSystems {
 
         render_sprites(world, state, out);
         render_subselections(world, state, out);
+        render_meta_info(world, state, out);
         render_cmdline(world, state, out);
     }
 }

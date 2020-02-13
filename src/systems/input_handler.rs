@@ -44,6 +44,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Redo => Action::Redo,
 
         Event::Clipboard(op) => Action::Clipboard(op),
+        Event::ToggleMetadata => Action::ToggleMetadata,
         Event::NewObject => Action::NewObject,
         Event::Duplicate(count) => Action::Duplicate(count),
         Event::Deselect => Action::Deselect,
@@ -88,6 +89,7 @@ fn objmode_region_event(event: InputEvent, state: &mut State) {
         Event::Redo => Action::Redo,
 
         Event::Clipboard(op) => Action::Clipboard(op),
+        Event::ToggleMetadata => Action::ToggleMetadata,
         Event::Deselect => Action::Deselect,
 
         Event::Left(MoveMeta::Relative) | Event::ArrowLeft => Action::Translate(Translation::Relative(-1, 0, 0)),
@@ -177,6 +179,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::EditPalette(index) => Action::SetMode(Mode::SelectSymbol(index)),
         Event::SelectPalette(index) => Action::ApplySymbol(palette.symbol(index)),
         Event::Clipboard(op) => Action::Clipboard(op),
+        Event::ToggleMetadata => Action::ToggleMetadata,
 
         Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,

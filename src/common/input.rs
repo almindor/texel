@@ -38,6 +38,7 @@ pub enum Event {
     SelectRegion,
     SelectFrame(Which<usize>),
     Clipboard(ClipboardOp),
+    ToggleMetadata,
     NewFrame,
     DeleteFrame,
     NewObject,
@@ -139,6 +140,8 @@ impl Default for CharMap {
         map.insert('y', Event::Clipboard(ClipboardOp::Copy));
         map.insert('Y', Event::Clipboard(ClipboardOp::Cut));
         map.insert('p', Event::Clipboard(ClipboardOp::Paste));
+
+        map.insert('m', Event::ToggleMetadata);
 
         map.insert('n', Event::NewObject);
         map.insert('t', Event::Duplicate(1));

@@ -1,4 +1,6 @@
-use crate::common::{fio, Action, Clipboard, ClipboardOp, Error, Layout, Mode, OnQuit, Scene, SceneExt, SelectMode};
+use crate::common::{
+    fio, Action, Clipboard, ClipboardOp, Error, Layout, MetadataType, Mode, OnQuit, Scene, SceneExt, SelectMode,
+};
 use crate::components::*;
 use crate::os::Terminal;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
@@ -17,6 +19,8 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::Undo => undo(world, state),
             Action::Redo => redo(world, state),
             Action::Clipboard(op) => clipboard(op, world, state),
+            Action::ToggleMetadata => toggle_metadata(state),
+            Action::SetMetadata(mt) => set_metadata(mt, world, state),
             Action::NewObject => new_sprite(world, state, None),
             Action::Duplicate(count) => match duplicate_selected(count, world, state) {
                 Ok(_) => true,
@@ -865,6 +869,35 @@ fn paste_subselection(world: &mut World, state: &mut State) -> bool {
     }
 
     changed
+}
+
+fn toggle_metadata(state: &mut State) -> bool {
+    state.show_meta = !state.show_meta;
+
+    false
+}
+
+fn set_metadata(mt: MetadataType, world: &mut World, state: &mut State) -> bool {
+    let query = <Write<Sprite>>::query().filter(component::<Selection>());
+    let selected = query.iter(world).count();
+
+    if selected == 0 {
+        return state.set_error(Error::execution("No object selected"));
+    }
+
+    if mt.is_id() && selected > 1 {
+        return state.set_error(Error::execution("Can only set ID on single object"));
+    }
+
+    let query = <Write<Sprite>>::query().filter(component::<Selection>());
+    for mut sprite in query.iter(world) {
+        match &mt {
+            MetadataType::Id(id) => sprite.id = *id,
+            MetadataType::Labels(labels) => sprite.labels = labels.clone(),
+        }
+    }
+
+    true
 }
 
 fn new_sprite(world: &mut World, state: &State, pos: Option<Position>) -> bool {

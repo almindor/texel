@@ -1,4 +1,4 @@
-use crate::common::{fio, topic_index, Action, Error, Event, InputEvent, Layout};
+use crate::common::{fio, topic_index, Action, Error, Event, InputEvent, Layout, MetadataType};
 use crate::components::Translation;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
@@ -170,6 +170,9 @@ impl CmdLine {
                 "export" | "read" | "write" | "w" | "r" => self
                     .auto_complete
                     .complete_filename(parts.last().unwrap_or_else(|| &"."))?,
+                "set" => self
+                    .auto_complete
+                    .complete_from_list(parts.last().unwrap_or_else(|| &""), &crate::common::METADATA_TYPES),
                 "help" => self
                     .auto_complete
                     .complete_from_list(parts.last().unwrap_or_else(|| &""), &crate::common::HELP_TOPICS),
@@ -203,6 +206,7 @@ impl CmdLine {
             Action::ClearBlank | Action::Deselect | Action::Tutorial | Action::Delete | Action::SetMode(_) => {
                 Ok(action)
             }
+            Action::SetMetadata(_) => self.parse_set_metadata(parts),
             Action::Layout(_) => self.parse_layout(parts),
             Action::Duplicate(_) => self.parse_duplicate(parts),
             Action::Translate(_) => self.parse_translate(parts),
@@ -212,6 +216,30 @@ impl CmdLine {
             Action::Export(_, _) => self.parse_export(parts),
             _ => Err(Error::InvalidCommand),
         }
+    }
+
+    fn parse_set_metadata(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
+        let mt_str = parts.next().ok_or(Error::execution("No metadata type specified"))?;
+
+        match mt_str {
+            "id" => self.parse_set_id(parts),
+            "labels" => self.parse_set_labels(parts),
+            _ => Err(Error::execution("Invalid metadata type")),
+        }
+    }
+
+    fn parse_set_id(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
+        let arg = parts.next().unwrap_or("none");
+        let mt = MetadataType::parse_id(arg)?;
+
+        Ok(Action::SetMetadata(mt))
+    }
+
+    fn parse_set_labels(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
+        let arg = parts.next().unwrap_or("");
+        let mt = MetadataType::parse_labels(arg)?;
+
+        Ok(Action::SetMetadata(mt))
     }
 
     fn parse_layout(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
