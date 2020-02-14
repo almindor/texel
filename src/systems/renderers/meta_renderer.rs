@@ -1,5 +1,5 @@
-use crate::common::index_from_one;
-use crate::components::{Bookmark, Position, Position2D, Selection, Sprite};
+use crate::common::{index_from_one, shortened_str};
+use crate::components::{Bookmark, Selection, Sprite};
 use crate::os::Terminal;
 use crate::resources::{FrameBuffer, State};
 use legion::prelude::*;
@@ -13,26 +13,32 @@ pub fn render_meta_info(world: &mut World, state: &State, out: &mut FrameBuffer)
 
     let ts = Terminal::terminal_size();
     let w = i32::from(ts.0);
-    // let h = i32::from(ts.1);
 
     out.write_line_default(1, 1, "=====BOOKMARKS=====");
 
-    let query = <(Read<Bookmark>, Read<Position2D>)>::query();
-    for (i, (bookmark, pos)) in query.iter(world).enumerate() {
+    let query = <Read<Bookmark>>::query();
+    for (i, bookmark) in query.iter(world).enumerate() {
         out.write_line_default(1, (i + 2) as i32, index_from_one(bookmark.0));
     }
 
     let x = w - METADATA_WIDTH;
     let mut y = 0i32;
-    let query = <(Read<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
-    for (i, (sprite, pos)) in query.iter(world).enumerate() {
+    let query = <Read<Sprite>>::query().filter(component::<Selection>());
+    for sprite in query.iter(world) {
         match sprite.id {
             Some(id) => out.write_line_default(x, y, format!("===  {}  ===", id)),
             None => out.write_line_default(x, y, "===<NONE>==="),
         }
 
         y += 1;
-        out.write_line_default(x, y, format!(" Labels: {}", sprite.labels.join(",")));
+        let labels = sprite.labels.join(",");
+        let label_str = shortened_str(&labels, 15);
+        if label_str.1 {
+            out.write_line_default(x, y, format!(" Labels: {}...", label_str.0));
+        } else {
+            out.write_line_default(x, y, format!(" Labels: {}", label_str.0));
+        }
+
         y += 1;
     }
 }

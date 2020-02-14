@@ -111,6 +111,7 @@ impl From<&str> for Action {
             "duplicate" => Action::Duplicate(1),
             "layout" => Action::Layout(Layout::None),
             "set" => Action::SetMetadata(MetadataType::Id(None)),
+            "metadata" => Action::ToggleMetadata,
             _ => Action::None,
         }
     }
@@ -156,7 +157,7 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 14] = [
+        const ACTION_WORDS: [&str; 15] = [
             "read",
             "write",
             "translate",
@@ -171,6 +172,7 @@ impl Action {
             "duplicate",
             "layout",
             "set",
+            "metadata",
         ];
 
         for word in &ACTION_WORDS {

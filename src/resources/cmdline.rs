@@ -203,9 +203,12 @@ impl CmdLine {
 
         let action = Action::from(parts.next());
         match action {
-            Action::ClearBlank | Action::Deselect | Action::Tutorial | Action::Delete | Action::SetMode(_) => {
-                Ok(action)
-            }
+            Action::ClearBlank
+            | Action::Deselect
+            | Action::Tutorial
+            | Action::Delete
+            | Action::ToggleMetadata
+            | Action::SetMode(_) => Ok(action),
             Action::SetMetadata(_) => self.parse_set_metadata(parts),
             Action::Layout(_) => self.parse_layout(parts),
             Action::Duplicate(_) => self.parse_duplicate(parts),
