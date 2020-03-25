@@ -28,8 +28,8 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             },
             Action::NewFrame => new_frame_on_selected(world, state),
             Action::DeleteFrame => delete_frame_on_selected(world, state),
-            Action::Viewport(index, true) => set_bookmark(index, state.offset, world),
-            Action::Viewport(index, false) => jump_to_bookmark(index, world, state),
+            Action::Bookmark(index, true) => set_bookmark(index, state.offset, world),
+            Action::Bookmark(index, false) => jump_to_bookmark(index, world, state),
             Action::Cancel => {
                 if state.error().is_some() {
                     state.clear_error()

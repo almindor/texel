@@ -31,8 +31,13 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::SelectObject(which, sticky) => Action::SelectObject(which, sticky),
         Event::SelectFrame(which) => Action::SelectFrame(which),
         Event::SelectRegion => Action::SetMode(Mode::Object(SelectMode::Region)),
-        Event::SelectPalette(index) => Action::Viewport(index, false),
-        Event::EditPalette(index) => Action::Viewport(index, true),
+        Event::SelectPalette(index) => {
+            if index < 10 {
+                Action::Bookmark(index, false)
+            } else {
+                Action::None
+            }
+        }
 
         Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,
