@@ -41,6 +41,21 @@ impl Default for Mode {
 }
 
 impl Mode {
+    // basic bit-mapping for each mode except quitting
+    pub fn to_bits(&self) -> u8 {
+        match self {
+            Mode::Object(_) => 0b1000_0000,
+            Mode::Color(_) => 0b0100_0000,
+            Mode::SelectColor(_, _) => 0b0010_0000,
+            Mode::SelectSymbol(_) => 0b0001_0000,
+            Mode::Edit => 0b0000_1000,
+            Mode::Write => 0b0000_0100,
+            Mode::Command => 0b0000_0010,
+            Mode::Help(_) => 0b0000_0001,
+            _ => 0u8,
+        }
+    }
+
     pub fn to_str(&self) -> &'static str {
         match self {
             Mode::Object(SelectMode::Object) => "OBJECT[OBJECT]",

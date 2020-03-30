@@ -64,12 +64,21 @@ impl Default for Event {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CharMap(pub HashMap<char, Event>);
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Overrides(pub HashMap<u8, CharMap>);
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ModesCharMap {
+    pub default: CharMap,
+    pub overrides: Overrides,
+}
+
 impl Default for CharMap {
     fn default() -> Self {
         let mut map = HashMap::with_capacity(30);
 
         map.insert(':', Event::Mode(Mode::Command));
-        map.insert('e', Event::Mode(Mode::Edit));
+        // map.insert('e', Event::Mode(Mode::Edit)); // override for object mode
         map.insert('i', Event::Mode(Mode::Write));
         // 1-0 + A,B,C,D,E,F (HEX) are symbol overrides
         map.insert('!', Event::EditPalette(0));
@@ -151,6 +160,19 @@ impl Default for CharMap {
         map.insert('v', Event::SelectRegion);
 
         CharMap(map)
+    }
+}
+
+impl Default for Overrides {
+    fn default() -> Self {
+        let mut map = HashMap::new();
+        let mut obj_overrides = HashMap::new();
+
+        // object mode 'e' -> edit mode
+        obj_overrides.insert('e', Event::Mode(Mode::Edit));
+        map.insert(0b1000_0000, CharMap(obj_overrides));
+
+        Overrides(map)
     }
 }
 
