@@ -1,17 +1,30 @@
-use crate::common::{CharMap, Event, InputEvent, MoveMeta};
+use crate::common::{CharMap, Event, InputEvent, Mode, ModesCharMap, MoveMeta};
 use crossterm::event::{read, Event as TEvent, KeyCode as Key, KeyEvent, KeyModifiers};
 use std::collections::HashMap;
 use texel_types::Which;
 
 type RawMap = HashMap<TEvent, Event>;
 
-struct MappedIter<'a> {
-    map: &'a RawMap,
+#[derive(Debug)]
+pub struct InputSource {
+    mode_maps: Vec<RawMap>,
 }
 
-impl MappedIter<'_> {
-    fn map_input(&self, raw_event: TEvent) -> InputEvent {
-        let mapped = self.map.get(&raw_event).copied().unwrap_or_else(|| match raw_event {
+impl InputSource {
+    pub fn next_event(&self, mode: Mode) -> InputEvent {
+        let map = self
+            .mode_maps
+            .get(mode.index())
+            .unwrap_or_else(|| panic!("Mode map not found"));
+
+        match read() {
+            Err(err) => panic!(err),
+            Ok(raw_event) => self.map_input(raw_event, map),
+        }
+    }
+
+    fn map_input(&self, raw_event: TEvent, map: &RawMap) -> InputEvent {
+        let mapped = map.get(&raw_event).copied().unwrap_or_else(|| match raw_event {
             TEvent::Resize(_, _) => Event::Resize,
             _ => Event::None,
         });
@@ -26,86 +39,73 @@ impl MappedIter<'_> {
     }
 }
 
-impl Iterator for MappedIter<'_> {
-    type Item = InputEvent;
-
-    fn next(&mut self) -> Option<InputEvent> {
-        match read() {
-            Err(err) => panic!(err), // TODO: maybe find a better handler?
-            Ok(result) => Some(self.map_input(result)),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct InputSource {
-    map: RawMap,
-}
-
-impl InputSource {
-    pub fn events(&self) -> impl Iterator<Item = InputEvent> + '_ {
-        MappedIter { map: &self.map }
-    }
-}
-
-impl From<CharMap> for InputSource {
-    fn from(cm: CharMap) -> Self {
+impl From<ModesCharMap> for InputSource {
+    fn from(cm: ModesCharMap) -> Self {
         let mut result = InputSource {
-            map: HashMap::with_capacity(cm.0.capacity()),
+            mode_maps: Vec::with_capacity(Mode::count()),
         };
 
-        for (c, v) in cm.0 {
-            let new_key = match c {
-                '\n' => TEvent::Key(KeyEvent::from(Key::Enter)), // crossterm doesn't \n -> Enter
-                '\t' => TEvent::Key(KeyEvent::from(Key::Tab)),   // crossterm doesn't \t -> Tab
-                _ => TEvent::Key(KeyEvent::from(Key::Char(c))),
-            };
+        let defaults = default_map(cm.all_modes());
 
-            result.map.insert(new_key, v);
+        // modes full maps
+        for o in cm.overrides() {
+            let mut mode_map = defaults.clone();
+            char_map_to_raw_map(o, &mut mode_map); // override specifics
+            result.mode_maps.push(mode_map);
         }
 
-        // meta-key defaults
-        result.map.insert(TEvent::Key(KeyEvent::from(Key::Esc)), Event::Cancel);
         result
-            .map
-            .insert(TEvent::Key(KeyEvent::from(Key::Left)), Event::ArrowLeft);
-        result
-            .map
-            .insert(TEvent::Key(KeyEvent::from(Key::Right)), Event::ArrowRight);
-        result.map.insert(TEvent::Key(KeyEvent::from(Key::Up)), Event::ArrowUp);
-        result
-            .map
-            .insert(TEvent::Key(KeyEvent::from(Key::Down)), Event::ArrowDown);
-        result
-            .map
-            .insert(TEvent::Key(KeyEvent::from(Key::Delete)), Event::Delete);
-        result
-            .map
-            .insert(TEvent::Key(KeyEvent::from(Key::Backspace)), Event::Backspace);
-        result.map.insert(
-            TEvent::Key(KeyEvent::new(Key::Char('h'), KeyModifiers::CONTROL)),
-            Event::Left(MoveMeta::Alternative),
-        );
-        result.map.insert(
-            TEvent::Key(KeyEvent::new(Key::Char('j'), KeyModifiers::CONTROL)),
-            Event::Right(MoveMeta::Alternative),
-        );
-        result.map.insert(
-            TEvent::Key(KeyEvent::new(Key::Char('k'), KeyModifiers::CONTROL)),
-            Event::Up(MoveMeta::Alternative),
-        );
-        result.map.insert(
-            TEvent::Key(KeyEvent::new(Key::Char('l'), KeyModifiers::CONTROL)),
-            Event::Down(MoveMeta::Alternative),
-        );
-        result.map.insert(
-            TEvent::Key(KeyEvent::from(Key::BackTab)),
-            Event::SelectObject(Which::Next, true),
-        );
-        result.map.insert(
-            TEvent::Key(KeyEvent::new(Key::Char('a'), KeyModifiers::CONTROL)),
-            Event::SelectObject(Which::All, false),
-        );
-        result
+    }
+}
+
+fn default_map(cm: &CharMap) -> RawMap {
+    let mut result = RawMap::new();
+    char_map_to_raw_map(cm, &mut result);
+
+    // meta-key defaults
+    result.insert(TEvent::Key(KeyEvent::from(Key::Esc)), Event::Cancel);
+    result.insert(TEvent::Key(KeyEvent::from(Key::Left)), Event::ArrowLeft);
+    result.insert(TEvent::Key(KeyEvent::from(Key::Right)), Event::ArrowRight);
+    result.insert(TEvent::Key(KeyEvent::from(Key::Up)), Event::ArrowUp);
+    result.insert(TEvent::Key(KeyEvent::from(Key::Down)), Event::ArrowDown);
+    result.insert(TEvent::Key(KeyEvent::from(Key::Delete)), Event::Delete);
+    result.insert(TEvent::Key(KeyEvent::from(Key::Backspace)), Event::Backspace);
+    result.insert(
+        TEvent::Key(KeyEvent::new(Key::Char('h'), KeyModifiers::CONTROL)),
+        Event::Left(MoveMeta::Alternative),
+    );
+    result.insert(
+        TEvent::Key(KeyEvent::new(Key::Char('j'), KeyModifiers::CONTROL)),
+        Event::Right(MoveMeta::Alternative),
+    );
+    result.insert(
+        TEvent::Key(KeyEvent::new(Key::Char('k'), KeyModifiers::CONTROL)),
+        Event::Up(MoveMeta::Alternative),
+    );
+    result.insert(
+        TEvent::Key(KeyEvent::new(Key::Char('l'), KeyModifiers::CONTROL)),
+        Event::Down(MoveMeta::Alternative),
+    );
+    result.insert(
+        TEvent::Key(KeyEvent::from(Key::BackTab)),
+        Event::SelectObject(Which::Next, true),
+    );
+    result.insert(
+        TEvent::Key(KeyEvent::new(Key::Char('a'), KeyModifiers::CONTROL)),
+        Event::SelectObject(Which::All, false),
+    );
+
+    result
+}
+
+fn char_map_to_raw_map(cm: &CharMap, raw_map: &mut RawMap) {
+    for (c, v) in &cm.0 {
+        let new_key = match c {
+            '\n' => TEvent::Key(KeyEvent::from(Key::Enter)), // crossterm doesn't \n -> Enter
+            '\t' => TEvent::Key(KeyEvent::from(Key::Tab)),   // crossterm doesn't \t -> Tab
+            _ => TEvent::Key(KeyEvent::from(Key::Char(*c))),
+        };
+
+        raw_map.insert(new_key, *v);
     }
 }

@@ -222,7 +222,9 @@ impl CmdLine {
     }
 
     fn parse_set_metadata(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
-        let mt_str = parts.next().ok_or(Error::execution("No metadata type specified"))?;
+        let mt_str = parts
+            .next()
+            .ok_or_else(|| Error::execution("No metadata type specified"))?;
 
         match mt_str {
             "id" => self.parse_set_id(parts),

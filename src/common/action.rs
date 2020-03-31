@@ -43,7 +43,7 @@ impl MetadataType {
     }
 
     pub fn parse_labels(source: &str) -> Result<Self, Error> {
-        let labels = source.split(",").map(String::from).collect::<Vec<String>>();
+        let labels = source.split(',').map(String::from).collect::<Vec<String>>();
 
         Ok(MetadataType::Labels(labels))
     }

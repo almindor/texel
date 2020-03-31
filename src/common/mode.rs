@@ -41,18 +41,22 @@ impl Default for Mode {
 }
 
 impl Mode {
+    pub const fn count() -> usize {
+        9
+    }
+
     // basic bit-mapping for each mode except quitting
-    pub fn to_bits(&self) -> u8 {
+    pub fn index(&self) -> usize {
         match self {
-            Mode::Object(_) => 0b1000_0000,
-            Mode::Color(_) => 0b0100_0000,
-            Mode::SelectColor(_, _) => 0b0010_0000,
-            Mode::SelectSymbol(_) => 0b0001_0000,
-            Mode::Edit => 0b0000_1000,
-            Mode::Write => 0b0000_0100,
-            Mode::Command => 0b0000_0010,
-            Mode::Help(_) => 0b0000_0001,
-            _ => 0u8,
+            Mode::Object(_) => 0,
+            Mode::Color(_) => 1,
+            Mode::SelectColor(_, _) => 2,
+            Mode::SelectSymbol(_) => 3,
+            Mode::Edit => 4,
+            Mode::Write => 5,
+            Mode::Command => 6,
+            Mode::Help(_) => 7,
+            Mode::Quitting(_) => 8,
         }
     }
 

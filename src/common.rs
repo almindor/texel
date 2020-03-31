@@ -14,7 +14,7 @@ pub mod fio; // file io
 
 pub use action::{Action, Layout, MetadataType, LAYOUT_WORDS, METADATA_TYPES};
 pub use clipboard::{Clipboard, ClipboardOp};
-pub use config::{Config, ConfigV1};
+pub use config::{Config, ConfigV2};
 pub use help::*;
 pub use input::*;
 pub use mode::{Mode, OnQuit, SelectMode};

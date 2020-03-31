@@ -65,12 +65,37 @@ impl Default for Event {
 pub struct CharMap(pub HashMap<char, Event>);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Overrides(pub HashMap<u8, CharMap>);
+pub struct Overrides(pub Vec<CharMap>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ModesCharMap {
-    pub default: CharMap,
-    pub overrides: Overrides,
+    all_modes: CharMap,
+    overrides: Overrides,
+}
+
+impl From<CharMap> for ModesCharMap {
+    fn from(char_map: CharMap) -> Self {
+        Self {
+            all_modes: char_map,
+            overrides: Overrides::default(),
+        }
+    }
+}
+
+impl ModesCharMap {
+    pub fn all_modes(&self) -> &CharMap {
+        &self.all_modes
+    }
+
+    pub fn overrides(&self) -> &Vec<CharMap> {
+        &self.overrides.0
+    }
+}
+
+impl CharMap {
+    fn new() -> Self {
+        CharMap(HashMap::new())
+    }
 }
 
 impl Default for CharMap {
@@ -165,12 +190,20 @@ impl Default for CharMap {
 
 impl Default for Overrides {
     fn default() -> Self {
-        let mut map = HashMap::new();
-        let mut obj_overrides = HashMap::new();
+        let mut map: Vec<CharMap> = Vec::with_capacity(Mode::count());
+
+        // pre-fill empty overrides for easy indexing
+        for _ in 0..Mode::count() {
+            map.push(CharMap::new());
+        }
+
+        use super::mode::SelectMode;
+        let mode_index = Mode::Object(SelectMode::default()).index();
 
         // object mode 'e' -> edit mode
-        obj_overrides.insert('e', Event::Mode(Mode::Edit));
-        map.insert(0b1000_0000, CharMap(obj_overrides));
+        if let Some(char_map) = map.get_mut(mode_index) {
+            char_map.0.insert('e', Event::Mode(Mode::Edit));
+        }
 
         Overrides(map)
     }

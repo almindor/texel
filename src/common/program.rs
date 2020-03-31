@@ -2,7 +2,7 @@ use legion::prelude::*;
 use std::io::stdout;
 use std::path::Path;
 
-use crate::common::{fio, Action, Config, ConfigV1, Event, InputEvent};
+use crate::common::{fio, Action, Config, ConfigV2, Event, InputEvent};
 use crate::os::{InputSource, Terminal};
 use crate::resources::{CmdLine, ColorPalette, FrameBuffer, State, SymbolPalette};
 use crate::systems::*;
@@ -35,7 +35,8 @@ pub fn run(args: Vec<String>) {
     // flush buffers to terminal
     out.flush_into(terminal.endpoint()).unwrap();
 
-    for mapped in input_source.events() {
+    loop {
+        let mapped = input_source.next_event(state.mode());
         // handle input
         dispatch_input_event(mapped, &mut state, &mut out, &mut terminal);
         TexelSystems::run(&mut world, &mut state, &mut out);
@@ -76,7 +77,7 @@ fn load_from(args: Vec<String>, state: &mut State) -> bool {
     }
 }
 
-fn build_resources(config: &ConfigV1, world: &mut World) -> InputSource {
+fn build_resources(config: &ConfigV2, world: &mut World) -> InputSource {
     // prep resources
     world.resources.insert(CmdLine::default());
     world.resources.insert(config.color_palette.clone());
@@ -103,16 +104,16 @@ fn check_terminal_size(ts: (u16, u16)) {
     }
 }
 
-fn save_config(mut v1: ConfigV1, config_file: &Path, world: &World) {
+fn save_config(mut v2: ConfigV2, config_file: &Path, world: &World) {
     use std::ops::Deref;
 
     let cp = world.resources.get::<ColorPalette>().unwrap();
     let sp = world.resources.get::<SymbolPalette>().unwrap();
 
-    v1.color_palette = cp.deref().clone();
-    v1.symbol_palette = sp.deref().clone();
+    v2.color_palette = cp.deref().clone();
+    v2.symbol_palette = sp.deref().clone();
 
-    let config = Config::from(v1);
+    let config = Config::from(v2);
 
     config.to_config_file(config_file).unwrap();
 }
