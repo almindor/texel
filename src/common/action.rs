@@ -1,5 +1,6 @@
 use crate::common::fio::ExportFormat;
 use crate::common::{ClipboardOp, Error, Mode, OnQuit};
+use std::collections::HashMap;
 use texel_types::{ColorMode, Position2D, SymbolStyle, Translation, Which};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -24,7 +25,7 @@ pub const LAYOUT_WORDS: [&str; 2] = ["column", "random"];
 #[derive(Debug)]
 pub enum MetadataType {
     Id(Option<u32>),
-    Labels(Vec<String>),
+    Labels(HashMap<String, String>),
 }
 
 impl MetadataType {
@@ -43,7 +44,15 @@ impl MetadataType {
     }
 
     pub fn parse_labels(source: &str) -> Result<Self, Error> {
-        let labels = source.split(',').map(String::from).collect::<Vec<String>>();
+        let mut labels = HashMap::new();
+
+        for label in source.split(',').map(|s| s.trim()) {
+            let mut parts = label.split('=').map(|s| s.trim());
+            let key = parts.next().ok_or_else(|| Error::execution("Invalid label key"))?;
+            let value = parts.next().ok_or_else(|| Error::execution("Invalid label value"))?;
+
+            labels.insert(key.into(), value.into());
+        }
 
         Ok(MetadataType::Labels(labels))
     }

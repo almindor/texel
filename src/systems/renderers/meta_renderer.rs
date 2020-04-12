@@ -14,6 +14,8 @@ pub fn render_meta_info(world: &mut World, state: &State, out: &mut FrameBuffer)
     let ts = Terminal::terminal_size();
     let w = i32::from(ts.0);
 
+    let filename = state.filename();
+    out.write_line_default(w / 2 - filename.len() as i32 / 2, 1, format!("<{}>", filename));
     out.write_line_default(1, 1, "=====BOOKMARKS=====");
 
     let query = <Read<Bookmark>>::query();
@@ -31,7 +33,12 @@ pub fn render_meta_info(world: &mut World, state: &State, out: &mut FrameBuffer)
         }
 
         y += 1;
-        let labels = sprite.labels.join(",");
+        let labels = sprite
+            .labels
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<String>>()
+            .join(",");
         let label_str = shortened_str(&labels, 15);
         if label_str.1 {
             out.write_line_default(x, y, format!(" Labels: {}...", label_str.0));

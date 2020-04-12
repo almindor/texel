@@ -38,6 +38,13 @@ fn objmode_event(event: InputEvent, state: &mut State) {
                 Action::None
             }
         }
+        Event::EditPalette(index) => {
+            if index < 10 {
+                Action::Bookmark(index, true)
+            } else {
+                Action::None
+            }
+        }
 
         Event::Cancel => Action::Cancel,
         Event::Delete | Event::Backspace => Action::Delete,
