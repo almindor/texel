@@ -20,7 +20,7 @@ pub use input::*;
 pub use mode::{Mode, OnQuit, SelectMode};
 pub use program::run;
 pub use scene::{Scene, SceneExt};
-pub use selected_info::SelectedInfo;
+pub use selected_info::{SelectedInfo, SELECTED_INFO_TEMPLATE};
 pub use sprite::SpriteExt;
 pub use texel::TexelExt;
 

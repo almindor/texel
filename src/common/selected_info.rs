@@ -48,7 +48,7 @@ impl From<Position2D> for SelectedInfo {
     out.set_cursor_pos(w - 1, h - 1);
 */
 
-const SELECTED_INFO_TEMPLATE: &str = "*▞ (   ,   ):[   /   ]:{   ,   }";
+pub const SELECTED_INFO_TEMPLATE: &str = "*▞ (   ,   ,   ):[   /   ]:{   ,   }";
 
 impl SelectedInfo {
     pub fn append(&mut self, sprite: &Sprite, pos: &Position) {
@@ -79,18 +79,11 @@ impl SelectedInfo {
         let mut line = texel_types::texels_from_str(SELECTED_INFO_TEMPLATE, start);
         let bold = SymbolStyles::only(SymbolStyle::Bold);
 
-        let mut write_coords_to_line = |x, y, start_x| {
-            let str_x = format!("{}", x);
-            let str_y = format!("{}", y);
-            texel_types::write_to_texels(&str_x, &mut line, start_x - str_x.len());
-            texel_types::write_to_texels(&str_y, &mut line, start_x + 4 - str_y.len());
-        };
-
         if self.selected_count > 0 {
-            write_coords_to_line(self.pos.x, self.pos.y, 7);
-            write_coords_to_line(self.frame_index as i32, self.frame_count as i32, 17);
+            write_coords_to_line(self.pos.x, self.pos.y, Some(self.pos.z), 7, &mut line);
+            write_coords_to_line(self.frame_index as i32, self.frame_count as i32, None, 21, &mut line);
         }
-        write_coords_to_line(self.offset.x, self.offset.y, 27);
+        write_coords_to_line(self.offset.x, self.offset.y, None, 31, &mut line);
 
         let white = Terminal::grayscale_u8(23);
         let dark_green = Terminal::rgb_u8(1, 3, 1);
@@ -100,19 +93,35 @@ impl SelectedInfo {
         line[0].styles = SymbolStyles::only(SymbolStyle::Bold);
         line[0].symbol = if state.unsaved_changes() { '*' } else { ' ' };
 
-        for t in line.iter_mut().skip(3).take(9) {
+        for t in line.iter_mut().skip(3).take(13) {
             t.styles = bold; // selected position in bold
             t.fg = white;
         }
 
-        for t in line.iter_mut().skip(13).take(9) {
+        for t in line.iter_mut().skip(17).take(9) {
             t.fg = dark_green;
         }
 
-        for t in line.iter_mut().skip(23) {
+        for t in line.iter_mut().skip(27) {
             t.fg = dark_blue;
         }
 
         line
+    }
+}
+
+fn write_coords_to_line(x: i32, y: i32, maybe_z: Option<i32>, start_x: usize, line: &mut Texels) -> usize {
+    let str_x = format!("{}", x);
+    let str_y = format!("{}", y);
+
+    texel_types::write_to_texels(&str_x, line, start_x - str_x.len());
+    texel_types::write_to_texels(&str_y, line, start_x + 4 - str_y.len());
+
+    if let Some(z) = maybe_z {
+        let str_z = format!("{}", z);
+        texel_types::write_to_texels(&str_z, line, start_x + 8 - str_z.len());
+        8
+    } else {
+        4
     }
 }

@@ -1,4 +1,4 @@
-use crate::common::{Error, Mode, SelectMode};
+use crate::common::{Error, Mode, SelectMode, SELECTED_INFO_TEMPLATE};
 use crate::os::Terminal;
 use crate::resources::{CmdLine, ColorPalette, FrameBuffer, State, SymbolPalette, PALETTE_OFFSET};
 use legion::prelude::*;
@@ -60,9 +60,10 @@ fn print_selected_colors(out: &mut FrameBuffer, state: &State, w: i32, h: i32) {
     // color selection
     let sc = (state.color(ColorMode::Bg), state.color(ColorMode::Fg));
     let saved_symbol = if state.unsaved_changes() { "*" } else { " " };
+    let len = SELECTED_INFO_TEMPLATE.len() as i32;
 
-    out.write_line_default(w - 35, h - 1, saved_symbol);
-    out.write_line(w - 34, h - 1, "▞", sc.0, sc.1, SymbolStyles::new());
+    out.write_line_default(w - len - 1, h - 1, saved_symbol);
+    out.write_line(w - len, h - 1, "▞", sc.0, sc.1, SymbolStyles::new());
     out.set_cursor_pos(w - 1, h - 1);
 }
 
