@@ -11,16 +11,16 @@ readme = "README.md"
 categories = ["text-editors", "multimedia::images"]
 
 [dependencies]
-big_enum_set = { version = "0.1.5", features = ["serde"] }
-crossterm = { version = "0.14.2", optional = true }
+big_enum_set = { version = "0.2.0", features = ["serde"] }
+crossterm = { version = "0.17.5", optional = true }
 dirs = "2.0.2"
 legion = "0.2.1"
-libflate = "0.1.27"
+libflate = "1.0.1"
 rand = "0.7.3"
-ron = "0.5.1"
-serde = "1.0.104"
-serde_derive = "1.0.104"
-termion = { version = "1.5.4", optional = true }
+ron = "0.6.0"
+serde = "1.0.111"
+serde_derive = "1.0.111"
+termion = { version = "1.5.5", optional = true }
 texel_types = { version = "2.0.0", features = ["serde_support"] }
 
 [features]
