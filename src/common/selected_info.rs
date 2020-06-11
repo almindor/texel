@@ -81,7 +81,13 @@ impl SelectedInfo {
 
         if self.selected_count > 0 {
             write_coords_to_line(self.pos.x, self.pos.y, Some(self.pos.z), 7, &mut line);
-            write_coords_to_line(self.frame_index as i32, self.frame_count as i32, None, 21, &mut line);
+            write_coords_to_line(
+                self.frame_index as i32 + 1,
+                self.frame_count as i32,
+                None,
+                21,
+                &mut line,
+            );
         }
         write_coords_to_line(self.offset.x, self.offset.y, None, 31, &mut line);
 
