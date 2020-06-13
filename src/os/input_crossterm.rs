@@ -29,9 +29,6 @@ impl InputSource {
             _ => Event::None,
         });
 
-        eprintln!("{:?}", map);
-        eprintln!("Raw: {:?}, mapped: {:?}", raw_event, mapped);
-
         match raw_event {
             TEvent::Key(key_event) => match key_event.code {
                 Key::Char(c) => (mapped, Some(c)),
@@ -106,7 +103,7 @@ fn char_map_to_raw_map(cm: &CharMap, raw_map: &mut RawMap) {
         let mut ke = KeyEvent::from(Key::Char(*c));
         // need to map SHIFT on chars
         if c.is_uppercase() {
-            ke.modifiers = KeyModifiers::SHIFT;
+            ke.modifiers |= KeyModifiers::SHIFT;
         }
         let new_key = match c {
             '\n' => TEvent::Key(KeyEvent::from(Key::Enter)), // crossterm doesn't \n -> Enter

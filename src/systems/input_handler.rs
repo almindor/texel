@@ -26,7 +26,6 @@ pub fn handle_input(world: &mut World, state: &mut State) {
 }
 
 fn objmode_event(event: InputEvent, state: &mut State) {
-    eprintln!("Handling event: {:?}", event);
     let action = match event.0 {
         Event::Mode(mode) => Action::SetMode(mode),
         Event::SelectObject(which, sticky) => Action::SelectObject(which, sticky),
