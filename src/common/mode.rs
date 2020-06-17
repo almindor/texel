@@ -45,6 +45,13 @@ impl Mode {
         9
     }
 
+    pub fn modifies_cursor(&self) -> bool {
+        match self {
+            Mode::Write | Mode::Edit => true,
+            _ => false,
+        }
+    }
+
     // basic bit-mapping for each mode except quitting
     pub fn index(&self) -> usize {
         match self {

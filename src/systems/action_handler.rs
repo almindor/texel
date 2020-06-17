@@ -109,19 +109,24 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
 }
 
 fn reverse_mode(world: &mut World, state: &mut State) -> bool {
+    let modifies_cursor = state.mode().modifies_cursor();
+
     if state.reverse_mode() {
-        let todo = CommandBuffer::default();
-        let query = <(Read<Position>, TryWrite<Position2D>)>::query().filter(component::<Selection>());
-        for (entity, (pos, cur_pos)) in query.iter_entities(world) {
-            let pos2d: Position2D = (*pos).into();
-            if let Some(mut cp) = cur_pos {
-                *cp = state.cursor - pos2d; // update to last cursor position
-            } else {
-                todo.add_component(entity, state.cursor - pos2d);
+        if modifies_cursor {
+            let todo = CommandBuffer::default();
+            let query = <(Read<Position>, TryWrite<Position2D>)>::query().filter(component::<Selection>());
+            for (entity, (pos, cur_pos)) in query.iter_entities(world) {
+                let pos2d: Position2D = (*pos).into();
+                if let Some(mut cp) = cur_pos {
+                    *cp = state.cursor - pos2d; // update to last cursor position
+                } else {
+                    todo.add_component(entity, state.cursor - pos2d);
+                }
             }
+
+            todo.write(world);
         }
 
-        todo.write(world);
         true
     } else {
         clear_subselection(world)
@@ -184,7 +189,7 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
                     let pos2d: Position2D = (*pos).into();
 
                     // if we're going from a non-cursory mode
-                    if state.mode() != Mode::Edit && state.mode() != Mode::Write {
+                    if !state.mode().modifies_cursor() {
                         if let Some(cp) = cur_pos {
                             state.cursor = *cp + pos2d;
                         } else {
