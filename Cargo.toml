@@ -13,13 +13,13 @@ categories = ["text-editors", "multimedia::images"]
 [dependencies]
 big_enum_set = { version = "0.2.0", features = ["serde"] }
 crossterm = { version = "0.17.5", optional = true }
-dirs = "2.0.2"
+dirs = "3.0.0"
 legion = "=0.2.1"
 libflate = "1.0.1"
 rand = "0.7.3"
 ron = "0.6.0"
-serde = "1.0.111"
-serde_derive = "1.0.111"
+serde = "1.0.114"
+serde_derive = "1.0.114"
 termion = { version = "1.5.5", optional = true }
 texel_types = { version = "2.0.0", features = ["serde_support"] }
 
