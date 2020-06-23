@@ -105,13 +105,11 @@ fn check_terminal_size(ts: (u16, u16)) {
 }
 
 fn save_config(mut v2: ConfigV2, config_file: &Path, world: &World) {
-    use std::ops::Deref;
-
     let cp = world.resources.get::<ColorPalette>().unwrap();
     let sp = world.resources.get::<SymbolPalette>().unwrap();
 
-    v2.color_palette = cp.deref().clone();
-    v2.symbol_palette = sp.deref().clone();
+    v2.color_palette = cp.clone();
+    v2.symbol_palette = sp.clone();
 
     let config = Config::from(v2);
 
