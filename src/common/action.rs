@@ -150,21 +150,6 @@ impl Action {
         }
     }
 
-    pub fn keeps_history(&self) -> bool {
-        match self {
-            Action::None
-            | Action::Undo
-            | Action::Redo
-            | Action::ClearError
-            | Action::ReverseMode
-            | Action::ShowHelp(_)
-            | Action::SetMode(_)
-            | Action::Write(_)
-            | Action::ToggleMetadata => false,
-            _ => true,
-        }
-    }
-
     pub fn complete_word(part: &str) -> Option<&'static str> {
         const ACTION_WORDS: [&str; 15] = [
             "read",

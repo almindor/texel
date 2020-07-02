@@ -12,9 +12,7 @@ const NEW_POSITION: Position = Position { x: 10, y: 10, z: 0 };
 
 pub fn handle_actions(world: &mut World, state: &mut State) {
     while let Some(action) = state.pop_action() {
-        let keep_history = action.keeps_history();
-
-        let changed = match action {
+        if match action {
             Action::None => false,
             Action::Undo => undo(world, state),
             Action::Redo => redo(world, state),
@@ -100,9 +98,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
                 false
             }
             Action::ClearBlank => clear_blank_texels(world, state),
-        };
-
-        if keep_history && changed {
+        } {
             state.dirty = true;
         }
     }
@@ -160,6 +156,8 @@ fn clear_subselection(world: &mut World) -> bool {
 }
 
 fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
+    let mut dirty = false;
+
     if match mode {
         Mode::Quitting(OnQuit::Check) => {
             if state.unsaved_changes() {
@@ -202,7 +200,8 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
             0 => {
                 state.clear_error();
                 state.cursor = (&NEW_POSITION).into();
-                new_sprite(world, state, None)
+                dirty = new_sprite(world, state, None);
+                dirty
             }
             _ => state.set_error(Error::execution("Multiple objects selected")),
         },
@@ -226,7 +225,7 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
         clear_subselection(world);
     }
 
-    false
+    dirty
 }
 
 fn select_region(world: &mut World, state: &mut State) -> bool {
@@ -1058,10 +1057,20 @@ fn apply_scene(scene: Scene, world: &mut World, state: &State, selections: Optio
     Ok(())
 }
 
+fn validate_mode(world: &mut World, state: &mut State) -> bool {
+    let selected = <Read<Selection>>::query().iter(world).count();
+
+    while !state.mode().valid_selection(selected) {
+        state.reverse_mode(); // keep reversing until a valid mode for given selection
+    }
+
+    false
+}
+
 fn undo(world: &mut World, state: &mut State) -> bool {
     if let Some(snap) = state.undo() {
         match apply_scene(snap.scene, world, state, Some(snap.selections)) {
-            Ok(_) => true,
+            Ok(_) => validate_mode(world, state),
             Err(err) => state.set_error(err),
         }
     } else {
@@ -1073,7 +1082,7 @@ fn undo(world: &mut World, state: &mut State) -> bool {
 fn redo(world: &mut World, state: &mut State) -> bool {
     if let Some(snap) = state.redo() {
         match apply_scene(snap.scene, world, state, Some(snap.selections)) {
-            Ok(_) => true,
+            Ok(_) => validate_mode(world, state),
             Err(err) => state.set_error(err),
         }
     } else {

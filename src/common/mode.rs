@@ -52,6 +52,13 @@ impl Mode {
         }
     }
 
+    pub fn valid_selection(&self, selected: usize) -> bool {
+        match self {
+            Mode::Write | Mode::Edit | Mode::Color(_) => selected == 1,
+            _ => true,
+        }
+    }
+
     // basic bit-mapping for each mode except quitting
     pub fn index(&self) -> usize {
         match self {
