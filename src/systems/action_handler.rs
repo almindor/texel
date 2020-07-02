@@ -895,9 +895,7 @@ fn set_metadata(mt: MetadataType, world: &mut World, state: &mut State) -> bool 
     for mut sprite in query.iter(world) {
         match &mt {
             MetadataType::Id(id) => sprite.id = *id,
-            MetadataType::Labels(labels) => sprite
-                .labels
-                .extend(labels.iter().map(|(k, v)| (k.clone(), v.clone()))),
+            MetadataType::Labels(labels) => sprite.labels.extend(labels.iter().map(|(k, v)| (k.clone(), v.clone()))),
         }
     }
 
