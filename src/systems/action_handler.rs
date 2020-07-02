@@ -127,7 +127,7 @@ fn reverse_mode(world: &mut World, state: &mut State) -> bool {
             todo.write(world);
         }
 
-        true
+        false
     } else {
         clear_subselection(world)
     }
@@ -221,15 +221,12 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
             true
         }
         _ => true,
-    } {
-        if state.set_mode(mode) {
-            clear_subselection(world);
-        }
-
-        true
-    } else {
-        false
+    } && state.set_mode(mode)
+    {
+        clear_subselection(world);
     }
+
+    false
 }
 
 fn select_region(world: &mut World, state: &mut State) -> bool {
