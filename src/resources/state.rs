@@ -120,7 +120,7 @@ impl State {
     }
 
     pub fn filename(&self) -> &str {
-        self.save_state.0.as_ref().map(|x| &**x).unwrap_or("NONE")
+        self.save_state.0.as_deref().unwrap_or("NONE")
     }
 
     pub fn saved(&mut self, path: String) -> bool {
