@@ -5,13 +5,38 @@ use texel_types::ColorMode;
 
 const HISTORY_CAPACITY: usize = 20usize;
 
+// snapshot of editor state
+#[derive(Debug, Default, Clone)]
+pub struct Snapshot {
+    pub scene: Scene,
+    pub selections: Vec<usize>,
+}
+
+impl From<Scene> for Snapshot {
+    fn from(scene: Scene) -> Self {
+        Snapshot {
+            scene,
+            selections: Vec::new(),
+        }
+    }
+}
+
+impl From<(Scene, Vec<usize>)> for Snapshot {
+    fn from(data: (Scene, Vec<usize>)) -> Self {
+        Snapshot {
+            scene: data.0,
+            selections: data.1,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct State {
     error: Option<Error>,
     events: VecDeque<InputEvent>, // (raw, Option<mapping>)
     actions: VecDeque<Action>,
     modes: VecDeque<Mode>,
-    history: VecDeque<(Scene, Vec<usize>)>, // scene + list of selected indexes
+    history: VecDeque<Snapshot>, // scene + list of selected indexes
     history_index: usize,
     selected_color: (u8, u8),
     save_state: (Option<String>, usize),
@@ -42,7 +67,7 @@ impl Default for State {
         };
 
         result.modes.push_back(Mode::default()); // there is always a mode!
-        result.history.push_back((Scene::default(), Vec::new())); // there is always a default scene
+        result.history.push_back(Snapshot::default()); // there is always a default snapshot
 
         result
     }
@@ -171,7 +196,7 @@ impl State {
     // resets history to start with this scene
     pub fn clear_history(&mut self, scene: Scene) {
         self.history.clear();
-        self.history.push_back((scene, Vec::new()));
+        self.history.push_back(Snapshot::from(scene));
         self.history_index = 0;
         self.dirty = false;
     }
@@ -194,7 +219,7 @@ impl State {
             self.history.truncate(self.history_index + 1);
         }
 
-        self.history.push_back((scene, selections));
+        self.history.push_back(Snapshot::from((scene, selections)));
         let next_index = self.history.len() - 1;
 
         self.history_index = next_index;
@@ -203,7 +228,7 @@ impl State {
         self.save_state.1 += 1;
     }
 
-    pub fn undo(&mut self) -> Option<(Scene, Vec<usize>)> {
+    pub fn undo(&mut self) -> Option<Snapshot> {
         if self.history_index == 0 {
             return None;
         }
@@ -216,7 +241,7 @@ impl State {
         None
     }
 
-    pub fn redo(&mut self) -> Option<(Scene, Vec<usize>)> {
+    pub fn redo(&mut self) -> Option<Snapshot> {
         if self.history.is_empty() || self.history_index >= self.history.len() - 1 {
             return None;
         }

@@ -1059,8 +1059,8 @@ fn apply_scene(scene: Scene, world: &mut World, state: &State, selections: Optio
 }
 
 fn undo(world: &mut World, state: &mut State) -> bool {
-    if let Some(value) = state.undo() {
-        match apply_scene(value.0, world, state, Some(value.1)) {
+    if let Some(snap) = state.undo() {
+        match apply_scene(snap.scene, world, state, Some(snap.selections)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }
@@ -1071,8 +1071,8 @@ fn undo(world: &mut World, state: &mut State) -> bool {
 }
 
 fn redo(world: &mut World, state: &mut State) -> bool {
-    if let Some(value) = state.redo() {
-        match apply_scene(value.0, world, state, Some(value.1)) {
+    if let Some(snap) = state.redo() {
+        match apply_scene(snap.scene, world, state, Some(snap.selections)) {
             Ok(_) => true,
             Err(err) => state.set_error(err),
         }
