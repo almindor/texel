@@ -40,19 +40,8 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::SelectObject(which, sticky) => select_obj(which, sticky, world, state),
             Action::SelectRegion => select_region(world, state),
             Action::Delete => delete_object(world, state),
-            Action::Write(path) => {
-                if let Err(err) = save_scene(&path, world, state) {
-                    state.set_error(err)
-                } else if let Some(path) = path {
-                    state.saved(path)
-                } else {
-                    state.clear_changes()
-                }
-            }
-            Action::Read(path) => match load_from_file(&path, world, state) {
-                Ok(changed) => changed, // we reset history in some cases here
-                Err(err) => state.set_error(err),
-            },
+            Action::Write(path) => write_scene_to_file(path, world, state),
+            Action::Read(path) => read_scene_from_file(path, world, state),
             Action::Tutorial => match tutorial(world, state) {
                 Ok(changed) => changed,
                 Err(err) => state.set_error(err),
@@ -1006,6 +995,23 @@ fn tutorial(world: &mut World, state: &mut State) -> Result<bool, Error> {
         state.clear_history(scene); // we're going from this scene now
         state.reset_save_file(); // ensure we don't save the tutorial into previous file
         Ok(false)
+    }
+}
+
+fn write_scene_to_file(path: Option<String>, world: &mut World, state: &mut State) -> bool {
+    if let Err(err) = save_scene(&path, world, state) {
+        state.set_error(err)
+    } else if let Some(path) = path {
+        state.saved(path)
+    } else {
+        state.clear_changes()
+    }
+}
+
+fn read_scene_from_file(path: String, world: &mut World, state: &mut State) -> bool {
+    match load_from_file(&path, world, state) {
+        Ok(changed) => changed, // we reset history in some cases here
+        Err(err) => state.set_error(err),
     }
 }
 
