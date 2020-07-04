@@ -20,10 +20,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::ToggleMetadata => toggle_metadata(state),
             Action::SetMetadata(mt) => set_metadata(mt, world, state),
             Action::NewObject => new_sprite(world, state, None),
-            Action::Duplicate(count) => match duplicate_selected(count, world, state) {
-                Ok(_) => true,
-                Err(err) => state.set_error(err),
-            },
+            Action::Duplicate(count) => duplicate_selected(count, world, state),
             Action::NewFrame => new_frame_on_selected(world, state),
             Action::DeleteFrame => delete_frame_on_selected(world, state),
             Action::Bookmark(index, true) => set_bookmark(index, state.offset, world),
@@ -919,7 +916,7 @@ fn new_sprite(world: &mut World, state: &State, pos: Option<Position>) -> bool {
     true
 }
 
-fn duplicate_selected(count: usize, world: &mut World, state: &State) -> Result<(), Error> {
+fn duplicate_selected(count: usize, world: &mut World, state: &mut State) -> bool {
     let mut done = 0;
     let query = <(Read<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
     let mut clones = Vec::new();
@@ -934,15 +931,14 @@ fn duplicate_selected(count: usize, world: &mut World, state: &State) -> Result<
     deselect_obj(world);
 
     for (sprite, pos) in clones.into_iter() {
-        import_sprite(sprite, pos, true, world, state)?;
-        done += 1;
+        let import_result = import_sprite(sprite, pos, true, world, state);
+        match import_result {
+            Ok(_) => done += 1,
+            Err(err) => return state.set_error(err),
+        }
     }
 
-    if done > 0 {
-        Ok(())
-    } else {
-        Err(Error::execution("Nothing to duplicate"))
-    }
+    done > 0
 }
 
 fn import_sprite(
