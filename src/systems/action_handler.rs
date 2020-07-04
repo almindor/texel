@@ -39,15 +39,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::SelectFrame(which) => change_frame_on_selected(which, world, state),
             Action::SelectObject(which, sticky) => select_obj(which, sticky, world, state),
             Action::SelectRegion => select_region(world, state),
-            Action::Delete => {
-                if state.mode() == Mode::Edit || state.mode() == Mode::Write {
-                    clear_symbol_on_selected(world, state)
-                } else if let Err(err) = delete_selected(world) {
-                    state.set_error(err)
-                } else {
-                    true
-                }
-            }
+            Action::Delete => delete_object(world, state),
             Action::Write(path) => {
                 if let Err(err) = save_scene(&path, world, state) {
                     state.set_error(err)
@@ -373,6 +365,16 @@ fn select_obj(which: Which<Position2D>, sticky: bool, world: &mut World, state: 
         Which::All => select_obj_all(world),
         Which::At(_) => false,
         // Which::At(pos) => select_obj_at(pos, sticky, world),
+    }
+}
+
+fn delete_object(world: &mut World, state: &mut State) -> bool {
+    if state.mode() == Mode::Edit || state.mode() == Mode::Write {
+        clear_symbol_on_selected(world, state)
+    } else if let Err(err) = delete_selected(world) {
+        state.set_error(err)
+    } else {
+        true
     }
 }
 
