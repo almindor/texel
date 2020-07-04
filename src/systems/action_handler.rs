@@ -28,22 +28,14 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::DeleteFrame => delete_frame_on_selected(world, state),
             Action::Bookmark(index, true) => set_bookmark(index, state.offset, world),
             Action::Bookmark(index, false) => jump_to_bookmark(index, world, state),
-            Action::Cancel => {
-                if state.error().is_some() {
-                    state.clear_error()
-                } else if !reverse_mode(world, state) {
-                    deselect_obj(world)
-                } else {
-                    false
-                }
-            }
+            Action::Cancel => cancel(world, state),
             Action::ClearError => state.clear_error(),
             Action::SetMode(mode) => set_mode(mode, world, state),
             Action::ApplyColor(cm) => apply_color_to_selected(cm, world, state),
             Action::ApplySymbol(sym) => apply_symbol_to_selected(sym, world, state),
             Action::ApplyStyle(style) => apply_style_to_selected(style, world, state),
             Action::ApplyRegion => apply_region(subselection(world), world, state),
-            Action::ReverseMode => reverse_mode(world, state),
+            Action::ReverseMode => reverse_mode(world, state) && false, // NOTE: reverse returns if reverted, not dirty state
             Action::Deselect => clear_subselection(world) || deselect_obj(world),
             Action::Translate(t) => match state.mode() {
                 Mode::Edit => {
@@ -104,6 +96,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
     }
 }
 
+// NOTE: returns if mode was reverted, not if dirty
 fn reverse_mode(world: &mut World, state: &mut State) -> bool {
     let modifies_cursor = state.mode().modifies_cursor();
 
@@ -123,7 +116,7 @@ fn reverse_mode(world: &mut World, state: &mut State) -> bool {
             todo.write(world);
         }
 
-        false
+        true
     } else {
         clear_subselection(world)
     }
@@ -226,6 +219,16 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
     }
 
     dirty
+}
+
+fn cancel(world: &mut World, state: &mut State) -> bool {
+    if state.error().is_some() {
+        state.clear_error()
+    } else if !reverse_mode(world, state) {
+        deselect_obj(world)
+    } else {
+        false
+    }
 }
 
 fn select_region(world: &mut World, state: &mut State) -> bool {
