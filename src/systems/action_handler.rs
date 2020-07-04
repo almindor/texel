@@ -34,17 +34,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::ApplyRegion => apply_region(subselection(world), world, state),
             Action::ReverseMode => reverse_mode(world, state) && false, // NOTE: reverse returns if reverted, not dirty state
             Action::Deselect => clear_subselection(world) || deselect_obj(world),
-            Action::Translate(t) => match state.mode() {
-                Mode::Edit => {
-                    let sprite_bounds = selected_bounds(world);
-                    translate_subselection(t, sprite_bounds, world, state)
-                }
-                Mode::Object(SelectMode::Region) => {
-                    let viewport_bounds = viewport_bounds(&state);
-                    translate_subselection(t, Some(viewport_bounds), world, state)
-                }
-                _ => translate_selected(t, world, state),
-            },
+            Action::Translate(t) => translate_object(t, world, state),
             Action::Layout(layout) => apply_layout_to_selected(layout, world, state),
             Action::SelectFrame(which) => change_frame_on_selected(which, world, state),
             Action::SelectObject(which, sticky) => select_obj(which, sticky, world, state),
@@ -436,6 +426,20 @@ fn translate_subselection(t: Translation, area_bounds: Option<Bounds>, world: &m
     }
 
     false
+}
+
+fn translate_object(t: Translation, world: &mut World, state: &mut State) -> bool {
+    match state.mode() {
+        Mode::Edit => {
+            let sprite_bounds = selected_bounds(world);
+            translate_subselection(t, sprite_bounds, world, state)
+        }
+        Mode::Object(SelectMode::Region) => {
+            let viewport_bounds = viewport_bounds(&state);
+            translate_subselection(t, Some(viewport_bounds), world, state)
+        }
+        _ => translate_selected(t, world, state),
+    }
 }
 
 fn translate_selected(t: Translation, world: &mut World, state: &mut State) -> bool {
