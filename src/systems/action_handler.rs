@@ -12,7 +12,7 @@ const NEW_POSITION: Position = Position { x: 10, y: 10, z: 0 };
 
 pub fn handle_actions(world: &mut World, state: &mut State) {
     while let Some(action) = state.pop_action() {
-        if match action {
+        state.dirty |= match action {
             Action::None => false,
             Action::Undo => undo(world, state),
             Action::Redo => redo(world, state),
@@ -42,25 +42,11 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::Delete => delete_object(world, state),
             Action::Write(path) => write_scene_to_file(path, world, state),
             Action::Read(path) => read_scene_from_file(path, world, state),
-            Action::Tutorial => match tutorial(world, state) {
-                Ok(changed) => changed,
-                Err(err) => state.set_error(err),
-            },
-            Action::Export(format, path) => {
-                if let Err(err) = export_to_file(format, &path, world) {
-                    state.set_error(err)
-                } else {
-                    false
-                }
-            }
-            Action::ShowHelp(index) => {
-                state.set_mode(Mode::Help(index));
-                false
-            }
+            Action::Tutorial => tutorial(world, state),
+            Action::Export(format, path) => export_to_file(format, &path, world, state),
+            Action::ShowHelp(index) => state.set_mode(Mode::Help(index)),
             Action::ClearBlank => clear_blank_texels(world, state),
-        } {
-            state.dirty = true;
-        }
+        };
     }
 }
 
@@ -974,27 +960,37 @@ fn save_scene(new_path: &Option<String>, world: &mut World, state: &mut State) -
     fio::scene_to_file(&scene, &path)
 }
 
-fn export_to_file(format: ExportFormat, path: &str, world: &mut World) -> Result<(), Error> {
+fn export_to_file(format: ExportFormat, path: &str, world: &mut World, state: &mut State) -> bool {
     let scene = Scene::from_world(world);
 
-    fio::export_to_file(scene, format, path)
+    match fio::export_to_file(scene, format, path) {
+        Ok(_) => false,
+        Err(err) => state.set_error(err),
+    }
 }
 
-fn tutorial(world: &mut World, state: &mut State) -> Result<bool, Error> {
+fn tutorial(world: &mut World, state: &mut State) -> bool {
     if state.unsaved_changes() {
-        Err(Error::execution("Unsaved changes, save before opening tutorial"))
+        state.set_error(Error::execution("Unsaved changes, save before opening tutorial"));
+
+        false
     } else {
         use fio::Loaded;
         let bytes = include_bytes!("../../help/tutorial.rgz");
-        let scene = match fio::scene_from_rgz_stream(&bytes[..])? {
-            Loaded::Scene(scene) => scene,
-            Loaded::Sprite(_) => return Err(Error::execution("Invalid const situation")),
-        };
-
-        apply_scene(scene.clone(), world, state, None)?;
-        state.clear_history(scene); // we're going from this scene now
-        state.reset_save_file(); // ensure we don't save the tutorial into previous file
-        Ok(false)
+        match fio::scene_from_rgz_stream(&bytes[..]) {
+            Ok(loaded) => match loaded {
+                Loaded::Scene(scene) => match apply_scene(scene.clone(), world, state, None) {
+                    Ok(_) => {
+                        state.clear_history(scene); // we're going from this scene now
+                        state.reset_save_file(); // ensure we don't save the tutorial into previous file            
+                        false // tutorial does not dirty
+                    }
+                    Err(err) => state.set_error(err),
+                }
+                Loaded::Sprite(_) => state.set_error(Error::execution("Invalid const situation")),
+            },
+            Err(err) => state.set_error(err),
+        }
     }
 }
 
