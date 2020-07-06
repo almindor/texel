@@ -982,11 +982,11 @@ fn tutorial(world: &mut World, state: &mut State) -> bool {
                 Loaded::Scene(scene) => match apply_scene(scene.clone(), world, state, None) {
                     Ok(_) => {
                         state.clear_history(scene); // we're going from this scene now
-                        state.reset_save_file(); // ensure we don't save the tutorial into previous file            
+                        state.reset_save_file(); // ensure we don't save the tutorial into previous file
                         false // tutorial does not dirty
                     }
                     Err(err) => state.set_error(err),
-                }
+                },
                 Loaded::Sprite(_) => state.set_error(Error::execution("Invalid const situation")),
             },
             Err(err) => state.set_error(err),
