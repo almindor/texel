@@ -12,3 +12,9 @@ Cargo.lock
 
 # VS Code
 .vscode
+
+# Debug file
+x.txt
+
+# Top level "debug scenes"
+*.rgz
