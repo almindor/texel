@@ -1,4 +1,4 @@
-use crate::common::{scene_for_help_index, Mode, Scene, SelectedInfo};
+use crate::common::{scene_for_help_index, Scene, SelectedInfo};
 use crate::components::{Dimension, Position, Position2D, Selection, Sprite};
 use crate::os::Terminal;
 use crate::resources::{FrameBuffer, State};
@@ -6,7 +6,7 @@ use legion::prelude::*;
 use texel_types::{SymbolStyles, Texel, DEFAULT_BG_U8, DEFAULT_FG_U8};
 
 pub fn render_sprites(world: &mut World, state: &mut State, out: &mut FrameBuffer) {
-    if let Mode::Help(index) = state.mode() {
+    if let Some(index) = state.show_help() {
         render_scene(out, &state, scene_for_help_index(index));
         return; // show help, done
     }

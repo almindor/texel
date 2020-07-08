@@ -131,6 +131,29 @@ impl State {
         false
     }
 
+    pub fn previous_mode(&self) -> Option<Mode> {
+        if self.modes.len() > 1 {
+            self.modes.get(self.modes.len() - 2).cloned()
+        } else {
+            None
+        }
+    }
+
+    pub fn show_help(&self) -> Option<usize> {
+        if self.modes.len() > 1 {
+            if let Mode::Help(index) = self.mode() {
+                return Some(index);
+            } else if let Some(previous_mode) = self.previous_mode() {
+                if let Mode::Help(index) = previous_mode {
+                    return Some(index);
+                }
+            }
+            None
+        } else {
+            None
+        }
+    }
+
     // needs to clone because we need to keep the option for saved() if
     // everything went fine and scene was saved, also the temporary new_path
     // cannot be referenced out because it has no place to live in
