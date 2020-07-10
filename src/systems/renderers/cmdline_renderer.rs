@@ -166,6 +166,7 @@ fn print_color_palette(
 
     let x = PALETTE_OFFSET + (index as i32);
     let pos = Position2D { x, y: h - 1 };
+
     out.write_line(1, h - 1, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.write_texel(palette.selector_texel(index, pos, cm));
     out.set_cursor_pos(state.cursor.x, state.cursor.y);

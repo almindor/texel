@@ -116,13 +116,24 @@ impl ColorPalette {
             ColorMode::Bg => (self.colors[index], invert_luminance(self.colors[index])),
             ColorMode::Fg => (invert_luminance(self.colors[index]), self.colors[index]),
         };
-        let s_u8 = crate::common::index_from_one(index) as u8;
+
+        let u8_val = crate::common::index_from_one(index) as u8;
+        let symbol = match u8_val {
+            0..=9 => char::from(u8_val),
+            10 => 'a',
+            11 => 'b',
+            12 => 'c',
+            13 => 'd',
+            14 => 'e',
+            15 => 'f',
+            _ => panic!("Hex value out of bounds"),
+        };
 
         Texel {
             pos,
             fg,
             bg,
-            symbol: char::from(s_u8),
+            symbol,
             styles: SymbolStyles::only(SymbolStyle::Bold),
         }
     }
