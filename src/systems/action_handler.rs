@@ -56,20 +56,10 @@ fn reverse_mode(world: &mut World, state: &mut State) -> bool {
 
     if state.reverse_mode() {
         if modifies_cursor {
-            let todo = CommandBuffer::default();
-            let query = <(Read<Position>, TryWrite<Position2D>)>::query().filter(component::<Selection>());
-            for (entity, (pos, cur_pos)) in query.iter_entities(world) {
-                let pos2d: Position2D = (*pos).into();
-                if let Some(mut cp) = cur_pos {
-                    *cp = state.cursor - pos2d; // update to last cursor position
-                } else {
-                    todo.add_component(entity, state.cursor - pos2d);
-                }
-            }
-
-            todo.write(world);
+            save_cursor_pos(world, state);
         }
 
+        restore_cursor_pos(world, state);
         true
     } else {
         clear_subselection(world)
@@ -105,6 +95,11 @@ fn clear_subselection(world: &mut World) -> bool {
 fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
     let mut dirty = false;
 
+    // going from cursor modifying state, save it
+    if state.mode().modifies_cursor() {
+        save_cursor_pos(world, state);
+    }
+
     if match mode {
         Mode::Quitting(OnQuit::Check) => {
             if state.unsaved_changes() {
@@ -129,19 +124,7 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
             1 => {
                 state.clear_error();
 
-                let query = <(Read<Position>, TryRead<Position2D>)>::query().filter(component::<Selection>());
-                if let Some((pos, cur_pos)) = query.iter(world).next() {
-                    let pos2d: Position2D = (*pos).into();
-
-                    // if we're going from a non-cursory mode
-                    if !state.mode().modifies_cursor() {
-                        if let Some(cp) = cur_pos {
-                            state.cursor = *cp + pos2d;
-                        } else {
-                            state.cursor = pos2d;
-                        }
-                    }
-                }
+                restore_cursor_pos(world, state);
                 true
             }
             0 => {
@@ -173,6 +156,36 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
     }
 
     dirty
+}
+
+fn save_cursor_pos(world: &mut World, state: &mut State) {
+    let todo = CommandBuffer::default();
+    let query = <(Read<Position>, TryWrite<Position2D>)>::query().filter(component::<Selection>());
+    if let Some((entity, (pos, cur_pos))) = query.iter_entities(world).next() {
+        let pos2d: Position2D = (*pos).into();
+
+        if let Some(mut cp) = cur_pos {
+            *cp = state.cursor - pos2d; // update to last cursor position
+        } else {
+            todo.add_component(entity, state.cursor - pos2d); // insert new cursor position
+        }
+    }
+
+    todo.write(world);
+}
+
+fn restore_cursor_pos(world: &mut World, state: &mut State) {
+    let query = <(Read<Position>, TryRead<Position2D>)>::query().filter(component::<Selection>());
+    if let Some((pos, cur_pos)) = query.iter(world).next() {
+        let pos2d: Position2D = (*pos).into();
+
+        // set last known cursor position if known
+        if let Some(cp) = cur_pos {
+            state.cursor = *cp + pos2d;
+        } else {
+            state.cursor = pos2d;
+        }
+    }
 }
 
 fn cancel(world: &mut World, state: &mut State) -> bool {
@@ -252,7 +265,7 @@ fn apply_region(region: Option<Bounds>, world: &mut World, state: &mut State) ->
     todo.write(world);
 
     clear_subselection(world);
-    state.reverse_mode();
+    reverse_mode(world, state);
 
     false
 }
@@ -449,7 +462,7 @@ fn translate_object(t: Translation, world: &mut World, state: &mut State) -> boo
                 state.cursor.apply(t, sprite_bounds);
             }
             false
-        },
+        }
         Mode::SelectColor(_, _) => state.cursor.apply(t, palette_bounds),
         _ => false,
     }
