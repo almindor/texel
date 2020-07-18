@@ -447,7 +447,7 @@ fn translate_selected(t: Translation, world: &mut World, state: &mut State) -> b
                 let screen_bounds = Bounds::Free(Position2D::default(), screen_dim - *dim);
 
                 if match state.mode() {
-                    Mode::Write => state.cursor.apply(t, sprite_bounds),
+                    Mode::Write => state.cursor.apply(t, sprite_bounds) && false,
                     Mode::Object(_) => position.apply(t, screen_bounds),
                     _ => false,
                 } {
