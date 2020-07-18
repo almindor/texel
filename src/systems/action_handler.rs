@@ -406,20 +406,6 @@ fn translate_subselection(t: Translation, area_bounds: Option<Bounds>, world: &m
 }
 
 fn translate_object(t: Translation, world: &mut World, state: &mut State) -> bool {
-    match state.mode() {
-        Mode::Edit => {
-            let sprite_bounds = selected_bounds(world);
-            translate_subselection(t, sprite_bounds, world, state)
-        }
-        Mode::Object(SelectMode::Region) => {
-            let viewport_bounds = viewport_bounds(&state);
-            translate_subselection(t, Some(viewport_bounds), world, state)
-        }
-        _ => translate_selected(t, world, state),
-    }
-}
-
-fn translate_selected(t: Translation, world: &mut World, state: &mut State) -> bool {
     let ts = Terminal::terminal_size();
     let screen_dim = Dimension::from_wh(ts.0, ts.1);
     let palette_pos = Position2D {
@@ -429,34 +415,41 @@ fn translate_selected(t: Translation, world: &mut World, state: &mut State) -> b
     let palette_dim = Dimension::from_wh(PALETTE_W as u16, PALETTE_H as u16);
     let palette_bounds = Bounds::Binding(palette_pos, palette_dim);
 
-    let mode = state.mode();
-
-    match mode {
-        Mode::Object(_) | Mode::Write => {
+    match state.mode() {
+        Mode::Edit => {
+            let sprite_bounds = selected_bounds(world);
+            translate_subselection(t, sprite_bounds, world, state)
+        }
+        Mode::Object(SelectMode::Region) => {
+            let viewport_bounds = viewport_bounds(&state);
+            translate_subselection(t, Some(viewport_bounds), world, state)
+        }
+        Mode::Object(SelectMode::Object) => {
             let mut changed = false;
 
             // nothing selected, move viewport
             if <Read<Selection>>::query().iter(world).count() == 0 {
                 let screen_bounds = Bounds::Free(Position2D::default(), screen_dim);
                 state.offset.apply(t, screen_bounds);
-            }
+            } else {
+                let query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
+                for (mut position, dim) in query.iter(world) {
+                    let screen_bounds = Bounds::Free(Position2D::default(), screen_dim - *dim);
 
-            let query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
-            for (mut position, dim) in query.iter(world) {
-                let sprite_bounds = Bounds::Free((*position).into(), *dim);
-                let screen_bounds = Bounds::Free(Position2D::default(), screen_dim - *dim);
-
-                if match state.mode() {
-                    Mode::Write => state.cursor.apply(t, sprite_bounds) && false,
-                    Mode::Object(_) => position.apply(t, screen_bounds),
-                    _ => false,
-                } {
-                    changed = true;
+                    if position.apply(t, screen_bounds) {
+                        changed = true;
+                    }
                 }
             }
 
             changed
         }
+        Mode::Write => {
+            if let Some(sprite_bounds) = selected_bounds(world) {
+                state.cursor.apply(t, sprite_bounds);
+            }
+            false
+        },
         Mode::SelectColor(_, _) => state.cursor.apply(t, palette_bounds),
         _ => false,
     }
