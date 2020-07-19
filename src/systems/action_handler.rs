@@ -32,6 +32,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::ApplySymbol(sym) => apply_symbol_to_selected(sym, world, state),
             Action::ApplyStyle(style) => apply_style_to_selected(style, world, state),
             Action::ApplyRegion => apply_region(subselection(world), world, state),
+            Action::PickColor(cm) => pick_color(cm, world, state),
             Action::ReverseMode => reverse_mode(world, state) && false, // NOTE: reverse returns if reverted, not dirty state
             Action::Deselect => clear_subselection(world) || deselect_obj(world),
             Action::Translate(t) => translate_object(t, world, state),
@@ -48,6 +49,21 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::ClearBlank => clear_blank_texels(world, state),
         };
     }
+}
+
+fn pick_color(cm: ColorMode, world: &mut World, state: &mut State) -> bool {
+    let query = <(Read<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
+    if let Some((sprite, pos)) = query.iter(world).next() {
+        let pos2d: Position2D = (*pos).into();
+        let rel_pos = state.cursor - pos2d;
+
+        if let Some(texel) = sprite.read_texel(rel_pos) {
+            // always pick FG color as source color
+            state.set_color(texel.fg, cm);
+        }
+    }
+
+    false
 }
 
 // NOTE: returns if mode was reverted, not if dirty

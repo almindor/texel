@@ -73,6 +73,7 @@ pub enum Action {
     SetMode(Mode),
     ReverseMode,
     Deselect,
+    PickColor(ColorMode),
     ApplyColor(ColorMode),
     ApplySymbol(char),
     ApplyStyle(SymbolStyle),

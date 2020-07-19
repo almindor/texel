@@ -34,6 +34,7 @@ pub enum Event {
     SelectPalette(usize), // index of symbol/color/bookmark, 0x0-0xF as usize <0, 16)
     EditPalette(usize),   // index of symbol/color/bookmark, 0x0-0xF as usize <0, 16)
     ApplyColor(ColorMode),
+    PickColor(ColorMode),                  // pick color from existing texel
     SelectObject(Which<Position2D>, bool), // sticky boolean
     SelectRegion,
     SelectFrame(Which<usize>),

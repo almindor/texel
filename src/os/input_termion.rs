@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::io::stdin;
 use termion::event::{Event as TEvent, Key};
 use termion::input::TermRead;
-use texel_types::Which;
+use texel_types::{ColorMode, Which};
 
 type RawMap = HashMap<TEvent, Event>;
 
@@ -71,6 +71,8 @@ fn default_map(cm: &CharMap) -> RawMap {
     result.insert(TEvent::Key(Key::Ctrl('j')), Event::Right(MoveMeta::Alternative));
     result.insert(TEvent::Key(Key::Ctrl('k')), Event::Up(MoveMeta::Alternative));
     result.insert(TEvent::Key(Key::Ctrl('l')), Event::Down(MoveMeta::Alternative));
+    result.insert(TEvent::Key(Key::Alt('z')), Event::PickColor(ColorMode::Fg));
+    result.insert(TEvent::Key(Key::Alt('x')), Event::PickColor(ColorMode::Bg));
     result.insert(TEvent::Key(Key::BackTab), Event::SelectObject(Which::Next, true));
 
     result

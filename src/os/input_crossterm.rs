@@ -1,7 +1,7 @@
 use crate::common::{CharMap, Event, InputEvent, Mode, ModesCharMap, MoveMeta};
 use crossterm::event::{read, Event as TEvent, KeyCode as Key, KeyEvent, KeyModifiers};
 use std::collections::HashMap;
-use texel_types::Which;
+use texel_types::{ColorMode, Which};
 
 type RawMap = HashMap<TEvent, Event>;
 
@@ -85,6 +85,14 @@ fn default_map(cm: &CharMap) -> RawMap {
     result.insert(
         TEvent::Key(KeyEvent::new(Key::Char('l'), KeyModifiers::CONTROL)),
         Event::Down(MoveMeta::Alternative),
+    );
+    result.insert(
+        TEvent::Key(KeyEvent::new(Key::Char('z'), KeyModifiers::ALT)),
+        Event::PickColor(ColorMode::Fg),
+    );
+    result.insert(
+        TEvent::Key(KeyEvent::new(Key::Char('x'), KeyModifiers::ALT)),
+        Event::PickColor(ColorMode::Bg),
     );
     result.insert(
         TEvent::Key(KeyEvent::from(Key::BackTab)),
