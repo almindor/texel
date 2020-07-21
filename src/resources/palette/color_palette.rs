@@ -10,7 +10,7 @@ const fn cc(r: u8, g: u8, b: u8) -> u8 {
 
 pub const PALETTE_W: i32 = 16;
 pub const PALETTE_H: i32 = 14;
-pub const PALETTE_OFFSET: i32 = 24;
+pub const PALETTE_OFFSET: i32 = 18;
 pub const MAX_COLOR_INDEX: u8 = 6 * 6 * 6;
 
 const COLORS_IN_PALETTE: usize = 16;
