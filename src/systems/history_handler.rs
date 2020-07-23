@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use std::ops::Deref;
 
 pub fn preserve_history(world: &mut World, state: &mut State) {
-    if !state.dirty {
+    if !state.needs_preserving() {
         return;
     }
 

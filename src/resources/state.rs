@@ -67,7 +67,7 @@ impl Default for State {
         };
 
         result.modes.push_back(Mode::default()); // there is always a mode!
-        result.history.push_back(Snapshot::default()); // there is always a default snapshot
+        result.history.push_back(Snapshot::default()); // empty
 
         result
     }
@@ -216,6 +216,12 @@ impl State {
         self.actions.pop_front()
     }
 
+    // returns if we need to preserve anything
+    // this includes non-dirty selection updates if history.len() == 1
+    pub fn needs_preserving(&self) -> bool {
+        self.dirty || self.history.len() == 1
+    }
+
     // resets history to start with this scene
     pub fn clear_history(&mut self, scene: Scene) {
         self.history.clear();
@@ -231,6 +237,12 @@ impl State {
     // space under typical usage
     pub fn push_history(&mut self, scene: Scene, selections: Vec<usize>) {
         if !self.dirty {
+            // non-dirtying change in initial setup, refresh selections
+            if self.history.len() == 1 && !selections.is_empty() {
+                self.history[0].scene = scene; // ordering can change, preserve it
+                self.history[0].selections = selections;
+            }
+
             return;
         }
 
