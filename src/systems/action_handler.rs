@@ -415,6 +415,10 @@ fn selected_bounds(world: &mut World) -> Option<Bounds> {
     }
 }
 
+fn subselection_bounds(world: &mut World, state: &State) -> Bounds {
+    subselection(world).unwrap_or_else(|| Bounds::point(state.cursor + state.offset))
+}
+
 fn translate_subselection(t: Translation, area_bounds: Option<Bounds>, world: &mut World, state: &mut State) -> bool {
     if let Some(bounds) = area_bounds {
         if state.cursor.apply(t, bounds) {
@@ -487,7 +491,7 @@ fn translate_object(t: Translation, world: &mut World, state: &mut State) -> boo
 fn apply_color_to_selected(cm: ColorMode, world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
     let color = state.color(cm);
-    let sel_bounds = subselection(world).unwrap_or_else(|| Bounds::point(state.cursor));
+    let sel_bounds = subselection_bounds(world, state);
 
     let query = <(Write<Sprite>, Write<Position>)>::query().filter(component::<Selection>());
     for (mut sprite, pos) in query.iter(world) {
@@ -512,7 +516,7 @@ fn apply_color_to_selected(cm: ColorMode, world: &mut World, state: &mut State) 
 
 fn clear_symbol_on_selected(world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
-    let sel_bounds = subselection(world).unwrap_or_else(|| Bounds::point(state.cursor));
+    let sel_bounds = subselection_bounds(world, state);
 
     let query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
     for (mut sprite, mut pos, mut dim) in query.iter(world) {
@@ -715,7 +719,7 @@ fn change_frame_on_selected(which: Which<usize>, world: &mut World, state: &mut 
 
 fn apply_style_to_selected(style: SymbolStyle, world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
-    let sel_bounds = subselection(world).unwrap_or_else(|| Bounds::point(state.cursor));
+    let sel_bounds = subselection_bounds(world, state);
 
     let query = <(Write<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
     for (mut sprite, pos) in query.iter(world) {
@@ -742,7 +746,7 @@ fn apply_symbol_to_selected(symbol: char, world: &mut World, state: &mut State) 
     let mut changed = false;
     let bg = state.color(ColorMode::Bg);
     let fg = state.color(ColorMode::Fg);
-    let sel_bounds = subselection(world).unwrap_or_else(|| Bounds::point(state.cursor));
+    let sel_bounds = subselection_bounds(world, state);
 
     let query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
     for (mut sprite, mut pos, mut dim) in query.iter(world) {
@@ -821,7 +825,7 @@ fn paste_selection(world: &mut World, state: &mut State) -> bool {
 fn copy_or_cut_subselection(op: ClipboardOp, world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
     let mut found = false;
-    let sel_bounds = subselection(world).unwrap_or_else(|| Bounds::point(state.cursor));
+    let sel_bounds = subselection_bounds(world, state);
 
     let query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
     if let Some((mut sprite, mut pos, mut dim)) = query.iter(world).next() {
