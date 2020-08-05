@@ -65,8 +65,8 @@ fn print_texel(out: &mut FrameBuffer, state: &State, p: &Position, t: &Texel) {
 }
 
 fn render_border(out: &mut FrameBuffer, state: &State, p: &Position, d: Dimension) {
-    let min_x = std::cmp::max(0, p.x - 1);
-    let min_y = std::cmp::max(0, p.y - 1);
+    let min_x = p.x - 1;
+    let min_y = p.y - 1;
     let b_w = i32::from(d.w + 1);
     let b_h = i32::from(d.h + 1);
 

@@ -908,7 +908,6 @@ fn new_sprite(world: &mut World, state: &State, pos: Option<Position>) -> bool {
     deselect_obj(world);
 
     let sprite = Sprite::default();
-
     let dim = Dimension::for_sprite(&sprite);
 
     world.insert(
