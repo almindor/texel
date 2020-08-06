@@ -162,6 +162,7 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
             true
         }
         Mode::Object(SelectMode::Region) => {
+            cursor_to_selected(world, state);
             deselect_obj(world);
             true
         }
@@ -172,6 +173,23 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
     }
 
     dirty
+}
+
+fn cursor_to_selected(world: &mut World, state: &mut State) -> bool {
+    let query = <(Read<Position>, TryRead<Position2D>)>::query().filter(component::<Selection>());
+    if let Some((pos, cur_pos)) = query.iter(world).next() {
+        let pos2d: Position2D = (*pos).into();
+
+        if let Some(cp) = cur_pos {
+            state.cursor = *cp;
+        } else {
+            state.cursor = pos2d;
+        }
+
+        true
+    } else {
+        false
+    }
 }
 
 fn save_cursor_pos(world: &mut World, state: &mut State) {
