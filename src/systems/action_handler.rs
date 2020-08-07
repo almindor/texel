@@ -197,11 +197,12 @@ fn save_cursor_pos(world: &mut World, state: &mut State) {
     let query = <(Read<Position>, TryWrite<Position2D>)>::query().filter(component::<Selection>());
     if let Some((entity, (pos, cur_pos))) = query.iter_entities(world).next() {
         let pos2d: Position2D = (*pos).into();
+        let save_pos = state.cursor - pos2d + state.offset();
 
         if let Some(mut cp) = cur_pos {
-            *cp = state.cursor - pos2d; // update to last cursor position
+            *cp = save_pos; // update to last cursor position
         } else {
-            todo.add_component(entity, state.cursor - pos2d); // insert new cursor position
+            todo.add_component(entity, save_pos); // insert new cursor position
         }
     }
 
@@ -211,7 +212,7 @@ fn save_cursor_pos(world: &mut World, state: &mut State) {
 fn restore_cursor_pos(world: &mut World, state: &mut State) {
     let query = <(Read<Position>, TryRead<Position2D>)>::query().filter(component::<Selection>());
     if let Some((pos, cur_pos)) = query.iter(world).next() {
-        let pos2d: Position2D = (*pos).into();
+        let pos2d = Position2D::from(*pos) - state.offset();
 
         // set last known cursor position if known
         if let Some(cp) = cur_pos {
