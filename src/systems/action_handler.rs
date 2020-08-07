@@ -31,7 +31,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::ApplyColor(cm) => apply_color_to_selected(cm, world, state),
             Action::ApplySymbol(sym) => apply_symbol_to_selected(sym, world, state),
             Action::ApplyStyle(style) => apply_style_to_selected(style, world, state),
-            Action::ApplyRegion => apply_region(subselection(world), world, state),
+            Action::ApplyRegion => apply_region(subselection(world, state), world, state),
             Action::PickColor(cm) => pick_color(cm, world, state),
             Action::ReverseMode => reverse_mode(world, state) && false, // NOTE: reverse returns if reverted, not dirty state
             Action::Deselect => clear_subselection(world) || deselect_obj(world),
@@ -436,7 +436,7 @@ fn selected_bounds(world: &mut World, state: &State) -> Option<Bounds> {
 }
 
 fn subselection_bounds(world: &mut World, state: &State) -> Bounds {
-    subselection(world).unwrap_or_else(|| Bounds::point(state.cursor + state.offset()))
+    subselection(world, state).unwrap_or_else(|| Bounds::point(state.cursor + state.offset()))
 }
 
 fn translate_subselection(t: Translation, area_bounds: Option<Bounds>, world: &mut World, state: &mut State) -> bool {
@@ -564,10 +564,10 @@ fn clear_symbol_on_selected(world: &mut World, state: &mut State) -> bool {
     changed
 }
 
-fn subselection(world: &mut World) -> Option<Bounds> {
+fn subselection(world: &mut World, state: &State) -> Option<Bounds> {
     let query = <(Read<Position2D>, Read<Dimension>)>::query().filter(component::<Subselection>());
     if let Some((pos, dim)) = query.iter(world).next() {
-        Some(Bounds::Binding(*pos, *dim))
+        Some(Bounds::Binding(*pos + state.offset(), *dim))
     } else {
         None
     }
