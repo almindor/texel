@@ -41,10 +41,10 @@ pub struct State {
     selected_color: (u8, u8),
     save_state: (Option<String>, usize),
     // TODO: refactor these off?
+    offset: Position2D, // viewport "offset"
     pub dirty: bool,
     pub clipboard: Clipboard,
     pub cursor: Position2D,
-    pub offset: Position2D, // viewport "offset"
     pub show_meta: bool,
 }
 
@@ -90,6 +90,31 @@ impl State {
             ColorMode::Bg => self.selected_color.0 = color,
             ColorMode::Fg => self.selected_color.1 = color,
         }
+    }
+
+    // hacky way to keep help + command_during_help from offsetting the viewport
+    fn offset_for_mode(&self, mode: Mode) -> Position2D {
+        match mode {
+            Mode::Help(_) => Position2D::default(),
+            Mode::Command => if let Some(prev_mode) = self.previous_mode() {
+                self.offset_for_mode(prev_mode)
+            } else {
+                self.offset
+            },
+            _ => self.offset,
+        }
+    }
+
+    pub fn offset(&self) -> Position2D {
+        self.offset_for_mode(self.mode())
+    }
+
+    pub fn offset_mut(&mut self) -> &mut Position2D {
+        &mut self.offset
+    }
+    
+    pub fn set_offset(&mut self, offset: Position2D) {
+        self.offset = offset;
     }
 
     // returns bool so we can easily chain to "changed"

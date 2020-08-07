@@ -23,7 +23,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::Duplicate(count) => duplicate_selected(count, world, state),
             Action::NewFrame => new_frame_on_selected(world, state),
             Action::DeleteFrame => delete_frame_on_selected(world, state),
-            Action::Bookmark(index, true) => set_bookmark(index, state.offset, world),
+            Action::Bookmark(index, true) => set_bookmark(index, state.offset(), world),
             Action::Bookmark(index, false) => jump_to_bookmark(index, world, state),
             Action::Cancel => cancel(world, state),
             Action::ClearError => state.clear_error(),
@@ -45,7 +45,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::Read(path) => read_scene_from_file(path, world, state),
             Action::Tutorial => tutorial(world, state),
             Action::Export(format, path) => export_to_file(format, &path, world, state),
-            Action::ShowHelp(index) => state.set_mode(Mode::Help(index)),
+            Action::ShowHelp(index) => show_help(index, state),
             Action::ClearBlank => clear_blank_texels(world, state),
         };
     }
@@ -291,7 +291,7 @@ fn apply_region(region: Option<Bounds>, world: &mut World, state: &mut State) ->
     for (entity, (pos, dim)) in query.iter_entities(world) {
         // any point inside region -> select
         let pos2d: Position2D = (*pos).into();
-        if area.intersects(pos2d - state.offset, *dim) {
+        if area.intersects(pos2d - state.offset(), *dim) {
             todo.add_component(entity, Selection);
         }
     }
@@ -421,7 +421,7 @@ fn delete_selected(world: &mut World) -> Result<(), Error> {
 
 fn viewport_bounds(state: &State) -> Bounds {
     let ts = Terminal::terminal_size();
-    Bounds::Free(state.offset, Dimension::from_wh(ts.0, ts.1))
+    Bounds::Free(state.offset(), Dimension::from_wh(ts.0, ts.1))
 }
 
 fn selected_bounds(world: &mut World) -> Option<Bounds> {
@@ -434,7 +434,7 @@ fn selected_bounds(world: &mut World) -> Option<Bounds> {
 }
 
 fn subselection_bounds(world: &mut World, state: &State) -> Bounds {
-    subselection(world).unwrap_or_else(|| Bounds::point(state.cursor + state.offset))
+    subselection(world).unwrap_or_else(|| Bounds::point(state.cursor + state.offset()))
 }
 
 fn translate_subselection(t: Translation, area_bounds: Option<Bounds>, world: &mut World, state: &mut State) -> bool {
@@ -481,7 +481,7 @@ fn translate_object(t: Translation, world: &mut World, state: &mut State) -> boo
             // nothing selected, move viewport
             if <Read<Selection>>::query().iter(world).count() == 0 {
                 let screen_bounds = Bounds::Free(Position2D::default(), screen_dim);
-                state.offset.apply(t, screen_bounds);
+                state.offset_mut().apply(t, screen_bounds);
             } else {
                 let query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
                 for (mut position, dim) in query.iter(world) {
@@ -624,12 +624,16 @@ fn set_bookmark(index: usize, location: Position2D, world: &mut World) -> bool {
 fn jump_to_bookmark(index: usize, world: &mut World, state: &mut State) -> bool {
     let query = <(Read<Bookmark>, Read<Position2D>)>::query();
     if let Some((_, pos)) = query.iter(world).find(|(bm, _)| bm.0 == index) {
-        state.offset = *pos;
+        state.set_offset(*pos);
     } else {
         state.set_error(Error::execution("Bookmark not found"));
     }
 
     false
+}
+
+fn show_help(index: usize, state: &mut State) -> bool {
+    state.set_mode(Mode::Help(index))
 }
 
 fn clear_blank_texels(world: &mut World, state: &mut State) -> bool {
@@ -934,7 +938,7 @@ fn new_sprite(world: &mut World, state: &State, pos: Option<Position>) -> bool {
 
     world.insert(
         (Selectable,),
-        vec![(Selection, pos.unwrap_or(NEW_POSITION + state.offset), dim, sprite)],
+        vec![(Selection, pos.unwrap_or(NEW_POSITION + state.offset()), dim, sprite)],
     );
 
     true
@@ -977,7 +981,7 @@ fn import_sprite(
             (Selectable,),
             vec![(
                 Selection,
-                pos.unwrap_or(NEW_POSITION + state.offset),
+                pos.unwrap_or(NEW_POSITION + state.offset()),
                 Dimension::for_sprite(&sprite),
                 sprite,
             )],
@@ -986,7 +990,7 @@ fn import_sprite(
         world.insert(
             (Selectable,),
             vec![(
-                pos.unwrap_or(NEW_POSITION + state.offset),
+                pos.unwrap_or(NEW_POSITION + state.offset()),
                 Dimension::for_sprite(&sprite),
                 sprite,
             )],

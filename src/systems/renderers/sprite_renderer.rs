@@ -11,7 +11,7 @@ pub fn render_sprites(world: &mut World, state: &mut State, out: &mut FrameBuffe
         return; // show help, done
     }
 
-    let mut selected_info = SelectedInfo::from(state.offset);
+    let mut selected_info = SelectedInfo::from(state.offset());
 
     let query = <(Read<Position>, Read<Dimension>, Read<Sprite>, TryRead<Selection>)>::query();
 
@@ -54,7 +54,7 @@ fn render_sprite(out: &mut FrameBuffer, state: &State, p: &Position, s: &Sprite)
 fn print_texel(out: &mut FrameBuffer, state: &State, p: &Position, t: &Texel) {
     let pos2d: Position2D = (*p + t.pos).into();
     let abs_texel = Texel {
-        pos: pos2d - state.offset,
+        pos: pos2d - state.offset(),
         symbol: t.symbol,
         bg: t.bg,
         fg: t.fg,
