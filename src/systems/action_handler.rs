@@ -424,10 +424,11 @@ fn viewport_bounds(state: &State) -> Bounds {
     Bounds::Free(state.offset(), Dimension::from_wh(ts.0, ts.1))
 }
 
-fn selected_bounds(world: &mut World) -> Option<Bounds> {
+fn selected_bounds(world: &mut World, state: &State) -> Option<Bounds> {
     let query = <(Read<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
     if let Some((position, dim)) = query.iter(world).next() {
-        Some(Bounds::Free((*position).into(), *dim))
+        let pos2d: Position2D = (*position).into();
+        Some(Bounds::Free(pos2d - state.offset(), *dim))
     } else {
         None
     }
@@ -468,7 +469,7 @@ fn translate_object(t: Translation, world: &mut World, state: &mut State) -> boo
 
     match state.mode() {
         Mode::Edit => {
-            let sprite_bounds = selected_bounds(world);
+            let sprite_bounds = selected_bounds(world, state);
             translate_subselection(t, sprite_bounds, world, state)
         }
         Mode::Object(SelectMode::Region) => {
@@ -496,7 +497,7 @@ fn translate_object(t: Translation, world: &mut World, state: &mut State) -> boo
             changed
         }
         Mode::Write => {
-            if let Some(sprite_bounds) = selected_bounds(world) {
+            if let Some(sprite_bounds) = selected_bounds(world, state) {
                 state.cursor.apply(t, sprite_bounds);
             }
             false
