@@ -39,7 +39,7 @@ pub struct State {
     history: VecDeque<Snapshot>, // scene + list of selected indexes
     history_index: usize,
     selected_color: (u8, u8),
-    save_state: (Option<String>, usize),
+    save_state: (Option<String>, usize, usize), // save file path, changes, change "start" index
     // TODO: refactor these off?
     offset: Position2D, // viewport "offset"
     pub dirty: bool,
@@ -58,7 +58,7 @@ impl Default for State {
             history: VecDeque::with_capacity(HISTORY_CAPACITY),
             history_index: 0usize,
             selected_color: (texel_types::DEFAULT_BG_U8, texel_types::DEFAULT_FG_U8),
-            save_state: (None, 0),
+            save_state: (None, 0, 0),
             dirty: false,
             clipboard: Clipboard::Empty,
             cursor: Position2D::default(),
@@ -136,7 +136,7 @@ impl State {
     }
 
     pub fn unsaved_changes(&self) -> bool {
-        self.save_state.1 > 0 && self.history_index > 0
+        self.save_state.1 > 0 && self.history_index != self.save_state.2
     }
 
     pub fn set_mode(&mut self, mode: Mode) -> bool {
@@ -199,21 +199,22 @@ impl State {
     }
 
     pub fn saved(&mut self, path: String) -> bool {
-        self.save_state = (Some(path), 0);
+        self.save_state = (Some(path), 0, self.history_index);
 
-        true
+        false
     }
 
     pub fn clear_changes(&mut self) -> bool {
         self.save_state.1 = 0; // keep filename
+        self.save_state.2 = self.history_index;
 
-        true
+        false
     }
 
     pub fn reset_save_file(&mut self) -> bool {
-        self.save_state = (None, 0);
+        self.save_state = (None, 0, 0);
 
-        true
+        false
     }
 
     pub fn quitting(&self) -> bool {
@@ -297,6 +298,7 @@ impl State {
 
         self.history_index -= 1;
         if let Some(value) = self.history.get(self.history_index) {
+            self.save_state.1 += 1;
             return Some(value.clone());
         }
 
@@ -310,6 +312,7 @@ impl State {
 
         self.history_index += 1;
         if let Some(value) = self.history.get(self.history_index) {
+            self.save_state.1 += 1;
             return Some(value.clone());
         }
 
