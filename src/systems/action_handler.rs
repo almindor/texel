@@ -891,7 +891,7 @@ fn paste_subselection(world: &mut World, state: &mut State) -> bool {
     if let Some((mut sprite, mut pos, mut dim)) = query.iter(world).next() {
         let texels: Texels = state.clipboard.clone().into();
         let pos2d: Position2D = (*pos).into();
-        let rel_pos = state.cursor - pos2d;
+        let rel_pos = state.cursor + state.offset() - pos2d;
 
         let bounds = sprite.apply_texels(texels, rel_pos);
         *pos += *bounds.position();
