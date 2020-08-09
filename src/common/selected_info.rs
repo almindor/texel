@@ -48,7 +48,7 @@ impl From<Position2D> for SelectedInfo {
     out.set_cursor_pos(w - 1, h - 1);
 */
 
-pub const SELECTED_INFO_TEMPLATE: &str = "*▞ (   ,   ,   ):[   /   ]:{   ,   }";
+pub const SELECTED_INFO_TEMPLATE: &str = "*▞     ,   ,    :    /    :    ,    ";
 
 impl SelectedInfo {
     pub fn append(&mut self, sprite: &Sprite, pos: &Position) {
