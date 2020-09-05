@@ -19,7 +19,7 @@ impl Config {
     pub fn current(self) -> ConfigV2 {
         match self {
             Self::V1(config) => upgrade_v1_to_v2(config),
-            Self::V2(config) => config,
+            Self::V2(config) => add_new_defaults(config),
         }
     }
 
@@ -62,4 +62,10 @@ fn upgrade_v1_to_v2(v1: ConfigV1) -> ConfigV2 {
         symbol_palette: v1.symbol_palette,
         char_map: ModesCharMap::from(v1.char_map),
     }
+}
+
+fn add_new_defaults(mut v2: ConfigV2) -> ConfigV2 {
+    v2.char_map.fill_defaults();
+
+    v2
 }

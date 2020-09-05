@@ -28,6 +28,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::Cancel => cancel(world, state),
             Action::ClearError => state.clear_error(),
             Action::SetMode(mode) => set_mode(mode, world, state),
+            Action::SwapColor => swap_color(state),
             Action::ApplyColor(cm) => apply_color_to_selected(cm, world, state),
             Action::ApplySymbol(sym) => apply_symbol_to_selected(sym, world, state),
             Action::ApplyStyle(style) => apply_style_to_selected(style, world, state),
@@ -49,6 +50,10 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::ClearBlank => clear_blank_texels(world, state),
         };
     }
+}
+
+fn swap_color(state: &mut State) -> bool {
+    state.swap_color()
 }
 
 fn pick_color(cm: ColorMode, world: &mut World, state: &mut State) -> bool {

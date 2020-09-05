@@ -92,6 +92,13 @@ impl State {
         }
     }
 
+    pub fn swap_color(&mut self) -> bool {
+        eprintln!("CSWAP");
+        std::mem::swap(&mut self.selected_color.0, &mut self.selected_color.1);
+
+        false
+    }
+
     // hacky way to keep help + command_during_help from offsetting the viewport
     fn offset_for_mode(&self, mode: Mode) -> Position2D {
         match mode {

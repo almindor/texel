@@ -35,6 +35,7 @@ pub enum Event {
     EditPalette(usize),   // index of symbol/color/bookmark, 0x0-0xF as usize <0, 16)
     ApplyColor(ColorMode),
     PickColor(ColorMode),                  // pick color from existing texel
+    SwapColor,                             // swap bg/fg color
     SelectObject(Which<Position2D>, bool), // sticky boolean
     SelectRegion,
     SelectFrame(Which<usize>),
@@ -91,6 +92,17 @@ impl ModesCharMap {
     pub fn overrides(&self) -> &Vec<CharMap> {
         &self.overrides.0
     }
+
+    pub fn fill_defaults(&mut self) {
+        let def_map = CharMap::default();
+
+        for (k, e) in def_map.0 {
+            // if we don't have this event mapped to a key yet
+            if self.all_modes.0.values().find(|v| *v == &e).is_none() {
+                self.all_modes.0.insert(k, e);
+            }
+        }
+    }
 }
 
 impl CharMap {
@@ -146,6 +158,7 @@ impl Default for CharMap {
 
         map.insert('z', Event::ApplyColor(ColorMode::Fg));
         map.insert('x', Event::ApplyColor(ColorMode::Bg));
+        map.insert('s', Event::SwapColor);
 
         map.insert('q', Event::ApplyStyle(SymbolStyle::Bold));
         map.insert('Q', Event::ApplyStyle(SymbolStyle::Italic));

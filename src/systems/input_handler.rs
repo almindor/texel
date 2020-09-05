@@ -64,6 +64,7 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
         Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 
+        Event::SwapColor => Action::SwapColor,
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
         Event::ApplyStyle(style) => Action::ApplyStyle(style),
 
@@ -141,6 +142,7 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
             state.push_action(Action::ReverseMode);
             state.push_action(Action::SetMode(Mode::Command));
         }
+        Event::SwapColor => state.push_action(Action::SwapColor),
         Event::EditPalette(index) => state.push_action(Action::SetMode(Mode::SelectColor(index, cm))),
         Event::SelectPalette(index) => {
             state.set_color(palette.color(index), cm);
@@ -208,6 +210,7 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::Above => Action::Translate(Translation::Relative(0, 0, -1)),
         Event::Below => Action::Translate(Translation::Relative(0, 0, 1)),
 
+        Event::SwapColor => Action::SwapColor,
         Event::PickColor(cm) => Action::PickColor(cm),
         Event::ApplyColor(cm) => Action::ApplyColor(cm),
         Event::ApplyStyle(style) => Action::ApplyStyle(style),
