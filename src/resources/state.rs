@@ -93,7 +93,6 @@ impl State {
     }
 
     pub fn swap_color(&mut self) -> bool {
-        eprintln!("CSWAP");
         std::mem::swap(&mut self.selected_color.0, &mut self.selected_color.1);
 
         false
