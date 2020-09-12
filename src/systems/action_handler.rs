@@ -674,13 +674,14 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
     let bounds = viewport_bounds(state);
 
     match layout {
-        Layout::None => {}
+        Layout::None => false,
         Layout::Column(cols, padding) => {
             let mut col_sizes = [0i32].repeat(cols);
             let mut row_sizes = Vec::new();
             let mut start_x = i32::max_value();
             let mut start_y = i32::max_value();
             let mut positions = Vec::new();
+            let mut moved = 0;
 
             let query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
             for (i, (pos, dim)) in query.iter(world).enumerate() {
@@ -713,9 +714,13 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
 
                 pos.x = start_x + offset_x;
                 pos.y = start_y + offset_y;
+                moved += 1;
             }
+
+            moved > 0
         }
         Layout::Random => {
+            let mut moved = 0;
             let query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
             for (mut pos, dim) in query.iter(world) {
                 let bounds_x = bounds.position().x;
@@ -730,12 +735,13 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
                     let y: i32 = rng.gen_range(bounds_y, bounds_y + bounds_h - dim_h);
                     pos.x = x;
                     pos.y = y;
+                    moved += 1
                 }
             }
+
+            moved > 0
         }
     }
-
-    false
 }
 
 fn change_frame_on_selected(which: Which<usize>, world: &mut World, state: &mut State) -> bool {
