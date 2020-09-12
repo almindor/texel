@@ -363,13 +363,18 @@ fn select_obj_relative(forward: bool, sticky: bool, world: &mut World, state: &S
     false
 }
 
-fn select_obj_all(world: &mut World) -> bool {
+fn select_obj_all(world: &mut World, state: &State) -> bool {
+    let viewport = viewport_bounds(state);
     let todo = CommandBuffer::default();
-    let query = <TryRead<Selection>>::query().filter(tag::<Selectable>());
-    for (entity, selected) in query.iter_entities(world) {
-        if selected.is_none() {
-            todo.add_component(entity, Selection);
-        }
+    let query = <(Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(tag::<Selectable>());
+    for (entity, (_, _, _)) in query.iter_entities(world).filter(|item| {
+        let p = *((item.1).0);
+        let d = *((item.1).1);
+        let unselected = (item.1).2.is_none();
+
+        unselected && viewport.intersects(p.into(), d)
+    }) {
+        todo.add_component(entity, Selection);
     }
 
     todo.write(world);
@@ -390,7 +395,7 @@ fn select_obj(which: Which<Position2D>, sticky: bool, world: &mut World, state: 
     match which {
         Which::Next => select_obj_relative(true, sticky, world, state),
         Which::Previous => select_obj_relative(false, sticky, world, state),
-        Which::All => select_obj_all(world),
+        Which::All => select_obj_all(world, state),
         Which::At(_) => false,
         // Which::At(pos) => select_obj_at(pos, sticky, world),
     }
