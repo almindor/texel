@@ -640,7 +640,9 @@ fn jump_to_bookmark(index: usize, world: &mut World, state: &mut State) -> bool 
 }
 
 fn show_help(index: usize, state: &mut State) -> bool {
-    state.set_mode(Mode::Help(index))
+    state.set_mode(Mode::Help(index));
+
+    false
 }
 
 fn clear_blank_texels(world: &mut World, state: &mut State) -> bool {
