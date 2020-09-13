@@ -203,7 +203,8 @@ impl CmdLine {
 
         let action = Action::from(parts.next());
         match action {
-            Action::ClearBlank
+            Action::New(_)
+            | Action::ClearBlank
             | Action::Deselect
             | Action::Tutorial
             | Action::Delete

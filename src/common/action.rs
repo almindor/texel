@@ -63,6 +63,7 @@ pub const METADATA_TYPES: [&str; 2] = ["id", "labels"];
 #[derive(Debug)]
 pub enum Action {
     None,
+    New(bool),
     NewObject,
     Duplicate(usize),
     Clipboard(ClipboardOp),
@@ -107,6 +108,8 @@ impl Default for Action {
 impl From<&str> for Action {
     fn from(source: &str) -> Self {
         match source {
+            "new" | "n" => Action::New(false),
+            "new!" | "n!" => Action::New(true),
             "read" | "r" => Action::Read(String::default()),
             "write" | "w" => Action::Write(None),
             "translate" => Action::Translate(Translation::default()),
@@ -153,7 +156,8 @@ impl Action {
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {
-        const ACTION_WORDS: [&str; 15] = [
+        const ACTION_WORDS: [&str; 16] = [
+            "new",
             "read",
             "write",
             "translate",

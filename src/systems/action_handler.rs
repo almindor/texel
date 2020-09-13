@@ -14,6 +14,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
     while let Some(action) = state.pop_action() {
         state.dirty |= match action {
             Action::None => false,
+            Action::New(force) => new(force, world, state),
             Action::Undo => undo(world, state),
             Action::Redo => redo(world, state),
             Action::Clipboard(op) => clipboard(op, world, state),
@@ -1033,6 +1034,23 @@ fn export_to_file(format: ExportFormat, path: &str, world: &mut World, state: &m
     match fio::export_to_file(scene, format, path) {
         Ok(_) => false,
         Err(err) => state.set_error(err),
+    }
+}
+
+fn new(force: bool, world: &mut World, state: &mut State) -> bool {
+    if !force && state.unsaved_changes() {
+        state.set_error(Error::execution("Unsaved changes, save before opening new scene"));
+
+        false
+    } else {
+        match apply_scene(Scene::default(), world, state, None) {
+            Ok(_) => {
+                state.clear_history(Scene::default()); // we're going from this scene now
+                state.reset_save_file(); // ensure we don't save the tutorial into previous file
+                false // new scene does not dirty
+            }
+            Err(err) => state.set_error(err),
+        }
     }
 }
 
