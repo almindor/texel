@@ -4,7 +4,7 @@ ASCII Art and landscape editor. Texel aims to make editing ASCII art easy especi
 
 ### Example Scene
 
-![alt text](https://raw.githubusercontent.com/almindor/texel/master/docs/texel_scene.png)
+![Example Scene PNG](https://raw.githubusercontent.com/almindor/texel/master/docs/texel_scene.png)
 
 
 ## Building
@@ -20,9 +20,11 @@ The default terminal backend used is [Crossterm](https://crates.io/crates/crosst
 
 ### Compiling
 
-#### Linux, Windows, Mac OS X
+#### Linux, Windows*, Mac OS X
 
 `cargo build --release`
+
+- NOTE: Windows is currently broken due to crossterm binding issues
 
 #### Redox/Termion
 
