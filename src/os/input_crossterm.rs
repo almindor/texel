@@ -1,7 +1,7 @@
 use crate::common::{CharMap, Event, InputEvent, Mode, ModesCharMap, MoveMeta};
-use crossterm::event::{read, Event as TEvent, KeyCode as Key, KeyEvent, KeyModifiers};
+use crossterm::event::{read, Event as TEvent, KeyCode as Key, KeyEvent, KeyModifiers, MouseButton, MouseEvent};
 use std::collections::HashMap;
-use texel_types::{ColorMode, Which};
+use texel_types::{ColorMode, Position2D, Which};
 
 type RawMap = HashMap<TEvent, Event>;
 
@@ -26,6 +26,17 @@ impl InputSource {
     fn map_input(&self, raw_event: TEvent, map: &RawMap) -> InputEvent {
         let mapped = map.get(&raw_event).copied().unwrap_or_else(|| match raw_event {
             TEvent::Resize(_, _) => Event::Resize,
+            TEvent::Mouse(MouseEvent::Down(MouseButton::Left, x, y, km)) => {
+                let pos = Position2D::from_xy(x.into(), y.into());
+                let sticky = km == KeyModifiers::SHIFT; // never seems to get through
+
+                Event::MouseDown(pos, sticky)
+            }
+            TEvent::Mouse(MouseEvent::Drag(MouseButton::Left, x, y, _)) => {
+                let pos = Position2D::from_xy(x.into(), y.into());
+
+                Event::MouseDrag(pos)
+            }
             _ => Event::None,
         });
 

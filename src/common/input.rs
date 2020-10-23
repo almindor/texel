@@ -53,6 +53,10 @@ pub enum Event {
     ArrowDown,
     ArrowLeft,
     ArrowRight,
+    // mouse events
+    MouseDown(Position2D, bool), // pos, sticky (SHIFT + click)
+    MouseUp(Position2D),
+    MouseDrag(Position2D),
     // terminal events
     Resize,
 }

@@ -45,6 +45,7 @@ pub struct State {
     pub dirty: bool,
     pub clipboard: Clipboard,
     pub cursor: Position2D,
+    pub mouse_entry: Position2D, // previous mouse position for dragging
     pub show_meta: bool,
 }
 
@@ -63,6 +64,7 @@ impl Default for State {
             clipboard: Clipboard::Empty,
             cursor: Position2D::default(),
             offset: Position2D::default(),
+            mouse_entry: Position2D::default(),
             show_meta: false,
         };
 

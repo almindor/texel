@@ -1,12 +1,15 @@
 use crossterm::terminal::size as crossterm_size;
+use crossterm::ExecutableCommand;
 use std::io::{Stdout, Write};
 use texel_types::SymbolStyle;
 
 pub struct Terminal(Stdout);
 
 impl Terminal {
-    pub fn new(stdout: Stdout) -> Self {
+    pub fn new(mut stdout: Stdout) -> Self {
         crossterm::terminal::enable_raw_mode().unwrap();
+
+        stdout.execute(crossterm::event::EnableMouseCapture).unwrap();
 
         Terminal(stdout)
     }
@@ -21,6 +24,8 @@ impl Terminal {
 
     pub fn restore(&mut self) {
         use crossterm::Command;
+
+        self.0.execute(crossterm::event::DisableMouseCapture).unwrap();
 
         write!(
             self.0,

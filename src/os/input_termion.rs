@@ -1,9 +1,9 @@
 use crate::common::{CharMap, Event, InputEvent, Mode, ModesCharMap, MoveMeta};
 use std::collections::HashMap;
 use std::io::stdin;
-use termion::event::{Event as TEvent, Key};
+use termion::event::{Event as TEvent, Key, MouseButton, MouseEvent};
 use termion::input::TermRead;
-use texel_types::{ColorMode, Which};
+use texel_types::{ColorMode, Position2D, Which};
 
 type RawMap = HashMap<TEvent, Event>;
 
@@ -25,7 +25,19 @@ impl InputSource {
     }
 
     fn map_input(&self, raw_event: TEvent, map: &RawMap) -> InputEvent {
-        let mapped = map.get(&raw_event).copied().unwrap_or(Event::None);
+        let mapped = map.get(&raw_event).copied().unwrap_or_else(|| match raw_event {
+            TEvent::Mouse(MouseEvent::Press(MouseButton::Left, x, y)) => {
+                let pos = Position2D::from_xy(x.into(), y.into());
+
+                Event::MouseDown(pos, false)
+            }
+            TEvent::Mouse(MouseEvent::Hold(x, y)) => {
+                let pos = Position2D::from_xy(x.into(), y.into());
+
+                Event::MouseDrag(pos)
+            }
+            _ => Event::None,
+        });
 
         match raw_event {
             TEvent::Key(Key::Char(c)) => (mapped, Some(c)),

@@ -2,7 +2,7 @@ use crate::common::{Action, Event, InputEvent, Mode, MoveMeta, SelectMode};
 use crate::components::{Direction, Translation};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette};
 use legion::prelude::*;
-use texel_types::ColorMode;
+use texel_types::{ColorMode, Which};
 
 pub fn handle_input(world: &mut World, state: &mut State) {
     let cmdline = &mut world.resources.get_mut::<CmdLine>().unwrap();
@@ -78,6 +78,17 @@ fn objmode_event(event: InputEvent, state: &mut State) {
         Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
         Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
 
+        Event::MouseDown(pos, sticky) => {
+            state.mouse_entry = pos;
+            Action::SelectObject(Which::At(pos), sticky)
+        }
+
+        Event::MouseDrag(pos) => {
+            let diff = pos - state.mouse_entry;
+            state.mouse_entry = pos;
+            Action::Translate(Translation::Relative(diff.x, diff.y, 0))
+        }
+
         _ => Action::None,
     };
 
@@ -115,6 +126,9 @@ fn objmode_region_event(event: InputEvent, state: &mut State) {
         Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
         Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
 
+        Event::MouseDown(pos, _) => Action::Translate(Translation::Absolute(pos.x, pos.y, None)),
+        Event::MouseDrag(pos) => Action::Translate(Translation::Absolute(pos.x, pos.y, None)),
+
         _ => Action::None,
     };
 
@@ -149,6 +163,7 @@ fn color_event(event: InputEvent, state: &mut State, cm: ColorMode, palette: &Co
             state.push_action(Action::ReverseMode);
         }
         Event::Cancel => state.push_action(Action::Cancel),
+
         _ => {}
     };
 }
@@ -173,6 +188,9 @@ fn write_event(event: InputEvent, state: &mut State) {
         }
 
         Event::Deselect => Action::Deselect,
+
+        Event::MouseDown(pos, _) => Action::Translate(Translation::Absolute(pos.x, pos.y, None)),
+        Event::MouseDrag(pos) => Action::Translate(Translation::Absolute(pos.x, pos.y, None)),
 
         _ => {
             if let Some(c) = event.1 {
@@ -225,6 +243,9 @@ fn edit_event(event: InputEvent, state: &mut State, palette: &SymbolPalette) {
         Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
         Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
 
+        Event::MouseDown(pos, _) => Action::Translate(Translation::Absolute(pos.x, pos.y, None)),
+        Event::MouseDrag(pos) => Action::Translate(Translation::Absolute(pos.x, pos.y, None)),
+
         _ => Action::None,
     };
 
@@ -266,6 +287,9 @@ fn color_select_event(event: InputEvent, state: &mut State, index: usize, palett
         Event::Up(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Top)),
         Event::Down(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Bottom)),
         Event::Right(MoveMeta::ToEdge) => Action::Translate(Translation::ToEdge(Direction::Right)),
+
+        Event::MouseDown(pos, _) => Action::Translate(Translation::Absolute(pos.x, pos.y, None)),
+        Event::MouseDrag(pos) => Action::Translate(Translation::Absolute(pos.x, pos.y, None)),
 
         _ => Action::None,
     };
