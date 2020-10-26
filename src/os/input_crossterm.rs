@@ -24,6 +24,7 @@ impl InputSource {
     }
 
     fn map_input(&self, raw_event: TEvent, map: &RawMap) -> InputEvent {
+        eprintln!("Raw: {:?}", raw_event);
         let mapped = map.get(&raw_event).copied().unwrap_or_else(|| match raw_event {
             TEvent::Resize(_, _) => Event::Resize,
             TEvent::Mouse(MouseEvent::Down(MouseButton::Left, x, y, km)) => {
@@ -106,7 +107,7 @@ fn default_map(cm: &CharMap) -> RawMap {
         Event::PickColor(ColorMode::Bg),
     );
     result.insert(
-        TEvent::Key(KeyEvent::from(Key::BackTab)),
+        TEvent::Key(KeyEvent::new(Key::BackTab, KeyModifiers::SHIFT)),
         Event::SelectObject(Which::Next, true),
     );
     result.insert(
