@@ -1,3 +1,7 @@
+### v0.2.1
+* add mouse support
+* upgrade legion to v3
+
 ### v0.2.0
 * add crossterm support
 * add layer command
