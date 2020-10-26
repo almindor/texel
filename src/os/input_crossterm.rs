@@ -24,7 +24,6 @@ impl InputSource {
     }
 
     fn map_input(&self, raw_event: TEvent, map: &RawMap) -> InputEvent {
-        eprintln!("Raw: {:?}", raw_event);
         let mapped = map.get(&raw_event).copied().unwrap_or_else(|| match raw_event {
             TEvent::Resize(_, _) => Event::Resize,
             TEvent::Mouse(MouseEvent::Down(MouseButton::Left, x, y, km)) => {
