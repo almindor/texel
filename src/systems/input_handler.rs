@@ -1,13 +1,13 @@
 use crate::common::{Action, Event, InputEvent, Mode, MoveMeta, SelectMode};
 use crate::components::{Direction, Translation};
 use crate::resources::{CmdLine, ColorPalette, State, SymbolPalette};
-use legion::prelude::*;
+use legion::*;
 use texel_types::{ColorMode, Which};
 
-pub fn handle_input(world: &mut World, state: &mut State) {
-    let cmdline = &mut world.resources.get_mut::<CmdLine>().unwrap();
-    let symbol_palette = &mut world.resources.get_mut::<SymbolPalette>().unwrap();
-    let color_palette = &mut world.resources.get_mut::<ColorPalette>().unwrap();
+pub fn handle_input(state: &mut State, resources: &mut Resources) {
+    let cmdline = &mut resources.get_mut::<CmdLine>().unwrap();
+    let symbol_palette = &mut resources.get_mut::<SymbolPalette>().unwrap();
+    let color_palette = &mut resources.get_mut::<ColorPalette>().unwrap();
 
     while let Some(event) = state.pop_event() {
         match state.mode() {

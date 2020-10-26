@@ -1,7 +1,7 @@
 use crate::common::{Error, Mode, SelectMode, SELECTED_INFO_TEMPLATE};
 use crate::os::Terminal;
 use crate::resources::{CmdLine, ColorPalette, FrameBuffer, State, SymbolPalette, PALETTE_OFFSET};
-use legion::prelude::*;
+use legion::*;
 use texel_types::{ColorMode, Position2D, SymbolStyle, SymbolStyles};
 
 // type SystemData = (
@@ -12,7 +12,7 @@ use texel_types::{ColorMode, Position2D, SymbolStyle, SymbolStyles};
 //     specs::Read<'a, SymbolPalette>,
 // );
 
-pub fn render_cmdline(world: &mut World, state: &State, out: &mut FrameBuffer) {
+pub fn render_cmdline(state: &State, resources: &Resources, out: &mut FrameBuffer) {
     let ts = Terminal::terminal_size();
     let w = i32::from(ts.0);
     let h = i32::from(ts.1);
@@ -25,9 +25,9 @@ pub fn render_cmdline(world: &mut World, state: &State, out: &mut FrameBuffer) {
     }
 
     let mode = state.mode();
-    let cmdline = world.resources.get::<CmdLine>().unwrap();
-    let symbol_palette = world.resources.get::<SymbolPalette>().unwrap();
-    let color_palette = world.resources.get::<ColorPalette>().unwrap();
+    let cmdline = resources.get::<CmdLine>().unwrap();
+    let symbol_palette = resources.get::<SymbolPalette>().unwrap();
+    let color_palette = resources.get::<ColorPalette>().unwrap();
 
     match mode {
         Mode::Quitting(_) => {}

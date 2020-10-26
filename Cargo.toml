@@ -14,7 +14,7 @@ categories = ["text-editors", "multimedia::images"]
 big_enum_set = { version = "0.2.0", features = ["serde"] }
 crossterm = { version = "0.18.0", optional = true }
 dirs = "3.0.1"
-legion = "=0.2.1"
+legion = "0.3.1"
 libflate = "1.0.2"
 rand = "0.7.3"
 ron = "0.6.1"

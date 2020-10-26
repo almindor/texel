@@ -30,8 +30,9 @@ impl From<(Scene, Vec<usize>)> for Snapshot {
     }
 }
 
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct State {
+    // state
     error: Option<Error>,
     events: VecDeque<InputEvent>, // (raw, Option<mapping>)
     actions: VecDeque<Action>,
@@ -52,6 +53,7 @@ pub struct State {
 impl Default for State {
     fn default() -> Self {
         let mut result = State {
+            // state
             error: None,
             events: VecDeque::with_capacity(10),
             actions: VecDeque::with_capacity(10),
@@ -60,6 +62,7 @@ impl Default for State {
             history_index: 0usize,
             selected_color: (texel_types::DEFAULT_BG_U8, texel_types::DEFAULT_FG_U8),
             save_state: (None, 0, 0),
+            // others
             dirty: false,
             clipboard: Clipboard::Empty,
             cursor: Position2D::default(),
@@ -75,7 +78,7 @@ impl Default for State {
     }
 }
 
-impl State {
+impl State {    
     pub fn error(&self) -> &Option<Error> {
         &self.error
     }

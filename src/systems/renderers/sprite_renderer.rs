@@ -2,7 +2,7 @@ use crate::common::{scene_for_help_index, Scene, SelectedInfo};
 use crate::components::{Dimension, Position, Position2D, Selection, Sprite};
 use crate::os::Terminal;
 use crate::resources::{FrameBuffer, State};
-use legion::prelude::*;
+use legion::*;
 use texel_types::{SymbolStyles, Texel, DEFAULT_BG_U8, DEFAULT_FG_U8};
 
 pub fn render_sprites(world: &mut World, state: &mut State, out: &mut FrameBuffer) {
@@ -12,8 +12,7 @@ pub fn render_sprites(world: &mut World, state: &mut State, out: &mut FrameBuffe
     }
 
     let mut selected_info = SelectedInfo::from(state.offset());
-
-    let query = <(Read<Position>, Read<Dimension>, Read<Sprite>, TryRead<Selection>)>::query();
+    let mut query = <(Read<Position>, Read<Dimension>, Read<Sprite>, TryRead<Selection>)>::query();
 
     // TODO: optimize
     let mut sorted = Vec::new();

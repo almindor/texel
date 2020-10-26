@@ -1,5 +1,5 @@
 use crate::components::Bookmark;
-use legion::prelude::*;
+use legion::*;
 use std::collections::BTreeMap;
 use std::ops::Deref;
 pub use texel_types::{Position, Position2D, Scene, SceneV2, Sprite};
@@ -15,12 +15,12 @@ impl SceneExt for Scene {
         let mut objects = Vec::new();
         let mut bookmarks = BTreeMap::new();
 
-        let query = <(Read<Sprite>, Read<Position>)>::query();
+        let mut query = <(Read<Sprite>, Read<Position>)>::query();
         for (sprite, pos) in query.iter(world) {
             objects.push((sprite.deref().clone(), *pos));
         }
 
-        let query = <(Read<Bookmark>, Read<Position2D>)>::query();
+        let mut query = <(Read<Bookmark>, Read<Position2D>)>::query();
         for (bookmark, pos) in query.iter(world) {
             bookmarks.insert(bookmark.0, *pos);
         }

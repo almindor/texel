@@ -1,4 +1,4 @@
-use legion::prelude::*;
+use legion::*;
 use std::io::stdout;
 use std::path::Path;
 
@@ -11,8 +11,7 @@ pub fn run(args: Vec<String>) {
     let ts = Terminal::terminal_size();
     check_terminal_size(ts);
 
-    let universe = Universe::new();
-    let mut world = universe.create_world();
+    let mut world = World::default();
     let config_file = dirs::config_dir().unwrap().join("texel/config.ron");
     let config = match fio::from_config_file(&config_file) {
         Ok(val) => val.current(), // ensures we upgrade if there's a version change
@@ -21,7 +20,8 @@ pub fn run(args: Vec<String>) {
 
     let mut out = FrameBuffer::new(usize::from(ts.0), usize::from(ts.1));
     let mut state = State::default();
-    let input_source = build_resources(&config, &mut world);
+    let mut resources = build_resources(&config);
+    let input_source = InputSource::from(config.char_map.clone());
 
     // initial clear screen
     let mut terminal = Terminal::new(stdout());
@@ -30,7 +30,7 @@ pub fn run(args: Vec<String>) {
     // load files as needed
     load_from(args, &mut state);
     // run/render initial screen
-    TexelSystems::run(&mut world, &mut state, &mut out);
+    TexelSystems::run(&mut world, &mut state, &mut resources, &mut out);
 
     // flush buffers to terminal
     out.flush_into(terminal.endpoint()).unwrap();
@@ -39,7 +39,7 @@ pub fn run(args: Vec<String>) {
         let mapped = input_source.next_event(state.mode());
         // handle input
         dispatch_input_event(mapped, &mut state, &mut out, &mut terminal);
-        TexelSystems::run(&mut world, &mut state, &mut out);
+        TexelSystems::run(&mut world, &mut state, &mut resources, &mut out);
         // flush buffers to terminal
         out.flush_into(terminal.endpoint()).unwrap();
 
@@ -51,7 +51,16 @@ pub fn run(args: Vec<String>) {
     terminal.restore();
 
     // save config
-    save_config(config, &config_file, &world);
+    save_config(config, &config_file, &resources);
+}
+
+fn build_resources(config: &ConfigV2) -> Resources {
+    let mut resources = Resources::default();
+    resources.insert(CmdLine::default());
+    resources.insert(config.color_palette.clone());
+    resources.insert(config.symbol_palette.clone());
+
+    resources
 }
 
 fn load_from(args: Vec<String>, state: &mut State) -> bool {
@@ -77,15 +86,6 @@ fn load_from(args: Vec<String>, state: &mut State) -> bool {
     }
 }
 
-fn build_resources(config: &ConfigV2, world: &mut World) -> InputSource {
-    // prep resources
-    world.resources.insert(CmdLine::default());
-    world.resources.insert(config.color_palette.clone());
-    world.resources.insert(config.symbol_palette.clone());
-
-    InputSource::from(config.char_map.clone())
-}
-
 fn dispatch_input_event(event: InputEvent, state: &mut State, out: &mut FrameBuffer, terminal: &mut Terminal) {
     // ensure we re-blank on resizes
     if event.0 == Event::Resize {
@@ -104,9 +104,9 @@ fn check_terminal_size(ts: (u16, u16)) {
     }
 }
 
-fn save_config(mut v2: ConfigV2, config_file: &Path, world: &World) {
-    let cp = world.resources.get::<ColorPalette>().unwrap();
-    let sp = world.resources.get::<SymbolPalette>().unwrap();
+fn save_config(mut v2: ConfigV2, config_file: &Path, resources: &Resources) {
+    let cp = resources.get::<ColorPalette>().unwrap();
+    let sp = resources.get::<SymbolPalette>().unwrap();
 
     v2.color_palette = cp.clone();
     v2.symbol_palette = sp.clone();

@@ -1,7 +1,7 @@
 use crate::common::{Scene, SceneExt};
 use crate::components::{Bookmark, Position, Position2D, Selection, Sprite};
 use crate::resources::State;
-use legion::prelude::*;
+use legion::*;
 use std::collections::BTreeMap;
 use std::ops::Deref;
 
@@ -14,7 +14,7 @@ pub fn preserve_history(world: &mut World, state: &mut State) {
     let mut selections = Vec::new();
     let mut bookmarks = BTreeMap::new();
 
-    let query = <(Read<Position>, Read<Sprite>, TryRead<Selection>)>::query();
+    let mut query = <(Read<Position>, Read<Sprite>, TryRead<Selection>)>::query();
 
     for (i, (pos, sprite, selected)) in query.iter(world).enumerate() {
         objects.push((sprite.deref().clone(), *pos));
@@ -23,7 +23,7 @@ pub fn preserve_history(world: &mut World, state: &mut State) {
         }
     }
 
-    let query = <(Read<Position2D>, Read<Bookmark>)>::query();
+    let mut query = <(Read<Position2D>, Read<Bookmark>)>::query();
 
     for (pos, bookmark) in query.iter(world) {
         bookmarks.insert(bookmark.0, *pos);

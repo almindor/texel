@@ -1,7 +1,7 @@
 use crate::common::{Mode, SelectMode};
 use crate::components::{Dimension, Position2D, Subselection};
 use crate::resources::{ColorPalette, FrameBuffer, State};
-use legion::prelude::*;
+use legion::*;
 use texel_types::{SymbolStyles, Texel};
 
 pub fn render_subselections(world: &mut World, state: &mut State, out: &mut FrameBuffer) {
@@ -12,7 +12,7 @@ pub fn render_subselections(world: &mut World, state: &mut State, out: &mut Fram
 
     let select_color = ColorPalette::subselection_bg_u8();
 
-    let query = <(Read<Position2D>, Read<Dimension>)>::query().filter(component::<Subselection>());
+    let mut query = <(Read<Position2D>, Read<Dimension>)>::query().filter(component::<Subselection>());
 
     for (pos, dim) in query.iter(world) {
         let texels = Position2D::area_texels(*pos, *dim);

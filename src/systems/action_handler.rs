@@ -5,7 +5,8 @@ use crate::components::*;
 use crate::os::Terminal;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use fio::ExportFormat;
-use legion::prelude::*;
+use legion::*;
+use legion::systems::CommandBuffer;
 use texel_types::{ColorMode, SymbolStyle, Texels, Which};
 
 const NEW_POSITION: Position = Position { x: 10, y: 10, z: 0 };
@@ -58,7 +59,7 @@ fn swap_color(state: &mut State) -> bool {
 }
 
 fn pick_color(cm: ColorMode, world: &mut World, state: &mut State) -> bool {
-    let query = <(Read<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
+    let mut query = <(Read<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
     if let Some((sprite, pos)) = query.iter(world).next() {
         let pos2d: Position2D = (*pos).into();
         let rel_pos = state.cursor - pos2d;
@@ -89,27 +90,27 @@ fn reverse_mode(world: &mut World, state: &mut State) -> bool {
 }
 
 fn deselect_obj(world: &mut World) -> bool {
-    let query = <Read<Selection>>::query();
-    let todo = CommandBuffer::default();
+    let mut query = <(Entity, Read<Selection>)>::query();
+    let mut todo = CommandBuffer::new(world);
 
-    for (entity, _) in query.iter_entities(world) {
-        todo.remove_component::<Selection>(entity);
+    for (entity, _) in query.iter(world) {
+        todo.remove_component::<Selection>(*entity);
     }
 
-    todo.write(world);
+    todo.flush(world);
 
     false
 }
 
 fn clear_subselection(world: &mut World) -> bool {
-    let query = <Read<Subselection>>::query();
-    let todo = CommandBuffer::default();
+    let mut query = <(Entity, Read<Subselection>)>::query();
+    let mut todo = CommandBuffer::new(world);
 
-    if let Some((entity, _)) = query.iter_entities(world).next() {
-        todo.delete(entity);
+    if let Some((entity, _)) = query.iter(world).next() {
+        todo.remove(*entity);
     };
 
-    todo.write(world);
+    todo.flush(world);
 
     false
 }
@@ -182,7 +183,7 @@ fn set_mode(mode: Mode, world: &mut World, state: &mut State) -> bool {
 }
 
 fn cursor_to_selected(world: &mut World, state: &mut State) -> bool {
-    let query = <(Read<Position>, TryRead<Position2D>)>::query().filter(component::<Selection>());
+    let mut query = <(Read<Position>, TryRead<Position2D>)>::query().filter(component::<Selection>());
     if let Some((pos, cur_pos)) = query.iter(world).next() {
         let pos2d: Position2D = (*pos).into();
 
@@ -199,24 +200,24 @@ fn cursor_to_selected(world: &mut World, state: &mut State) -> bool {
 }
 
 fn save_cursor_pos(world: &mut World, state: &mut State) {
-    let todo = CommandBuffer::default();
-    let query = <(Read<Position>, TryWrite<Position2D>)>::query().filter(component::<Selection>());
-    if let Some((entity, (pos, cur_pos))) = query.iter_entities(world).next() {
+    let mut todo = CommandBuffer::new(world);
+    let mut query = <(Entity, Read<Position>, TryWrite<Position2D>)>::query().filter(component::<Selection>());
+    if let Some((entity, pos, cur_pos)) = query.iter_mut(world).next() {
         let pos2d: Position2D = (*pos).into();
         let save_pos = state.cursor - pos2d + state.offset();
 
-        if let Some(mut cp) = cur_pos {
+        if let Some(cp) = cur_pos {
             *cp = save_pos; // update to last cursor position
         } else {
-            todo.add_component(entity, save_pos); // insert new cursor position
+            todo.add_component(*entity, save_pos); // insert new cursor position
         }
     }
 
-    todo.write(world);
+    todo.flush(world);
 }
 
 fn restore_cursor_pos(world: &mut World, state: &mut State) {
-    let query = <(Read<Position>, TryRead<Position2D>)>::query().filter(component::<Selection>());
+    let mut query = <(Read<Position>, TryRead<Position2D>)>::query().filter(component::<Selection>());
     if let Some((pos, cur_pos)) = query.iter(world).next() {
         let pos2d = Position2D::from(*pos) - state.offset();
 
@@ -251,36 +252,29 @@ fn select_region(world: &mut World, state: &mut State) -> bool {
 }
 
 fn mark_subselection(world: &mut World, state: &State) -> Option<Bounds> {
-    let todo = CommandBuffer::default();
+    let mut todo = CommandBuffer::new(world);
 
-    let clear_edit = |entity| {
-        todo.delete(entity);
-    };
-
-    let new_edit = || {
-        let pos = state.cursor;
-        todo.insert((), vec![(pos, Dimension::unit(), Subselection::at(pos))]);
-    };
-
-    let query = <Write<Subselection>>::query();
-    let result = if let Some((entity, mut sel)) = query.iter_entities(world).next() {
+    let mut query = <(Entity, Write<Subselection>)>::query();
+    let result = if let Some((entity, mut sel)) = query.iter_mut(world).next() {
         // existing selection, finish it
         if sel.active {
             sel.active = false; // we're done selecting
             Some(sel.initial_pos.area(state.cursor))
         } else {
             // redo
-            clear_edit(entity);
-            new_edit();
+            todo.remove(*entity);
+            let pos = state.cursor;
+            todo.extend(vec![(pos, Dimension::unit(), Subselection::at(pos))]);
             None
         }
     } else {
         // initiating new selection/edit
-        new_edit();
+        let pos = state.cursor;
+        todo.extend(vec![(pos, Dimension::unit(), Subselection::at(pos))]);
         None
     };
 
-    todo.write(world);
+    todo.flush(world);
 
     result
 }
@@ -293,17 +287,17 @@ fn apply_region(region: Option<Bounds>, world: &mut World, state: &mut State) ->
 
     deselect_obj(world);
 
-    let query = <(Read<Position>, Read<Dimension>)>::query().filter(tag::<Selectable>());
-    let todo = CommandBuffer::default();
-    for (entity, (pos, dim)) in query.iter_entities(world) {
+    let mut query = <(Entity, Read<Position>, Read<Dimension>)>::query().filter(component::<Selectable>());
+    let mut todo = CommandBuffer::new(world);
+    for (entity, pos, dim) in query.iter(world) {
         // any point inside region -> select
         let pos2d: Position2D = (*pos).into();
         if area.intersects(pos2d - state.offset(), *dim) {
-            todo.add_component(entity, Selection);
+            todo.add_component(*entity, Selection);
         }
     }
 
-    todo.write(world);
+    todo.flush(world);
 
     clear_subselection(world);
     reverse_mode(world, state);
@@ -316,13 +310,13 @@ fn select_obj_relative(forward: bool, sticky: bool, world: &mut World, state: &S
     let mut start = 0usize;
     let viewport = viewport_bounds(state);
 
-    let query = <(Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(tag::<Selectable>());
-    for (entity, (pos, _, selected)) in query.iter_entities(world).filter(|item| {
-        let p = *((item.1).0);
-        let d = *((item.1).1);
+    let mut query = <(Entity, Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(component::<Selectable>());
+    for (entity, pos, _, selected) in query.iter(world).filter(|item| {
+        let p = *(item.1);
+        let d = *(item.2);
         viewport.intersects(p.into(), d)
     }) {
-        all.push((entity, *pos, selected.is_some()));
+        all.push((*entity, *pos, selected.is_some()));
     }
 
     // ensure we keep sorting order
@@ -355,10 +349,15 @@ fn select_obj_relative(forward: bool, sticky: bool, world: &mut World, state: &S
         deselect_obj(world);
     }
 
-    if let Some(entity) = unselected_iter.next() {
-        world.add_component(entity.0, Selection);
-    } else if let Some(entity) = all.first() {
-        world.add_component(entity.0, Selection); // re-deselecting
+    // select "next"
+    if let Some(mut entry) = if let Some((entity, _, _)) = unselected_iter.next() {
+        world.entry(*entity)
+    } else if let Some((entity, _, _)) = all.first() {
+        world.entry(*entity)
+    } else {
+        None
+    } {
+        entry.add_component(Selection);
     }
 
     false
@@ -366,47 +365,47 @@ fn select_obj_relative(forward: bool, sticky: bool, world: &mut World, state: &S
 
 fn select_obj_all(world: &mut World, state: &State) -> bool {
     let viewport = viewport_bounds(state);
-    let todo = CommandBuffer::default();
-    let query = <(Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(tag::<Selectable>());
-    for (entity, (_, _, _)) in query.iter_entities(world).filter(|item| {
-        let p = *((item.1).0);
-        let d = *((item.1).1);
-        let unselected = (item.1).2.is_none();
+    let mut todo = CommandBuffer::new(world);
+    let mut query = <(Entity, Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(component::<Selectable>());
+    for (entity, _, _, _) in query.iter(world).filter(|item| {
+        let p = *(item.1);
+        let d = *(item.2);
+        let unselected = item.3.is_none();
 
         unselected && viewport.intersects(p.into(), d)
     }) {
-        todo.add_component(entity, Selection);
+        todo.add_component(*entity, Selection);
     }
 
-    todo.write(world);
+    todo.flush(world);
 
     false
 }
 
 fn select_obj_at(at: Position2D, sticky: bool, world: &mut World, state: &State) -> bool {
     let at_bounds = Bounds::point(at + state.offset());
-    let todo = CommandBuffer::default();
+    let mut todo = CommandBuffer::new(world);
 
     if !sticky {
         deselect_obj(world);
     }
 
-    let query = <(Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(tag::<Selectable>());
-    for (entity, (_, _, _)) in query.iter_entities(world).filter(|item| {
-        let p = *((item.1).0);
-        let d = *((item.1).1);
-        let unselected = (item.1).2.is_none();
+    let mut query = <(Entity, Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(component::<Selectable>());
+    for (entity, _, _, _) in query.iter(world).filter(|item| {
+        let p = *(item.1);
+        let d = *(item.2);
+        let unselected = item.3.is_none();
 
         unselected && at_bounds.intersects(p.into(), d)
     }) {
-        todo.add_component(entity, Selection);
+        todo.add_component(*entity, Selection);
 
         if !sticky {
             break;
         }
     }
 
-    todo.write(world);
+    todo.flush(world);
 
     false
 }
@@ -433,18 +432,18 @@ fn delete_object(world: &mut World, state: &mut State) -> bool {
 
 fn delete_selected(world: &mut World) -> Result<(), Error> {
     let mut deleted = 0usize;
-    let todo = CommandBuffer::default();
+    let mut todo = CommandBuffer::new(world);
 
-    let query = <Read<Selection>>::query();
-    for (entity, _) in query.iter_entities(world) {
-        todo.delete(entity);
+    let mut query = <(Entity, Read<Selection>)>::query();
+    for (entity, _) in query.iter(world) {
+        todo.remove(*entity);
         deleted += 1;
     }
 
     if deleted == 0 {
         return Err(Error::execution("No entity to delete"));
     } else {
-        todo.write(world);
+        todo.flush(world);
     }
 
     Ok(())
@@ -456,7 +455,7 @@ fn viewport_bounds(state: &State) -> Bounds {
 }
 
 fn selected_bounds(world: &mut World, state: &State) -> Option<Bounds> {
-    let query = <(Read<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
+    let mut query = <(Read<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
     if let Some((position, dim)) = query.iter(world).next() {
         let pos2d: Position2D = (*position).into();
         Some(Bounds::Free(pos2d - state.offset(), *dim))
@@ -473,8 +472,8 @@ fn translate_subselection(t: Translation, area_bounds: Option<Bounds>, world: &m
     if let Some(bounds) = area_bounds {
         if state.cursor.apply(t, bounds) {
             // if we have a subselection
-            let query = <(Write<Position2D>, Write<Dimension>, Read<Subselection>)>::query();
-            if let Some((mut pos, mut dim, sub_sel)) = query.iter(world).next() {
+            let mut query = <(Write<Position2D>, Write<Dimension>, Read<Subselection>)>::query();
+            if let Some((pos, dim, sub_sel)) = query.iter_mut(world).next() {
                 if sub_sel.active {
                     // adjusting subselection
                     let edit_box = sub_sel.initial_pos.area(state.cursor);
@@ -515,8 +514,8 @@ fn translate_object(t: Translation, world: &mut World, state: &mut State) -> boo
                 let screen_bounds = Bounds::Free(Position2D::default(), screen_dim);
                 state.offset_mut().apply(t, screen_bounds);
             } else {
-                let query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
-                for (mut position, dim) in query.iter(world) {
+                let mut query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
+                for (position, dim) in query.iter_mut(world) {
                     let screen_bounds = Bounds::Free(Position2D::default(), screen_dim - *dim);
 
                     if position.apply(t, screen_bounds) {
@@ -543,8 +542,8 @@ fn apply_color_to_selected(cm: ColorMode, world: &mut World, state: &mut State) 
     let color = state.color(cm);
     let sel_bounds = subselection_bounds(world, state);
 
-    let query = <(Write<Sprite>, Write<Position>)>::query().filter(component::<Selection>());
-    for (mut sprite, pos) in query.iter(world) {
+    let mut query = <(Write<Sprite>, Write<Position>)>::query().filter(component::<Selection>());
+    for (sprite, pos) in query.iter_mut(world) {
         if state.mode() == Mode::Edit {
             let pos2d: Position2D = (*pos).into();
             let rel_bounds = sel_bounds - pos2d;
@@ -568,8 +567,8 @@ fn clear_symbol_on_selected(world: &mut World, state: &mut State) -> bool {
     let mut changed = false;
     let sel_bounds = subselection_bounds(world, state);
 
-    let query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
-    for (mut sprite, mut pos, mut dim) in query.iter(world) {
+    let mut query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
+    for (sprite, pos, dim) in query.iter_mut(world) {
         let pos2d: Position2D = (*pos).into();
         let rel_bounds = sel_bounds - pos2d;
 
@@ -595,7 +594,7 @@ fn clear_symbol_on_selected(world: &mut World, state: &mut State) -> bool {
 }
 
 fn subselection(world: &mut World, state: &State) -> Option<Bounds> {
-    let query = <(Read<Position2D>, Read<Dimension>)>::query().filter(component::<Subselection>());
+    let mut query = <(Read<Position2D>, Read<Dimension>)>::query().filter(component::<Subselection>());
     if let Some((pos, dim)) = query.iter(world).next() {
         Some(Bounds::Binding(*pos + state.offset(), *dim))
     } else {
@@ -611,8 +610,8 @@ fn new_frame_on_selected(world: &mut World, state: &mut State) -> bool {
         return false;
     }
 
-    let query = <Write<Sprite>>::query().filter(component::<Selection>());
-    for mut sprite in query.iter(world) {
+    let mut query = <Write<Sprite>>::query().filter(component::<Selection>());
+    for sprite in query.iter_mut(world) {
         sprite.new_frame();
         changed = true;
     }
@@ -628,8 +627,8 @@ fn delete_frame_on_selected(world: &mut World, state: &mut State) -> bool {
         return false;
     }
 
-    let query = <Write<Sprite>>::query().filter(component::<Selection>());
-    for mut sprite in query.iter(world) {
+    let mut query = <Write<Sprite>>::query().filter(component::<Selection>());
+    for sprite in query.iter_mut(world) {
         if sprite.delete_frame() {
             changed = true;
         }
@@ -639,8 +638,8 @@ fn delete_frame_on_selected(world: &mut World, state: &mut State) -> bool {
 }
 
 fn set_bookmark(index: usize, location: Position2D, world: &mut World) -> bool {
-    let query = <(Write<Position2D>, Read<Bookmark>)>::query();
-    if let Some((mut pos, _)) = query.iter(world).find(|(_, bm)| bm.0 == index) {
+    let mut query = <(Write<Position2D>, Read<Bookmark>)>::query();
+    if let Some((pos, _)) = query.iter_mut(world).find(|(_, bm)| bm.0 == index) {
         if location != *pos {
             *pos = location;
         }
@@ -648,13 +647,13 @@ fn set_bookmark(index: usize, location: Position2D, world: &mut World) -> bool {
         return true;
     }
 
-    world.insert((), vec![(Bookmark(index), location)]);
+    world.extend(vec![(Bookmark(index), location)]);
 
     true
 }
 
 fn jump_to_bookmark(index: usize, world: &mut World, state: &mut State) -> bool {
-    let query = <(Read<Bookmark>, Read<Position2D>)>::query();
+    let mut query = <(Read<Bookmark>, Read<Position2D>)>::query();
     if let Some((_, pos)) = query.iter(world).find(|(bm, _)| bm.0 == index) {
         state.set_offset(*pos);
     } else {
@@ -673,9 +672,9 @@ fn show_help(index: usize, state: &mut State) -> bool {
 fn clear_blank_texels(world: &mut World, state: &mut State) -> bool {
     use crate::common::SpriteExt;
 
-    let query = <Write<Sprite>>::query().filter(component::<Selection>());
+    let mut query = <Write<Sprite>>::query().filter(component::<Selection>());
     let mut changed = false;
-    for mut sprite in query.iter(world) {
+    for sprite in query.iter_mut(world) {
         sprite.clear_blank_texels(None);
         changed = true;
     }
@@ -703,8 +702,8 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
             let mut positions = Vec::new();
             let mut moved = 0;
 
-            let query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
-            for (i, (pos, dim)) in query.iter(world).enumerate() {
+            let mut query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
+            for (i, (pos, dim)) in query.iter_mut(world).enumerate() {
                 let col = i % cols;
                 let row = i / cols;
 
@@ -741,8 +740,8 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
         }
         Layout::Random => {
             let mut moved = 0;
-            let query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
-            for (mut pos, dim) in query.iter(world) {
+            let mut query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
+            for (mut pos, dim) in query.iter_mut(world) {
                 let bounds_x = bounds.position().x;
                 let bounds_y = bounds.position().y;
                 let bounds_w = i32::from(bounds.dimension().w);
@@ -770,8 +769,8 @@ fn change_frame_on_selected(which: Which<usize>, world: &mut World, state: &mut 
     }
 
     let mut changed = false;
-    let query = <Write<Sprite>>::query().filter(component::<Selection>());
-    for mut sprite in query.iter(world) {
+    let mut query = <Write<Sprite>>::query().filter(component::<Selection>());
+    for sprite in query.iter_mut(world) {
         sprite.apply_frame_change(which);
         changed = true;
     }
@@ -783,8 +782,8 @@ fn apply_style_to_selected(style: SymbolStyle, world: &mut World, state: &mut St
     let mut changed = false;
     let sel_bounds = subselection_bounds(world, state);
 
-    let query = <(Write<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
-    for (mut sprite, pos) in query.iter(world) {
+    let mut query = <(Write<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
+    for (sprite, pos) in query.iter_mut(world) {
         if state.mode() == Mode::Edit {
             let pos2d: Position2D = (*pos).into();
             let rel_bounds = sel_bounds - pos2d;
@@ -810,8 +809,8 @@ fn apply_symbol_to_selected(symbol: char, world: &mut World, state: &mut State) 
     let fg = state.color(ColorMode::Fg);
     let sel_bounds = subselection_bounds(world, state);
 
-    let query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
-    for (mut sprite, mut pos, mut dim) in query.iter(world) {
+    let mut query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
+    for (sprite, pos, dim) in query.iter_mut(world) {
         let pos2d: Position2D = (*pos).into();
         let rel_bounds = sel_bounds - pos2d;
         let bounds = (*sprite).apply_symbol(symbol, bg, fg, rel_bounds);
@@ -846,7 +845,7 @@ fn clipboard(op: ClipboardOp, world: &mut World, state: &mut State) -> bool {
 fn copy_or_cut_selection(op: ClipboardOp, world: &mut World, state: &mut State) -> bool {
     let mut sprites: Vec<Sprite> = Vec::new();
 
-    let query = <Read<Sprite>>::query().filter(component::<Selection>());
+    let mut query = <Read<Sprite>>::query().filter(component::<Selection>());
     for sprite in query.iter(world) {
         sprites.push((*sprite).clone());
     }
@@ -889,8 +888,8 @@ fn copy_or_cut_subselection(op: ClipboardOp, world: &mut World, state: &mut Stat
     let mut found = false;
     let sel_bounds = subselection_bounds(world, state);
 
-    let query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
-    if let Some((mut sprite, mut pos, mut dim)) = query.iter(world).next() {
+    let mut query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
+    if let Some((sprite, pos, dim)) = query.iter_mut(world).next() {
         let pos2d: Position2D = (*pos).into();
         let rel_bounds = sel_bounds - pos2d;
 
@@ -925,8 +924,8 @@ fn paste_subselection(world: &mut World, state: &mut State) -> bool {
 
     let mut changed = false;
 
-    let query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
-    if let Some((mut sprite, mut pos, mut dim)) = query.iter(world).next() {
+    let mut query = <(Write<Sprite>, Write<Position>, Write<Dimension>)>::query().filter(component::<Selection>());
+    if let Some((sprite, pos, dim)) = query.iter_mut(world).next() {
         let texels: Texels = state.clipboard.clone().into();
         let pos2d: Position2D = (*pos).into();
         let rel_pos = state.cursor + state.offset() - pos2d;
@@ -948,7 +947,7 @@ fn toggle_metadata(state: &mut State) -> bool {
 }
 
 fn set_metadata(mt: MetadataType, world: &mut World, state: &mut State) -> bool {
-    let query = <Write<Sprite>>::query().filter(component::<Selection>());
+    let mut query = <Read<Sprite>>::query().filter(component::<Selection>());
     let selected = query.iter(world).count();
 
     if selected == 0 {
@@ -959,8 +958,8 @@ fn set_metadata(mt: MetadataType, world: &mut World, state: &mut State) -> bool 
         return state.set_error(Error::execution("Can only set ID on single object"));
     }
 
-    let query = <Write<Sprite>>::query().filter(component::<Selection>());
-    for mut sprite in query.iter(world) {
+    let mut query = <Write<Sprite>>::query().filter(component::<Selection>());
+    for mut sprite in query.iter_mut(world) {
         match &mt {
             MetadataType::Id(id) => sprite.id = *id,
             MetadataType::Labels(labels) => sprite.labels.extend(labels.iter().map(|(k, v)| (k.clone(), v.clone()))),
@@ -976,9 +975,8 @@ fn new_sprite(world: &mut World, state: &State, pos: Option<Position>) -> bool {
     let sprite = Sprite::default();
     let dim = Dimension::for_sprite(&sprite);
 
-    world.insert(
-        (Selectable,),
-        vec![(Selection, pos.unwrap_or(NEW_POSITION + state.offset()), dim, sprite)],
+    world.extend(
+        vec![(Selectable, Selection, pos.unwrap_or(NEW_POSITION + state.offset()), dim, sprite)],
     );
 
     true
@@ -986,7 +984,7 @@ fn new_sprite(world: &mut World, state: &State, pos: Option<Position>) -> bool {
 
 fn duplicate_selected(count: usize, world: &mut World, state: &mut State) -> bool {
     let mut done = 0;
-    let query = <(Read<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
+    let mut query = <(Read<Sprite>, Read<Position>)>::query().filter(component::<Selection>());
     let mut clones = Vec::new();
 
     for i in 0..count {
@@ -1017,9 +1015,9 @@ fn import_sprite(
     state: &State,
 ) -> Result<(), Error> {
     if pre_select {
-        world.insert(
-            (Selectable,),
+        world.extend(
             vec![(
+                Selectable,
                 Selection,
                 pos.unwrap_or(NEW_POSITION + state.offset()),
                 Dimension::for_sprite(&sprite),
@@ -1027,9 +1025,9 @@ fn import_sprite(
             )],
         );
     } else {
-        world.insert(
-            (Selectable,),
+        world.extend(
             vec![(
+                Selectable,
                 pos.unwrap_or(NEW_POSITION + state.offset()),
                 Dimension::for_sprite(&sprite),
                 sprite,
@@ -1138,14 +1136,14 @@ fn load_from_file(path: &str, world: &mut World, state: &mut State) -> Result<bo
 }
 
 fn clear_scene(world: &mut World) -> Result<(), Error> {
-    let todo = CommandBuffer::default();
+    let mut todo = CommandBuffer::new(world);
 
-    let query = <Tagged<Selectable>>::query();
-    for (entity, _) in query.iter_entities(world) {
-        todo.delete(entity);
+    let mut query = <(Entity, Read<Selectable>)>::query();
+    for (entity, _) in query.iter(world) {
+        todo.remove(*entity);
     }
 
-    todo.write(world);
+    todo.flush(world);
 
     Ok(())
 }
