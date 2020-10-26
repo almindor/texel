@@ -78,7 +78,7 @@ impl Default for State {
     }
 }
 
-impl State {    
+impl State {
     pub fn error(&self) -> &Option<Error> {
         &self.error
     }

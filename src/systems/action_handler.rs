@@ -5,8 +5,8 @@ use crate::components::*;
 use crate::os::Terminal;
 use crate::resources::{State, PALETTE_H, PALETTE_OFFSET, PALETTE_W};
 use fio::ExportFormat;
-use legion::*;
 use legion::systems::CommandBuffer;
+use legion::*;
 use texel_types::{ColorMode, SymbolStyle, Texels, Which};
 
 const NEW_POSITION: Position = Position { x: 10, y: 10, z: 0 };
@@ -310,7 +310,8 @@ fn select_obj_relative(forward: bool, sticky: bool, world: &mut World, state: &S
     let mut start = 0usize;
     let viewport = viewport_bounds(state);
 
-    let mut query = <(Entity, Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(component::<Selectable>());
+    let mut query =
+        <(Entity, Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(component::<Selectable>());
     for (entity, pos, _, selected) in query.iter(world).filter(|item| {
         let p = *(item.1);
         let d = *(item.2);
@@ -366,7 +367,8 @@ fn select_obj_relative(forward: bool, sticky: bool, world: &mut World, state: &S
 fn select_obj_all(world: &mut World, state: &State) -> bool {
     let viewport = viewport_bounds(state);
     let mut todo = CommandBuffer::new(world);
-    let mut query = <(Entity, Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(component::<Selectable>());
+    let mut query =
+        <(Entity, Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(component::<Selectable>());
     for (entity, _, _, _) in query.iter(world).filter(|item| {
         let p = *(item.1);
         let d = *(item.2);
@@ -390,7 +392,8 @@ fn select_obj_at(at: Position2D, sticky: bool, world: &mut World, state: &State)
         deselect_obj(world);
     }
 
-    let mut query = <(Entity, Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(component::<Selectable>());
+    let mut query =
+        <(Entity, Read<Position>, Read<Dimension>, TryRead<Selection>)>::query().filter(component::<Selectable>());
     for (entity, _, _, _) in query.iter(world).filter(|item| {
         let p = *(item.1);
         let d = *(item.2);
@@ -975,9 +978,13 @@ fn new_sprite(world: &mut World, state: &State, pos: Option<Position>) -> bool {
     let sprite = Sprite::default();
     let dim = Dimension::for_sprite(&sprite);
 
-    world.extend(
-        vec![(Selectable, Selection, pos.unwrap_or(NEW_POSITION + state.offset()), dim, sprite)],
-    );
+    world.extend(vec![(
+        Selectable,
+        Selection,
+        pos.unwrap_or(NEW_POSITION + state.offset()),
+        dim,
+        sprite,
+    )]);
 
     true
 }
@@ -1015,24 +1022,20 @@ fn import_sprite(
     state: &State,
 ) -> Result<(), Error> {
     if pre_select {
-        world.extend(
-            vec![(
-                Selectable,
-                Selection,
-                pos.unwrap_or(NEW_POSITION + state.offset()),
-                Dimension::for_sprite(&sprite),
-                sprite,
-            )],
-        );
+        world.extend(vec![(
+            Selectable,
+            Selection,
+            pos.unwrap_or(NEW_POSITION + state.offset()),
+            Dimension::for_sprite(&sprite),
+            sprite,
+        )]);
     } else {
-        world.extend(
-            vec![(
-                Selectable,
-                pos.unwrap_or(NEW_POSITION + state.offset()),
-                Dimension::for_sprite(&sprite),
-                sprite,
-            )],
-        );
+        world.extend(vec![(
+            Selectable,
+            pos.unwrap_or(NEW_POSITION + state.offset()),
+            Dimension::for_sprite(&sprite),
+            sprite,
+        )]);
     }
 
     Ok(())
