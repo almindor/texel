@@ -46,10 +46,7 @@ impl Mode {
     }
 
     pub fn modifies_cursor(&self) -> bool {
-        match self {
-            Mode::Write | Mode::Edit => true,
-            _ => false,
-        }
+        matches!(self, Self::Write | Self::Edit)
     }
 
     pub fn valid_selection(&self, selected: usize) -> bool {

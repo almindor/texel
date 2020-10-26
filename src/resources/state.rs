@@ -229,10 +229,7 @@ impl State {
     }
 
     pub fn quitting(&self) -> bool {
-        match self.mode() {
-            Mode::Quitting(_) => true,
-            _ => false,
-        }
+        matches!(self.mode(), Mode::Quitting(_))
     }
 
     pub fn push_event(&mut self, event: InputEvent) {

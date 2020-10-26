@@ -30,10 +30,7 @@ pub enum MetadataType {
 
 impl MetadataType {
     pub fn is_id(&self) -> bool {
-        match self {
-            Self::Id(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Id(_))
     }
 
     pub fn parse_id(source: &str) -> Result<Self, Error> {
@@ -142,17 +139,7 @@ impl From<Option<&str>> for Action {
 
 impl Action {
     pub fn is_some(&self) -> bool {
-        match self {
-            Action::None => false,
-            _ => true,
-        }
-    }
-
-    pub fn is_reverse_mode(&self) -> bool {
-        match self {
-            Action::ReverseMode => true,
-            _ => false,
-        }
+        !matches!(self, Self::None)
     }
 
     pub fn complete_word(part: &str) -> Option<&'static str> {

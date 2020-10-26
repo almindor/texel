@@ -138,7 +138,7 @@ fn objmode_region_event(event: InputEvent, state: &mut State) {
 fn cmdline_event(event: InputEvent, state: &mut State, cmdline: &mut CmdLine) {
     match cmdline.input(event) {
         Ok(action) => {
-            if action.is_some() && !action.is_reverse_mode() {
+            if action.is_some() && matches!(action, Action::ReverseMode) {
                 state.push_action(Action::ReverseMode);
             }
             state.push_action(action);

@@ -36,7 +36,6 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::ApplyStyle(style) => apply_style_to_selected(style, world, state),
             Action::ApplyRegion => apply_region(subselection(world, state), world, state),
             Action::PickColor(cm) => pick_color(cm, world, state),
-            Action::ReverseMode => reverse_mode(world, state) && false, // NOTE: reverse returns if reverted, not dirty state
             Action::Deselect => clear_subselection(world) || deselect_obj(world),
             Action::Translate(t) => translate_object(t, world, state),
             Action::Layout(layout) => apply_layout_to_selected(layout, world, state),
@@ -50,6 +49,10 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::Export(format, path) => export_to_file(format, &path, world, state),
             Action::ShowHelp(index) => show_help(index, state),
             Action::ClearBlank => clear_blank_texels(world, state),
+            Action::ReverseMode => {
+                reverse_mode(world, state); // NOTE: reverse returns if reverted, not dirty state
+                false
+            }
         };
     }
 }

@@ -42,9 +42,6 @@ impl Into<Vec<Sprite>> for Clipboard {
 
 impl Clipboard {
     pub fn is_empty(&self) -> bool {
-        match self {
-            Self::Empty => true,
-            _ => false,
-        }
+        matches!(self, Self::Empty)
     }
 }
