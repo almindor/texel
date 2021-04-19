@@ -756,8 +756,8 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
                 let dim_h = i32::from(dim.h);
 
                 if dim_w < bounds_w && dim_h < bounds_h {
-                    let x: i32 = rng.gen_range(bounds_x, bounds_x + bounds_w - dim_w);
-                    let y: i32 = rng.gen_range(bounds_y, bounds_y + bounds_h - dim_h);
+                    let x: i32 = rng.gen_range(bounds_x..bounds_x + bounds_w - dim_w);
+                    let y: i32 = rng.gen_range(bounds_y..bounds_y + bounds_h - dim_h);
                     pos.x = x;
                     pos.y = y;
                     moved += 1
