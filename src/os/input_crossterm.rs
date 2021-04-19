@@ -18,7 +18,7 @@ impl InputSource {
             .unwrap_or_else(|| panic!("Mode map not found"));
 
         match read() {
-            Err(err) => panic!(err),
+            Err(err) => panic!("{}", err),
             Ok(raw_event) => self.map_input(raw_event, map),
         }
     }
