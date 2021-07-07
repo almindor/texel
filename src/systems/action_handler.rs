@@ -100,7 +100,7 @@ fn deselect_obj(world: &mut World) -> bool {
         todo.remove_component::<Selection>(*entity);
     }
 
-    todo.flush(world);
+    todo.flush(world, &mut Resources::default());
 
     false
 }
@@ -113,7 +113,7 @@ fn clear_subselection(world: &mut World) -> bool {
         todo.remove(*entity);
     };
 
-    todo.flush(world);
+    todo.flush(world, &mut Resources::default());
 
     false
 }
@@ -216,7 +216,7 @@ fn save_cursor_pos(world: &mut World, state: &mut State) {
         }
     }
 
-    todo.flush(world);
+    todo.flush(world, &mut Resources::default());
 }
 
 fn restore_cursor_pos(world: &mut World, state: &mut State) {
@@ -277,7 +277,7 @@ fn mark_subselection(world: &mut World, state: &State) -> Option<Bounds> {
         None
     };
 
-    todo.flush(world);
+    todo.flush(world, &mut Resources::default());
 
     result
 }
@@ -300,7 +300,7 @@ fn apply_region(region: Option<Bounds>, world: &mut World, state: &mut State) ->
         }
     }
 
-    todo.flush(world);
+    todo.flush(world, &mut Resources::default());
 
     clear_subselection(world);
     reverse_mode(world, state);
@@ -382,7 +382,7 @@ fn select_obj_all(world: &mut World, state: &State) -> bool {
         todo.add_component(*entity, Selection);
     }
 
-    todo.flush(world);
+    todo.flush(world, &mut Resources::default());
 
     false
 }
@@ -411,7 +411,7 @@ fn select_obj_at(at: Position2D, sticky: bool, world: &mut World, state: &State)
         }
     }
 
-    todo.flush(world);
+    todo.flush(world, &mut Resources::default());
 
     false
 }
@@ -449,7 +449,7 @@ fn delete_selected(world: &mut World) -> Result<(), Error> {
     if deleted == 0 {
         return Err(Error::execution("No entity to delete"));
     } else {
-        todo.flush(world);
+        todo.flush(world, &mut Resources::default());
     }
 
     Ok(())
@@ -1149,7 +1149,7 @@ fn clear_scene(world: &mut World) -> Result<(), Error> {
         todo.remove(*entity);
     }
 
-    todo.flush(world);
+    todo.flush(world, &mut Resources::default());
 
     Ok(())
 }
