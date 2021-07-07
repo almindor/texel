@@ -1,3 +1,10 @@
+### v0.2.3
+* bump for Cargo.lock
+
+### v0.2.2
+* update dependencies
+* fix clippy errors
+
 ### v0.2.1
 * add mouse support
 * upgrade legion to v3
