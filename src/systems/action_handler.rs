@@ -1089,6 +1089,7 @@ fn tutorial(world: &mut World, state: &mut State) -> bool {
             Ok(loaded) => match loaded {
                 Loaded::Scene(scene) => match apply_scene(scene.clone(), world, state, None) {
                     Ok(_) => {
+                        state.reset_mode(); // revert to object mode
                         state.clear_history(scene); // we're going from this scene now
                         state.reset_save_file(); // ensure we don't save the tutorial into previous file
                         false // tutorial does not dirty
@@ -1114,7 +1115,7 @@ fn write_scene_to_file(path: Option<String>, world: &mut World, state: &mut Stat
 
 fn read_scene_from_file(path: String, world: &mut World, state: &mut State) -> bool {
     match load_from_file(&path, world, state) {
-        Ok(changed) => changed, // we reset history in some cases here
+        Ok(changed) => changed,
         Err(err) => state.set_error(err),
     }
 }
@@ -1127,6 +1128,7 @@ fn load_from_file(path: &str, world: &mut World, state: &mut State) -> Result<bo
             if state.unsaved_changes() {
                 Err(Error::execution("Unsaved changes, save before opening another scene"))
             } else {
+                state.reset_mode(); // revert to object mode
                 apply_scene(scene.clone(), world, state, None)?;
                 state.clear_history(scene); // we're going from this scene now
                 state.saved(String::from(path));

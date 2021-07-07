@@ -169,6 +169,10 @@ impl State {
         false
     }
 
+    pub fn reset_mode(&mut self) {
+        while self.reverse_mode() {}
+    }
+
     pub fn previous_mode(&self) -> Option<Mode> {
         if self.modes.len() > 1 {
             self.modes.get(self.modes.len() - 2).cloned()
