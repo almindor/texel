@@ -167,18 +167,18 @@ impl CmdLine {
         } else if let Some(cmd) = parts.first() {
             // if we have something here, and count != 1 parts.count() must be >= 1
             if let Some(completion) = match *cmd {
-                "export" | "read" | "write" | "w" | "r" => self
-                    .auto_complete
-                    .complete_filename(parts.last().unwrap_or_else(|| &"."))?,
+                "export" | "read" | "write" | "w" | "r" => {
+                    self.auto_complete.complete_filename(parts.last().unwrap_or(&"."))?
+                }
                 "set" => self
                     .auto_complete
-                    .complete_from_list(parts.last().unwrap_or_else(|| &""), &crate::common::METADATA_TYPES),
+                    .complete_from_list(parts.last().unwrap_or(&""), &crate::common::METADATA_TYPES),
                 "help" => self
                     .auto_complete
-                    .complete_from_list(parts.last().unwrap_or_else(|| &""), &crate::common::HELP_TOPICS),
+                    .complete_from_list(parts.last().unwrap_or(&""), &crate::common::HELP_TOPICS),
                 "layout" => self
                     .auto_complete
-                    .complete_from_list(parts.last().unwrap_or_else(|| &""), &crate::common::LAYOUT_WORDS),
+                    .complete_from_list(parts.last().unwrap_or(&""), &crate::common::LAYOUT_WORDS),
                 _ => None,
             } {
                 match completion {

@@ -31,10 +31,10 @@ impl Default for SelectedInfo {
 
 impl From<Position2D> for SelectedInfo {
     fn from(pos: Position2D) -> Self {
-        let mut result = SelectedInfo::default();
-        result.offset = pos;
-
-        result
+        SelectedInfo {
+            offset: pos,
+            ..Default::default()
+        }
     }
 }
 

@@ -23,7 +23,7 @@ impl Terminal {
     }
 
     pub fn restore(&mut self) {
-        use crossterm::Command;
+        let clear_cmd = crossterm::terminal::Clear(crossterm::terminal::ClearType::All).to_string();
 
         self.0.execute(crossterm::event::DisableMouseCapture).unwrap();
 
@@ -31,7 +31,7 @@ impl Terminal {
             self.0,
             "{}{}{}",
             crossterm::style::ResetColor,
-            crossterm::terminal::Clear(crossterm::terminal::ClearType::All).ansi_code(),
+            &clear_cmd,
             crossterm::cursor::MoveTo(0, 0),
         )
         .unwrap();

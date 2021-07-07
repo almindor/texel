@@ -24,7 +24,7 @@ pub fn topic_index(word: &str) -> Option<usize> {
 
 pub fn scene_for_help_index(index: usize) -> Scene {
     let bytes = HELP_CONTENTS[index];
-    let loaded = scene_from_rgz_stream(&bytes[..]).unwrap();
+    let loaded = scene_from_rgz_stream(bytes).unwrap();
 
     match loaded {
         Loaded::Scene(scene) => scene,

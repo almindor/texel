@@ -181,10 +181,8 @@ impl State {
         if self.modes.len() > 1 {
             if let Mode::Help(index) = self.mode() {
                 return Some(index);
-            } else if let Some(previous_mode) = self.previous_mode() {
-                if let Mode::Help(index) = previous_mode {
-                    return Some(index);
-                }
+            } else if let Some(Mode::Help(index)) = self.previous_mode() {
+                return Some(index);
             }
             None
         } else {

@@ -81,7 +81,7 @@ impl AutoComplete {
         } else {
             abs_parent = abs_path.parent().unwrap_or_else(|| Path::new("/"));
             str_name = match loc_path.file_name() {
-                Some(name) => name.to_str().unwrap_or_else(|| ""),
+                Some(name) => name.to_str().unwrap_or(""),
                 None => "",
             };
         };
@@ -107,7 +107,7 @@ impl AutoComplete {
                                     }
                                 };
 
-                                let found = String::from(loc_parent.join(s).to_str().unwrap_or_else(|| "???"));
+                                let found = String::from(loc_parent.join(s).to_str().unwrap_or("???"));
 
                                 if file_type.is_dir() {
                                     Some(Completion::Directory(found))
