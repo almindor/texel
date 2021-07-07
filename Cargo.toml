@@ -1,6 +1,6 @@
 [package]
 name = "texel"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Ales Katona <ales@katona.me>"]
 edition = "2018"
 description = "ASCII art text editor"
@@ -11,17 +11,17 @@ readme = "README.md"
 categories = ["text-editors", "multimedia::images"]
 
 [dependencies]
-big_enum_set = { version = "0.2.0", features = ["serde"] }
-crossterm = { version = "0.18.2", optional = true }
-dirs = "3.0.1"
-legion = "0.3.1"
-libflate = "1.0.3"
-rand = "0.8.3"
-ron = "0.6.2"
-serde = "1.0.117"
-serde_derive = "1.0.117"
-termion = { version = "1.5.5", optional = true }
-texel_types = { version = "2.0.0", features = ["serde_support"] }
+big_enum_set = { version = "0.2", features = ["serde"] }
+crossterm = { version = "0.20", optional = true }
+dirs = "3.0"
+legion = "0.3"
+libflate = "1.0"
+rand = "0.8"
+ron = "0.6"
+serde = "1.0"
+serde_derive = "1.0"
+termion = { version = "1.5", optional = true }
+texel_types = { version = "2.0", features = ["serde_support"] }
 
 [features]
 default = ["crossterm"]
