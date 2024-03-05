@@ -16,8 +16,9 @@ impl Default for MoveMeta {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum Event {
+    #[default]
     None,
     Cancel,
     Confirm,
@@ -61,12 +62,6 @@ pub enum Event {
     Resize,
 }
 
-impl Default for Event {
-    fn default() -> Self {
-        Event::None
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CharMap(pub HashMap<char, Event>);
 
@@ -102,7 +97,7 @@ impl ModesCharMap {
 
         for (k, e) in def_map.0 {
             // if we don't have this event mapped to a key yet
-            if self.all_modes.0.values().find(|v| *v == &e).is_none() {
+            if !self.all_modes.0.values().any(|v| v == &e) {
                 self.all_modes.0.insert(k, e);
             }
         }

@@ -3,7 +3,6 @@ use crate::components::{Bookmark, Position, Position2D, Selection, Sprite};
 use crate::resources::State;
 use legion::*;
 use std::collections::BTreeMap;
-use std::ops::Deref;
 
 pub fn preserve_history(world: &mut World, state: &mut State) {
     if !state.needs_preserving() {
@@ -17,7 +16,7 @@ pub fn preserve_history(world: &mut World, state: &mut State) {
     let mut query = <(Read<Position>, Read<Sprite>, TryRead<Selection>)>::query();
 
     for (i, (pos, sprite, selected)) in query.iter(world).enumerate() {
-        objects.push((sprite.deref().clone(), *pos));
+        objects.push((sprite.clone(), *pos));
         if selected.is_some() {
             selections.push(i);
         }

@@ -258,7 +258,7 @@ fn mark_subselection(world: &mut World, state: &State) -> Option<Bounds> {
     let mut todo = CommandBuffer::new(world);
 
     let mut query = <(Entity, Write<Subselection>)>::query();
-    let result = if let Some((entity, mut sel)) = query.iter_mut(world).next() {
+    let result = if let Some((entity, sel)) = query.iter_mut(world).next() {
         // existing selection, finish it
         if sel.active {
             sel.active = false; // we're done selecting
@@ -509,7 +509,7 @@ fn translate_object(t: Translation, world: &mut World, state: &mut State) -> boo
             translate_subselection(t, sprite_bounds, world, state)
         }
         Mode::Object(SelectMode::Region) => {
-            let viewport_bounds = viewport_bounds(&state);
+            let viewport_bounds = viewport_bounds(state);
             translate_subselection(t, Some(viewport_bounds), world, state)
         }
         Mode::Object(SelectMode::Object) => {
@@ -730,7 +730,7 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
                 positions.push(pos); // we can't re-iterate so keep the references
             }
 
-            for (i, mut pos) in positions.into_iter().enumerate() {
+            for (i, pos) in positions.into_iter().enumerate() {
                 let col = i % cols;
                 let row = i / cols;
 
@@ -747,7 +747,7 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
         Layout::Random => {
             let mut moved = 0;
             let mut query = <(Write<Position>, Read<Dimension>)>::query().filter(component::<Selection>());
-            for (mut pos, dim) in query.iter_mut(world) {
+            for (pos, dim) in query.iter_mut(world) {
                 let bounds_x = bounds.position().x;
                 let bounds_y = bounds.position().y;
                 let bounds_w = i32::from(bounds.dimension().w);
@@ -965,7 +965,7 @@ fn set_metadata(mt: MetadataType, world: &mut World, state: &mut State) -> bool 
     }
 
     let mut query = <Write<Sprite>>::query().filter(component::<Selection>());
-    for mut sprite in query.iter_mut(world) {
+    for sprite in query.iter_mut(world) {
         match &mt {
             MetadataType::Id(id) => sprite.id = *id,
             MetadataType::Labels(labels) => sprite.labels.extend(labels.iter().map(|(k, v)| (k.clone(), v.clone()))),

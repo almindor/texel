@@ -1,4 +1,4 @@
-pub use texel_types::{Bounds, Position, Position2D, Sprite, DEFAULT_BG_U8};
+pub use texel_types::{Bounds, Sprite, DEFAULT_BG_U8};
 
 // extra stuff for texel only
 pub trait SpriteExt {

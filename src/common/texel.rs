@@ -1,7 +1,7 @@
 use crate::os::Terminal;
 use big_enum_set::BigEnumSet;
 
-pub use texel_types::{SymbolStyle, SymbolStyles, Texel, Texels};
+pub use texel_types::{SymbolStyle, Texel};
 
 // extra stuff useful only in texel itself
 pub trait TexelExt {

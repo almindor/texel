@@ -66,7 +66,7 @@ fn build_resources(config: &ConfigV2) -> Resources {
 fn load_from(args: Vec<String>, state: &mut State) -> bool {
     if args.len() > 1 {
         // single non-existing file -> make it
-        if (&args[1..]).len() == 1 && !std::path::Path::new(&args[1]).exists() {
+        if (args[1..]).len() == 1 && !std::path::Path::new(&args[1]).exists() {
             let path = args.get(1).unwrap();
             state.saved(path.into()); // consider this file our save file
         } else {

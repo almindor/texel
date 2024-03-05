@@ -17,7 +17,7 @@ pub fn handle_input(state: &mut State, resources: &mut Resources) {
             Mode::Color(cm) => color_event(event, state, cm, color_palette),
             Mode::SelectSymbol(index) => symbol_select_event(event, state, index, symbol_palette),
             Mode::SelectColor(index, _) => color_select_event(event, state, index, color_palette),
-            Mode::Edit => edit_event(event, state, &symbol_palette),
+            Mode::Edit => edit_event(event, state, symbol_palette),
             Mode::Write => write_event(event, state),
             Mode::Help(_) => help_event(event, state),
             Mode::Quitting(_) => {}

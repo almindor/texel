@@ -1,7 +1,6 @@
 use crate::components::Bookmark;
 use legion::*;
 use std::collections::BTreeMap;
-use std::ops::Deref;
 pub use texel_types::{Position, Position2D, Scene, SceneV2, Sprite};
 
 pub trait SceneExt {
@@ -17,7 +16,7 @@ impl SceneExt for Scene {
 
         let mut query = <(Read<Sprite>, Read<Position>)>::query();
         for (sprite, pos) in query.iter(world) {
-            objects.push((sprite.deref().clone(), *pos));
+            objects.push((sprite.clone(), *pos));
         }
 
         let mut query = <(Read<Bookmark>, Read<Position2D>)>::query();

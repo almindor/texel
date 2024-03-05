@@ -7,7 +7,7 @@ use texel_types::{SymbolStyles, Texel, DEFAULT_BG_U8, DEFAULT_FG_U8};
 
 pub fn render_sprites(world: &mut World, state: &mut State, out: &mut FrameBuffer) {
     if let Some(index) = state.show_help() {
-        render_scene(out, &state, scene_for_help_index(index));
+        render_scene(out, state, scene_for_help_index(index));
         return; // show help, done
     }
 
@@ -23,17 +23,17 @@ pub fn render_sprites(world: &mut World, state: &mut State, out: &mut FrameBuffe
     sorted.sort_by(|a, b| b.0.z.cmp(&a.0.z));
 
     for (pos, dim, sprite, is_selected) in sorted {
-        render_sprite(out, state, &pos, &sprite);
+        render_sprite(out, state, pos, sprite);
 
         if is_selected.is_some() {
-            render_border(out, &state, &pos, *dim);
-            selected_info.append(&sprite, &pos);
+            render_border(out, state, pos, *dim);
+            selected_info.append(sprite, pos);
         }
     }
 
     // location info status line
     let ts = Terminal::terminal_size();
-    let texels = selected_info.texels(&state, ts.0, ts.1);
+    let texels = selected_info.texels(state, ts.0, ts.1);
 
     out.write_texels(texels);
 }

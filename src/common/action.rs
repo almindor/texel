@@ -57,8 +57,9 @@ impl MetadataType {
 
 pub const METADATA_TYPES: [&str; 2] = ["id", "labels"];
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum Action {
+    #[default]
     None,
     New(bool),
     NewObject,
@@ -94,12 +95,6 @@ pub enum Action {
     Bookmark(usize, bool), // index and "set"
     Tutorial,
     ClearBlank, // clears "blank" texels from sprite/selection
-}
-
-impl Default for Action {
-    fn default() -> Self {
-        Action::None
-    }
 }
 
 impl From<&str> for Action {
@@ -162,12 +157,6 @@ impl Action {
             "metadata",
         ];
 
-        for word in &ACTION_WORDS {
-            if word.starts_with(part) {
-                return Some(word);
-            }
-        }
-
-        None
+        return ACTION_WORDS.iter().find(|&word| word.starts_with(part)).copied();
     }
 }

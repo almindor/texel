@@ -70,7 +70,7 @@ fn print_selected_colors(out: &mut FrameBuffer, state: &State, w: i32, h: i32) {
 fn print_write(out: &mut FrameBuffer, state: &State, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
-    let text = format!("--{}--", state.mode().to_str());
+    let text = format!("--{}--", state.mode().as_str());
 
     out.write_line(0, h - 1, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.set_cursor_pos(state.cursor.x, state.cursor.y);
@@ -79,7 +79,7 @@ fn print_write(out: &mut FrameBuffer, state: &State, h: i32) {
 fn print_mode(out: &mut FrameBuffer, state: &State, mode: Mode, w: i32, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
-    let text = format!("--{}--", mode.to_str());
+    let text = format!("--{}--", mode.as_str());
 
     out.write_line(0, h - 1, text, texel_types::DEFAULT_BG_U8, white, bold);
     if mode == Mode::Object(SelectMode::Region) {
@@ -101,7 +101,7 @@ fn print_edit(out: &mut FrameBuffer, state: &State, palette: &SymbolPalette, h: 
 fn print_color_select(out: &mut FrameBuffer, state: &State, palette: &ColorPalette, cm: ColorMode, w: i32, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
-    let text = format!("--{}--", state.mode().to_str());
+    let text = format!("--{}--", state.mode().as_str());
 
     out.write_line(0, h - 1, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.write_texels(palette.line_texels(PALETTE_OFFSET, h - 1, cm));
@@ -111,7 +111,7 @@ fn print_color_select(out: &mut FrameBuffer, state: &State, palette: &ColorPalet
 fn print_symbol_palette(out: &mut FrameBuffer, state: &State, palette: &SymbolPalette, index: usize, w: i32, h: i32) {
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
-    let text = format!("--{}--", state.mode().to_str());
+    let text = format!("--{}--", state.mode().as_str());
 
     out.write_line(1, h - 1, text, texel_types::DEFAULT_BG_U8, white, bold);
     out.write_line(
@@ -138,7 +138,7 @@ fn print_color_palette(
     let mut count = 0;
     let white = Terminal::grayscale_u8(23);
     let bold = SymbolStyles::only(SymbolStyle::Bold);
-    let text = format!("--{}--", state.mode().to_str());
+    let text = format!("--{}--", state.mode().as_str());
     let min = Position2D {
         x: PALETTE_OFFSET,
         y: h - PALETTE_H,
