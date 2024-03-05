@@ -1,3 +1,6 @@
+### v0.2.4
+* bump dependencies
+
 ### v0.2.3
 * bump for Cargo.lock
 
