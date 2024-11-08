@@ -12,7 +12,7 @@ categories = ["text-editors", "multimedia::images"]
 
 [dependencies]
 big_enum_set = { version = "0.3", features = ["serde"] }
-crossterm = { version = "0.27", optional = true }
+crossterm = { version = "0.28", optional = true }
 dirs = "5.0"
 legion = "0.4.0"
 libflate = "2.0"
