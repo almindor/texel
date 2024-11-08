@@ -15,7 +15,7 @@ big_enum_set = { version = "0.3", features = ["serde"] }
 crossterm = { version = "0.27", optional = true }
 dirs = "5.0"
 legion = "0.4.0"
-libflate = "2.0"
+libflate = "2.1"
 rand = "0.8"
 ron = "0.8"
 serde = "1.0"
