@@ -1,4 +1,4 @@
-use crate::common::{fio, topic_index, Action, Error, Event, InputEvent, Layout, MetadataType};
+use crate::common::{fio, topic_index, Action, Error, Event, InputEvent, Layout, MetadataType, Mode};
 use crate::components::Translation;
 use std::iter::Peekable;
 use std::str::SplitAsciiWhitespace;
@@ -45,6 +45,7 @@ impl CmdLine {
         let result = match event.0 {
             Event::Cancel => Ok(Action::ReverseMode),
             Event::Backspace => self.remove(),
+            Event::Mode(Mode::Command) => Ok(Action::ClearError),
 
             Event::ArrowUp => self.previous(),
             Event::ArrowDown => self.next(),
