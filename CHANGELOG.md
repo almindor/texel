@@ -1,3 +1,8 @@
+### unreleased
+* bump dependencies
+* error clear on cmdline invocation
+* add save_and_quit to new filename support
+
 ### v0.2.5
 * bump lockfile
 
