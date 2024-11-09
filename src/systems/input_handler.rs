@@ -299,6 +299,7 @@ fn color_select_event(event: InputEvent, state: &mut State, index: usize, palett
 
 fn help_event(event: InputEvent, state: &mut State) {
     let action = match event.0 {
+        Event::None => Action::None, // don't shut down help on mouse moves etc.
         Event::Mode(Mode::Command) => Action::SetMode(Mode::Command),
         _ => Action::ReverseMode,
     };
