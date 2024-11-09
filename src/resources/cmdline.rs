@@ -183,10 +183,10 @@ impl CmdLine {
             } {
                 match completion {
                     Completion::Filename(word) | Completion::Parameter(word) => {
-                        self.cmd = String::from(*cmd) + " " + &word;
+                        self.cmd = String::from(*cmd) + " " + word;
                     }
                     Completion::Directory(dir) => {
-                        self.cmd = String::from(*cmd) + " " + &dir + "/";
+                        self.cmd = String::from(*cmd) + " " + dir + "/";
                     }
                 }
 
@@ -215,6 +215,7 @@ impl CmdLine {
             Action::Duplicate(_) => self.parse_duplicate(parts),
             Action::Translate(_) => self.parse_translate(parts),
             Action::Write(_) => self.parse_save(parts),
+            Action::WriteAndQuit(_) => self.parse_save_and_quit(parts),
             Action::Read(_) => self.parse_load(parts),
             Action::ShowHelp(_) => self.parse_help(parts),
             Action::Export(_, _) => self.parse_export(parts),
@@ -315,6 +316,14 @@ impl CmdLine {
         }
 
         Ok(Action::Write(None))
+    }
+
+    fn parse_save_and_quit(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {
+        if let Some(path) = parts.next() {
+            return Ok(Action::WriteAndQuit(Some(String::from(path))));
+        }
+
+        Ok(Action::WriteAndQuit(None))
     }
 
     fn parse_load(&self, mut parts: Peekable<SplitAsciiWhitespace>) -> Result<Action, Error> {

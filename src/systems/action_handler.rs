@@ -44,6 +44,7 @@ pub fn handle_actions(world: &mut World, state: &mut State) {
             Action::SelectRegion => select_region(world, state),
             Action::Delete => delete_object(world, state),
             Action::Write(path) => write_scene_to_file(path, world, state),
+            Action::WriteAndQuit(path) => write_and_quit(path, world, state),
             Action::Read(path) => read_scene_from_file(path, world, state),
             Action::Tutorial => tutorial(world, state),
             Action::Export(format, path) => export_to_file(format, &path, world, state),
@@ -703,8 +704,8 @@ fn apply_layout_to_selected(layout: Layout, world: &mut World, state: &mut State
         Layout::Column(cols, padding) => {
             let mut col_sizes = [0i32].repeat(cols);
             let mut row_sizes = Vec::new();
-            let mut start_x = i32::max_value();
-            let mut start_y = i32::max_value();
+            let mut start_x = i32::MAX;
+            let mut start_y = i32::MAX;
             let mut positions = Vec::new();
             let mut moved = 0;
 
@@ -1101,6 +1102,11 @@ fn tutorial(world: &mut World, state: &mut State) -> bool {
             Err(err) => state.set_error(err),
         }
     }
+}
+
+fn write_and_quit(path: Option<String>, world: &mut World, state: &mut State) -> bool {
+    write_scene_to_file(path, world, state);
+    set_mode(Mode::Quitting(OnQuit::Check), world, state)
 }
 
 fn write_scene_to_file(path: Option<String>, world: &mut World, state: &mut State) -> bool {

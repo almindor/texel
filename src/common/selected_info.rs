@@ -20,8 +20,8 @@ impl Default for SelectedInfo {
             frame_index: 0,
             frame_count: 0,
             pos: Position {
-                x: i32::max_value(),
-                y: i32::max_value(),
+                x: i32::MAX,
+                y: i32::MAX,
                 z: 0,
             },
             offset: Position2D::default(),
