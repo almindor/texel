@@ -1,6 +1,6 @@
 [package]
 name = "texel"
-version = "0.2.5"
+version = "0.2.6"
 authors = ["Ales Katona <ales@katona.me>"]
 edition = "2018"
 description = "ASCII art text editor"
@@ -21,7 +21,7 @@ ron = "0.10"
 serde = "1.0"
 serde_derive = "1.0"
 termion = { version = "4.0", optional = true }
-texel_types = { version = "2.0", features = ["serde_support"] }
+texel_types = { version = "2.0.4", features = ["serde_support"] }
 
 [features]
 default = ["crossterm"]

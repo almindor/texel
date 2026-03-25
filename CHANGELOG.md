@@ -1,4 +1,5 @@
-### unreleased
+### v0.2.6
+* relicense under AiGPL
 * bump dependencies
 * error clear on cmdline invocation
 * add save_and_quit to new filename support
